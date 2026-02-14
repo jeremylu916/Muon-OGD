@@ -1,0 +1,12 @@
+{
+  "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+  "dataset": "gsm8k",
+  "split": "test",
+  "num_examples": 100,
+  "seed": 42,
+  "max_new_tokens": 128,
+  "accuracy": 0.06,
+  "correct": 6,
+  "total": 100,
+  "date": "2026-02-11"
+}

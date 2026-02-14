@@ -1,0 +1,14 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Local artifacts
+outputs/
+*.log
+
+# Optional: comment out if you want to version evaluation artifacts
+# results/
