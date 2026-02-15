@@ -1,6 +1,6 @@
 {
   "task": "bigcodebench",
-  "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_id": "outputs/sft_bigcodebench_hard_tuned",
   "bcb_version": "v0.1.4",
   "split": "instruct",
   "subset": "hard",
@@ -309,6 +309,6 @@
     "82",
     "214"
   ],
-  "pass@1": 0.013513513513513514,
-  "timestamp_utc": "2026-02-14T05:29:58.483709+00:00"
+  "pass@1": 0.0,
+  "timestamp_utc": "2026-02-14T23:27:05.673801+00:00"
 }

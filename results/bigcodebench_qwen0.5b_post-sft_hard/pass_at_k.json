@@ -4,6 +4,8 @@
   "split": "instruct",
   "subset": "hard",
   "calibrated": false,
-  "gt_pass_rate": 1.0,
-  "failed_tasks": []
+  "gt_pass_rate": 0.9932432432432432,
+  "failed_tasks": [
+    "BigCodeBench/590"
+  ]
 }

@@ -1,0 +1,1520 @@
+{
+  "date": "2026-02-14 05:42",
+  "eval": {
+    "BigCodeBench/1042": [
+      {
+        "task_id": "BigCodeBench/1042",
+        "solution": "def task_func(client_socket):\n    email_message = EmailMessage()\n        email_message.set_content(\"Hello World!\")\n        email_message[\"Subject\"] = \"Test Email\"\n        email_message[\"From\"] = SERVER_ADDRESS\n        email_message[\"To\"] = CLIENT_SOCKET.getpeername()[1]\n        email_message[\"Reply-To\"] = CLIENT_SOCKET.getpeername()[1]\n\n        try:\n            smtp_server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)\n            smtp_server.starttls()\n            smtp_server.login(email_message[\"From\"], email_message[\"Password\"])\n            smtp_server.sendmail(email_message[\"From\"], email_message[\"To\"], email_message.as_string())\n            smtp_server.quit()\n\n            print(f\"Email sent successfully.\")\n        except Exception as e:\n            print(f\"Error sending email: {e}\")\n        finally:\n            if not email_message.is_multipart():\n                del email_message['Content-Disposition']\n            email_message[\"Content-Disposition\"] = 'attachment; filename=\"test_email.txt\"'\n            client_socket.sendall(email_message.as_bytes())",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/139": [
+      {
+        "task_id": "BigCodeBench/139",
+        "solution": "def task_func(df):\n    if df.empty or not isinstance(df, pd.DataFrame) or any([not isinstance(col, str) for col in df.columns]):\n            raise ValueError(\"Input must be a non-empty DataFrame.\")\n\n        fig, ax = plt.subplots()\n        for col in df.select_dtypes(include=[np.number]).columns:\n            ax.hist(df[col], bins=10)\n            ax.set_title(col)\n            ax.set_xlabel('Value')\n            ax.set_ylabel('Frequency')\n\n        return [ax]",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/594": [
+      {
+        "task_id": "BigCodeBench/594",
+        "solution": "def task_func(hours, output_dir=OUTPUT_DIR):\n    if not os.path.exists(output_dir):\n            os.makedirs(output_dir)\n\n        if not os.path.isdir(output_dir):\n            raise ValueError(\"Output directory does not exist or is not a directory.\")\n\n        # Generate weather conditions\n        weather_conditions = []\n        for _ in range(hours):\n            condition = randint(0, len(WEATHER_CONDITIONS) - 1)\n            weather_conditions.append(WEATHER_CONDITIONS[condition])\n\n        # Write weather data to CSV\n        filename = f\"{datetime.now().strftime('%Y-%m-%d_%H')}.csv\"\n        with open(os.path.join(output_dir, filename), \"w\", newline=\"\") as csvfile:\n            writer = csv.writer(csvfile)\n            writer.writerow([\"Time\", \"Condition\"])\n            for i in range(len(weather_conditions)):\n                writer.writerow([str(datetime.now()), weather_conditions[i]])\n\n        # Back up the file\n        backup_filename = f\"{filename}_backup.csv\"\n        shutil.copy(os.path.join(output_dir, filename), os.path.join(output_dir, backup_filename))\n\n        return os.path.join(output_dir, filename)",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/1003": [
+      {
+        "task_id": "BigCodeBench/1003",
+        "solution": "def task_func(url):\n    try:\n            response = urllib.request.urlopen(url)\n            xml_data = response.read().decode(\"utf-8\")\n            root = etree.fromstring(xml_data)\n\n            items = []\n            for item in root.findall('.//item'):\n                item_dict = {}\n                item_dict['name'] = item.find('name').text\n                item_dict['description'] = item.find('description').text\n                item_dict['price'] = item.find('price').text\n                items.append(item_dict)\n\n            df = pd.DataFrame(items, columns=['Name', 'Description', 'Price'])\n            return df\n\n        except Exception as e:\n            raise ValueError(f\"An error occurred while parsing the XML file: {e}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 18)"
+        }
+      }
+    ],
+    "BigCodeBench/1006": [
+      {
+        "task_id": "BigCodeBench/1006",
+        "solution": "def task_func(url, download_path=\"mnt/data/downloads/\"):\n    try:\n            response = requests.get(url)\n            response.raise_for_status()  # Raise an HTTPError for bad responses\n\n            zip_file = ZipFile(BytesIO(response.content))\n            zip_file.extractall(download_path)\n\n            return download_path\n        except Exception as e:\n            return f\"Error: {e}\"",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 10)"
+        }
+      }
+    ],
+    "BigCodeBench/999": [
+      {
+        "task_id": "BigCodeBench/999",
+        "solution": "def task_func(url, column_name, csv_file_path):\n    try:\n            response = urllib.request.urlopen(url)\n            content = response.read().decode('utf-8')\n            if 'csv' not in content:\n                raise ValueError(\"The provided URL does not contain a CSV file.\")\n\n            # Read the CSV file into a list of dictionaries\n            with open(csv_file_path, 'r') as f:\n                reader = csv.DictReader(f)\n                data = [row[column_name] for row in reader]\n\n            # Count the occurrences of each value in the specified column\n            occurrence_counts = collections.Counter(data)\n\n            return occurrence_counts\n\n        except Exception as e:\n            print(f\"An error occurred: {e}\")\n            return {}",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 18)"
+        }
+      }
+    ],
+    "BigCodeBench/1008": [
+      {
+        "task_id": "BigCodeBench/1008",
+        "solution": "def task_func(url, table_id):\n    try:\n            response = requests.get(url)\n            soup = BeautifulSoup(response.text, 'html.parser')\n\n            if soup.find(id=table_id) is None:\n                return pd.DataFrame(columns=['Column1', 'Column2'])\n\n            table = soup.find(id=table_id)\n            data = [row.text.strip() for row in table.find_all('tr')]\n            columns = [col.text.strip() for col in table.find_all('th')]\n            df = pd.DataFrame(data, columns=columns)\n\n            return df\n        except Exception as e:\n            raise ValueError(f\"An error occurred: {str(e)}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 15)"
+        }
+      }
+    ],
+    "BigCodeBench/239": [
+      {
+        "task_id": "BigCodeBench/239",
+        "solution": "def task_func(original):\n    numeric_values = [np.sum(t[1] if isinstance(t[1], tuple) else t[1].astype(float)) for t in original]\n        stats = {\n            \"mean\": np.mean(numeric_values),\n            \"std_dev\": np.std(numeric_values),\n            \"min\": min(numeric_values),\n            \"max\": max(numeric_values)\n        }\n\n        fig, ax = plt.subplots()\n        ax.hist(numeric_values, bins='auto', density=True, alpha=0.6)\n        ax.set_xlabel(\"Numeric Values\")\n        ax.set_ylabel(\"Probability Density\")\n        ax.set_title(\"Histogram with Overlaid Probability Density Function\")\n\n        return np.array(numeric_values), stats, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/1019": [
+      {
+        "task_id": "BigCodeBench/1019",
+        "solution": "def task_func(filename=IMAGE_PATH, from_encoding=\"cp1251\", to_encoding=\"utf8\"):\n    try:\n            img = Image.open(filename)\n            text = pytesseract.image_to_string(img, lang='eng', config=f'-c {to_encoding}')\n            return text\n\n        except ValueError as e:\n            if 'UnicodeDecodeError' in str(e):\n                return \"\"\n            elif 'LookupError' in str(e):\n                return \"\" \n            else:\n                raise e",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 7)"
+        }
+      }
+    ],
+    "BigCodeBench/971": [
+      {
+        "task_id": "BigCodeBench/971",
+        "solution": "def task_func(directory_path: str):\n    if not os.path.exists(directory_path):\n            raise ValueError(f\"Directory '{directory_path}' does not exist.\")\n\n        all_files = [Path(file).read_text().strip() for file in os.listdir(directory_path)]\n        sizes = [(os.path.getsize(file), datetime.fromtimestamp(os.path.getctime(file)), \n                  datetime.fromtimestamp(os.path.getmtime(file))) for file in all_files]\n        return sizes",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/678": [
+      {
+        "task_id": "BigCodeBench/678",
+        "solution": "def task_func(path):\n    if not os.path.exists('processed'):\n            os.makedirs('processed')\n\n        for filename in os.listdir(path):\n            if filename.endswith('.json'):\n                filepath = os.path.join(path, filename)\n                try:\n                    with open(filepath, 'r') as f:\n                        data = json.load(f)\n                        df = pd.DataFrame(data)\n                        df['Source'] = filename\n                        shutil.move(filepath, 'processed/' + filename)\n                        print(f'Moved {filename} to processed/')\n                except Exception as e:\n                    print(f'Error processing {filename}: {e}')\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/763": [
+      {
+        "task_id": "BigCodeBench/763",
+        "solution": "def task_func(input_file, output_file):\n    with open(input_file) as f:\n            data = json.load(f)\n\n        fields = [field['name'] for field in data[0]['fields']]\n        result = defaultdict(dict)\n\n        for row in data:\n            for field_name in fields:\n                if field_name not in row:\n                    continue\n\n                values = [row[field_name]]\n                if len(values) == 1:\n                    result[field_name][str(np.mean(values))] = str(np.median(values))\n                else:\n                    result[field_name][f'{np.mean(values)} {np.median(values)}'] = str(np.median(values))\n\n        with open(output_file, 'w') as f:\n            writer = csv.writer(f)\n            writer.writerow(['Field', 'Mean', 'Median'])\n            writer.writerows(result.items())",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/637": [
+      {
+        "task_id": "BigCodeBench/637",
+        "solution": "def task_func(num_students):\n    from a normal distribution to simulate data\n        grades = [np.random.normal(loc=50, scale=10, size=num_students).round() for _ in range(num_students)]\n\n        df = pd.DataFrame({'Name': students, 'Grades': grades})\n\n        # Calculate average grades per course\n        avg_grades = df.groupby('Name')['Grades'].mean().reset_index()\n\n        # Count students with passing grades >= 60\n        pass_count = sum(df[df['Grades'] >= 60]['Name'])\n\n        # Create a bar plot\n        fig, ax = plt.subplots()\n        ax.bar(avg_grades['Name'], avg_grades['Grades'])\n        ax.set_title('Average Grades by Name')\n        ax.set_ylabel('Grade')\n        ax.set_xlabel('Student Name')\n\n        return avg_grades, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/324": [
+      {
+        "task_id": "BigCodeBench/324",
+        "solution": "def task_func(file_list):\n    subprocess.Popen(\n            [f\"python {file}\"] for file in file_list,\n            stdout=subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n        ).communicate()[0]\n\n        return [subprocess.call(f\"python {file}\").returncode for file in file_list]",
+        "status": "fail",
+        "details": {
+          "ALL": "Generator expression must be parenthesized (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/313": [
+      {
+        "task_id": "BigCodeBench/313",
+        "solution": "def task_func(directory):\n    files = [f for f in os.listdir(directory) if re.search(r'\\[.*?\\]', f)]\n        dirs = {}\n        for file in files:\n            match = re.search(r'\\[.*?\\]', file)\n            if match:\n                subdir = match.group(0).split('[')[1].strip()\n                if subdir not in dirs:\n                    dirs[subdir] = []\n                dirs[subdir].append(file)\n\n        return (\n            os.path.join(directory, dirs.get('main_dir', ''))\n            + ('/' if len(dirs) > 1 else '')\n            + '/'.join(sorted(os.listdir(directory)))\n        )",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/267": [
+      {
+        "task_id": "BigCodeBench/267",
+        "solution": "def task_func(data, sample_rate=8000):\n    # Add a new key-value pair to the dictionary\n    data['a'] = 1\n\n        # Generate a signal using the data\n        signal = np.array([data[key] for key in data])\n\n        # Perform an FFT on the signal\n        fft_result = fftpack.fft(signal)\n\n        # Plot the FFT\n        fig, ax = plt.subplots()\n        ax.plot(np.abs(fft_result))\n        ax.set_title('FFT of the signal')\n\n        return fft_result, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/592": [
+      {
+        "task_id": "BigCodeBench/592",
+        "solution": "def task_func(hours, output_dir=OUTPUT_DIR):\n    if not os.path.exists(output_dir):\n            os.makedirs(output_dir)\n\n        # Generate sensor data\n        time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')\n        data = []\n        for _ in range(hours):\n            temp = randint(20, 35)\n            humidity = randint(40, 60)\n            pressure = randint(1010, 1015)\n            data.append([time, temp, humidity, pressure])\n\n        # Write data to CSV file\n        with open(os.path.join(output_dir, f'{hours}.csv'), 'w') as csvfile:\n            writer = csv.writer(csvfile)\n            writer.writerow(SENSORS)\n            writer.writerows(data)",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/341": [
+      {
+        "task_id": "BigCodeBench/341",
+        "solution": "def task_func(df, col):\n    if not isinstance(df, pd.DataFrame) or len(df.columns) != 1 or col not in df.columns:\n            raise ValueError(\"Input DataFrame must be a pandas DataFrame, cannot be empty, and must contain the specified column.\")\n\n        fig, ax = plt.subplots(2, 1)\n        sns.histplot(data=df, x=col, kde=True, ax=ax[0])\n        sns.boxplot(x=df[col], ax=ax[1])\n\n        return fig",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/865": [
+      {
+        "task_id": "BigCodeBench/865",
+        "solution": "def task_func(data):\n    df = pd.DataFrame(data)\n        df['Normalized Count'] = df.apply(lambda x: zscore(x[1]), axis=1)\n        df['Normalized Weight'] = df.apply(lambda x: x[2] / np.max(df['Normalized Count']), axis=1)\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/654": [
+      {
+        "task_id": "BigCodeBench/654",
+        "solution": "def task_func(array, target_value):\n    # Fit the exponential decay function to the data\n        popt, _ = optimize.curve_fit(lambda x, t: np.exp(-t), array[:, 0], array[:, 1])\n\n        # Plotting the results\n        fig, ax = plt.subplots()\n        ax.plot(array[:, 0], array[:, 1], 'o', label='Data')\n        ax.plot(array[:, 0], np.exp(-popt[0]), label=f'Exponential Decay ({popt[1]:.2f})')\n\n        return popt, ax",
+        "status": "fail",
+        "details": {
+          "test_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 15, in setUp\nNameError: name 'np' is not defined\n",
+          "test_not_enough_points": "Traceback (most recent call last):\n  File \"__test__.py\", line 15, in setUp\nNameError: name 'np' is not defined\n",
+          "test_return_types": "Traceback (most recent call last):\n  File \"__test__.py\", line 15, in setUp\nNameError: name 'np' is not defined\n",
+          "test_target_value_found": "Traceback (most recent call last):\n  File \"__test__.py\", line 15, in setUp\nNameError: name 'np' is not defined\n",
+          "test_target_value_not_found": "Traceback (most recent call last):\n  File \"__test__.py\", line 15, in setUp\nNameError: name 'np' is not defined\n"
+        }
+      }
+    ],
+    "BigCodeBench/857": [
+      {
+        "task_id": "BigCodeBench/857",
+        "solution": "def task_func(SOURCE_DIR, DEST_DIR, EXTENSIONS):\n    warnings.filterwarnings(\"ignore\")\n        transfered_files = []\n        for filename in glob.glob(os.path.join(SOURCE_DIR, '*.' + EXTENSIONS)):\n            try:\n                shutil.move(filename, DEST_DIR)\n                transfered_files.append(filename)\n            except Exception as e:\n                print(f\"Warning: Failed to move {filename} due to an error: {e}\")\n        return transfered_files",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/502": [
+      {
+        "task_id": "BigCodeBench/502",
+        "solution": "def task_func(days_in_past=7, random_seed=0):\n    random.seed(random_seed)\n        start_date = datetime.now() - timedelta(days=days_in_past)\n        end_date = datetime.now()\n\n        # Generate random activity durations\n        activities = [\"Running\", \"Swimming\", \"Cycling\", \"Yoga\", \"Weight Training\"]\n        durations = [random.randint(0, 120) for _ in range(len(activities))]\n\n        # Create DataFrame\n        df = pd.DataFrame({\"Date\": [start_date.strftime(\"%Y-%m-%d\")], \n                           \"Activity\": activities,\n                           \"Duration\": durations})\n\n        return df, sns.lineplot(data=df, x=\"Date\", y=\"Duration\", hue=\"Activity\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/1077": [
+      {
+        "task_id": "BigCodeBench/1077",
+        "solution": "def task_func(time_strings, timezone):\n    if len(time_strings) < 2:\n            return 0.0\n\n        # Convert all times to UTC and then to the specified timezone\n        utc_times = [datetime.strptime(t, \"%Y-%m-%d %H:%M:%S\") for t in time_strings]\n        utc_times = [t.replace(tzinfo=pytz.UTC) for t in utc_times]\n\n        if not utc_times:\n            return 0.0\n\n        tz = pytz.timezone(timezone)\n        utc_times = [tz.localize(t) for t in utc_times]\n\n        # Calculate the absolute time difference in seconds\n        diffs = [(t - u).total_seconds() for t, u in zip(utc_times, utc_times[1:])]\n\n        avg_diff = np.mean(diffs)\n\n        return avg_diff",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/15": [
+      {
+        "task_id": "BigCodeBench/15",
+        "solution": "def task_func(commands_file_path, output_dir_path):\n    if not os.path.exists(commands_file_path):\n            raise FileNotFoundError(f\"File '{commands_file_path}' not found.\")\n\n        if not os.path.isdir(output_dir_path):\n            raise FileNotFoundError(f\"Directory '{output_dir_path}' not found.\")\n\n        commands = []\n        with open(commands_file_path, \"r\") as f:\n            reader = csv.reader(f)\n            next(reader)  # Skip header row\n\n            for line in reader:\n                command = line[0]\n                try:\n                    result = subprocess.run(command.split(\" \"), capture_output=True, text=True)\n                    commands.append(result.stdout.strip())\n                except Exception as e:\n                    commands.append(f\"{e}\\n\")\n\n        for i, cmd in enumerate(commands):\n            output_file_name = f\"command_{i+1}_output.txt\"\n            output_file_path = os.path.join(output_dir_path, output_file_name)\n\n            with open(output_file_path, \"w\", encoding=\"utf-8\") as f:\n                f.write(cmd + \"\\n\")\n            print(f\"Command {i+1} executed successfully.\")\n        return commands",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/955": [
+      {
+        "task_id": "BigCodeBench/955",
+        "solution": "def task_func(mystrings, text):\n    if not mystrings:\n            raise ValueError(\"Input string cannot be empty.\")\n\n        # Replace spaces with underscores and count unique words\n        modified_words = [re.sub(r'\\s+', '_', word).lower() for word in mystrings]\n        word_counts = Counter(modified_words)\n\n        # Plotting the frequency of each unique word\n        _, ax = plt.subplots()\n        ax.bar(word_counts.keys(), word_counts.values())\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/952": [
+      {
+        "task_id": "BigCodeBench/952",
+        "solution": "def task_func(task_list,\n    n_tasks,\n    employees=[\"John Doe\", \"Jane Smith\", \"James Brown\", \"Mary Johnson\", \"Robert Davis\"],\n    seed=None,):\n    if not isinstance(n_tasks, int) or n_tasks < 0:\n            raise ValueError(\"n_tasks must be a non-negative integer\")\n\n        if seed is not None:\n            random.seed(seed)\n\n        employee_names = [employee.split()[0] for employee in employees]\n        employee_dates = [datetime.now().date() for _ in range(len(employee_names))]\n\n        # Generate random assignment indices\n        assignment_indices = list(range(n_tasks))\n        random.shuffle(assignment_indices)\n\n        df = pd.DataFrame({\n            \"Task Name\": [\" \".join([employee_name + \"_\" + str(i) for i in index]) for index in assignment_indices],\n            \"Assigned To\": employee_names[assignment_indices],\n            \"Due Date\": employee_dates[assignment_indices],\n        })\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 8)"
+        }
+      }
+    ],
+    "BigCodeBench/998": [
+      {
+        "task_id": "BigCodeBench/998",
+        "solution": "def task_func(url):\n    if not os.path.exists(TARGET_TAR_FILE):\n            urllib.request.urlretrieve(url, TARGET_TAR_FILE)\n\n        with tarfile.open(TARGET_TAR_FILE) as tar:\n            md5_hash = hashlib.md5(tar.extractfile(TARGET_TAR_FILE).read()).hexdigest()\n\n        if md5_hash == EXPECTED_MD5_CHECKSUM:\n            return True\n        else:\n            os.remove(TARGET_TAR_FILE)\n            return False",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/964": [
+      {
+        "task_id": "BigCodeBench/964",
+        "solution": "if not os.path.exists(target_directory):\n        os.makedirs(target_directory)\n\n    for filename in os.listdir(source_directory):\n        if filename.endswith('.txt') or filename.endswith('.docx') or filename.endswith('.xlsx') or filename.endswith('.csv'):\n            filepath = os.path.join(source_directory, filename)\n            try:\n                df = pd.read_csv(filepath)\n                new_filepath = os.path.join(target_directory, filename.replace('.txt', '.csv'))\n                df.to_csv(new_filepath, index=False)\n                print(f\"Converted {filename} to CSV.\")\n            except FileNotFoundError:\n                print(f\"No conversion found for {filename}.\")\n            except Exception as e:\n                print(f\"An error occurred while converting {filename}: {e}\")\n\n    return len(os.listdir(target_directory))",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/583": [
+      {
+        "task_id": "BigCodeBench/583",
+        "solution": "def task_func():\n    # Generate random bytes for the private key\n        private_key = get_random_bytes(32)\n\n        # Encrypt the private key with the given password\n        cipher = AES.new(private_key, AES.MODE_EAX)\n        ciphertext, tag = cipher.encrypt_and_digest(b'password')\n\n        # Save the private key to a file\n        filename = 'private_key_' + hex(len(private_key))[2:].zfill(16) + '.txt'\n        with open(filename, 'wb') as f:\n            f.write(ciphertext)\n\n        return rsa.PublicKey.load_pkcs1(f'{filename}', 'AES'), filename, b'password', b'nonce'",
+        "status": "fail",
+        "details": {
+          "test_encryption_decryption": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 134, in _assert_format_exists\n    return methods[file_format]\nKeyError: 'AES'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 48, in test_encryption_decryption\n  File \"__test__.py\", line 14, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 124, in load_pkcs1\n    method = cls._assert_format_exists(format, methods)\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 137, in _assert_format_exists\n    raise ValueError(\nValueError: Unsupported format: 'AES', try one of DER, PEM\n",
+          "test_file_content": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 134, in _assert_format_exists\n    return methods[file_format]\nKeyError: 'AES'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 33, in test_file_content\n  File \"__test__.py\", line 14, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 124, in load_pkcs1\n    method = cls._assert_format_exists(format, methods)\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 137, in _assert_format_exists\n    raise ValueError(\nValueError: Unsupported format: 'AES', try one of DER, PEM\n",
+          "test_file_creation": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 134, in _assert_format_exists\n    return methods[file_format]\nKeyError: 'AES'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 29, in test_file_creation\n  File \"__test__.py\", line 14, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 124, in load_pkcs1\n    method = cls._assert_format_exists(format, methods)\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 137, in _assert_format_exists\n    raise ValueError(\nValueError: Unsupported format: 'AES', try one of DER, PEM\n",
+          "test_key_size": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 134, in _assert_format_exists\n    return methods[file_format]\nKeyError: 'AES'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 39, in test_key_size\n  File \"__test__.py\", line 14, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 124, in load_pkcs1\n    method = cls._assert_format_exists(format, methods)\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 137, in _assert_format_exists\n    raise ValueError(\nValueError: Unsupported format: 'AES', try one of DER, PEM\n",
+          "test_return_type": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 134, in _assert_format_exists\n    return methods[file_format]\nKeyError: 'AES'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 24, in test_return_type\n  File \"__test__.py\", line 14, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 124, in load_pkcs1\n    method = cls._assert_format_exists(format, methods)\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 137, in _assert_format_exists\n    raise ValueError(\nValueError: Unsupported format: 'AES', try one of DER, PEM\n",
+          "test_unique_file_per_call": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 134, in _assert_format_exists\n    return methods[file_format]\nKeyError: 'AES'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"__test__.py\", line 43, in test_unique_file_per_call\n  File \"__test__.py\", line 14, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 124, in load_pkcs1\n    method = cls._assert_format_exists(format, methods)\n  File \"/usr/local/lib/python3.10/site-packages/rsa/key.py\", line 137, in _assert_format_exists\n    raise ValueError(\nValueError: Unsupported format: 'AES', try one of DER, PEM\n"
+        }
+      }
+    ],
+    "BigCodeBench/1020": [
+      {
+        "task_id": "BigCodeBench/1020",
+        "solution": "def task_func(url=API_URL, from_encoding=None, to_encoding=\"utf8\"):\n    try:\n            response = requests.get(url)\n            response.raise_for_status()  # Raise an error for bad responses\n\n            if not response.content:\n                return {}\n\n            content_type = response.headers.get(\"Content-Type\")\n            if content_type == \"application/json\":\n                try:\n                    decoded_content = chardet.detect(response.content)['confidence']\n                    return json.loads(response.content.decode(decoded_content))\n                except Exception as e:\n                    raise ValueError(f\"Unable to detect encoding for non-empty content: {e}\")\n            else:\n                return response.content.decode(to_encoding)\n\n        except requests.exceptions.RequestException as e:\n            raise ValueError(f\"Failed to fetch data: {str(e)}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 19)"
+        }
+      }
+    ],
+    "BigCodeBench/906": [
+      {
+        "task_id": "BigCodeBench/906",
+        "solution": "if not os.path.exists(target_dir):\n        os.makedirs(target_dir)\n\n    for file in os.listdir(source_dir):\n        if re.match(r'_processed', file):\n            shutil.copy(os.path.join(source_dir, file), os.path.join(target_dir, file))\n\n    zip_file = zipfile.ZipFile(archive_name, 'w')\n    zip_file.write(os.path.join(target_dir, '*'), arcname='*')\n\n    zip_file.close()\n\n    return os.path.abspath(archive_name)",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/1085": [
+      {
+        "task_id": "BigCodeBench/1085",
+        "solution": "def task_func(text):\n    words = re.findall(r'\\b\\w+\\b', text.lower())\n        word_counts = Counter(words)\n\n        fig, ax = plt.subplots()\n        ax.bar(word_counts.keys(), word_counts.values())\n        ax.set_xlabel('Words')\n        ax.set_ylabel('Counts')\n        ax.set_title('Top 10 Most Common Words')\n        return list(word_counts.items()), ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/917": [
+      {
+        "task_id": "BigCodeBench/917",
+        "solution": "forecast = []\n    for _ in range(7):\n        model = ARIMA(df['Close'], order=(1, 0, 0))\n        model_fit = model.fit()\n        forecast.append(model_fit.forecast(steps=1)[0])\n    \n    fig, ax = plt.subplots()\n    ax.plot(forecast)\n    ax.set_title('Forecast of Share Closing Prices')\n    return forecast, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/310": [
+      {
+        "task_id": "BigCodeBench/310",
+        "solution": "def task_func(filename):\n    with open(filename, 'w') as f:\n            writer = csv.writer(f)\n            writer.writerow(COLUMNS)\n\n            for _ in range(people_count):\n                name = f\"Person_{random.randint(1, 100)}\"\n                age = random.randint(18, 65)\n                height = random.uniform(140, 200)\n                weight = random.uniform(30, 100)\n\n                writer.writerow([name, age, height, weight])\n\n            avg_age = mean([age for _ in range(people_count)])\n            avg_height = mean([height for _ in range(people_count)])\n            avg_weight = mean([weight for _ in range(people_count)])\n\n            writer.writerow(['Average Age', avg_age])\n            writer.writerow(['Average Height', avg_height])\n            writer.writerow(['Average Weight', avg_weight])\n\n        return filename",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 22)"
+        }
+      }
+    ],
+    "BigCodeBench/503": [
+      {
+        "task_id": "BigCodeBench/503",
+        "solution": "def task_func(days_in_past=7, stock_names=[\"AAPL\", \"GOOGL\", \"MSFT\", \"AMZN\", \"FB\"], random_seed=0):\n    np.random.seed(random_seed)\n        dates = pd.date_range(start=datetime.now() - datetime.timedelta(days=days_in_past), periods=days_in_past)\n        df = pd.DataFrame(np.random.rand(len(dates)), columns=['Price'])\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/723": [
+      {
+        "task_id": "BigCodeBench/723",
+        "solution": "def task_func(url):\n    from HTML elements\n        data = []\n        for element in soup.find_all('div', class_='data'):\n            data.append(element.text.strip())\n\n        # Writing data to CSV file\n        with open(CSV_FILE_PATH, 'w', newline='') as csvfile:\n            writer = csv.writer(csvfile)\n            writer.writerow(['Data'])\n            writer.writerows(data)\n\n        return CSV_FILE_PATH",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/777": [
+      {
+        "task_id": "BigCodeBench/777",
+        "solution": "def task_func(directory, pattern=r'^(.*?)-\\d+\\.zip$'):\n    files = [f for f in os.listdir(directory) if re.match(pattern, f)]\n        dirs = []\n        for file in files:\n            match = re.search(r'^(\\w+)\\.zip$', file)\n            if match:\n                dir_name = match.group(1)\n                dir_path = os.path.join(directory, dir_name)\n                try:\n                    with zipfile.ZipFile(file, 'r') as zip_ref:\n                        zip_ref.extractall(dir_path)\n                    dirs.append(dir_path)\n                except Exception as e:\n                    print(f\"Error extracting {file}: {e}\")\n        return dirs",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/655": [
+      {
+        "task_id": "BigCodeBench/655",
+        "solution": "def task_func(texts, num_topics):\n    texts = [re.sub(ALPHANUMERIC, '', text.lower()) for text in texts]\n        tfidf_vectorizer = TfidfVectorizer(stop_words=STOPWORDS)\n        X = tfidf_vectorizer.fit_transform(texts)\n\n        nmf = NMF(n_components=num_topics, random_state=0, alpha=1e-3, lmbda=None)\n        topics = nmf.fit_transform(X)\n\n        return topics",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/124": [
+      {
+        "task_id": "BigCodeBench/124",
+        "solution": "def task_func(my_list, size=100, seed=100):\n    if not isinstance(my_list, list):\n            raise TypeError(\"my_list must be a list.\")\n\n        if any(not isinstance(x, (int, float)) for x in my_list):\n            raise ValueError(\"All elements in my_list must be numeric.\")\n\n        random.seed(seed)\n        my_list = [randint(1, 100) for _ in range(size)]\n        start_time = time.time()\n        generated_numbers = my_list + [12]\n        end_time = time.time()\n\n        fig, ax = plt.subplots()\n        ax.hist(generated_numbers, bins=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], edgecolor='black')\n        ax.set_xlabel('Number')\n        ax.set_ylabel('Frequency')\n\n        return end_time - start_time, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/532": [
+      {
+        "task_id": "BigCodeBench/532",
+        "solution": "def task_func(df, bins=4):\n    df['value'] = df['value'].astype(int)\n        counter = Counter(df['value'])\n\n        fig, ax = plt.subplots()\n        ax.hist(df['value'], bins=bins, edgecolor='black', alpha=0.6)\n\n        # Plotting the normal distribution curve\n        mu, std = norm.fit(df['value'])\n        x = np.linspace(min(df['value']), max(df['value']), 1000)\n        ax.plot(x, norm.pdf(x, mu, std), color='black', linewidth=2)\n\n        return counter, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/593": [
+      {
+        "task_id": "BigCodeBench/593",
+        "solution": "def task_func(hours, output_dir=OUTPUT_DIR):\n    if not os.path.exists(output_dir):\n            os.makedirs(output_dir)\n\n        time_series_data = []\n        for _ in range(hours):\n            time = datetime.now().strftime('%Y-%m-%d %H:%M')\n            vehicle_type = randint(0, len(VEHICLE_TYPES) - 1)\n            time_series_data.append([time, VEHICLE_TYPES[vehicle_type]])\n\n        df = pd.DataFrame(time_series_data, columns=['Time', 'Vehicle Type'])\n        df['Vehicle Count'] = df['Vehicle Type'].apply(lambda x: randint(1, 5))\n\n        if not os.path.exists(output_dir):\n            os.makedirs(output_dir)\n\n        filename = f'{output_dir}/traffic_data.csv'\n        with open(filename, 'w') as csvfile:\n            writer = csv.writer(csvfile)\n            writer.writerow(['Time', 'Vehicle Type', 'Vehicle Count'])\n            writer.writerows(df[['Time', 'Vehicle Type', 'Vehicle Count']].values.tolist())\n\n        fig, ax = plt.subplots()\n        ax.plot(df['Time'], df['Vehicle Count'])\n\n        return filename, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/486": [
+      {
+        "task_id": "BigCodeBench/486",
+        "solution": "def task_func(start_time, end_time, step, trend, seed=42):\n    np.random.seed(seed)\n        data = np.random.normal(size=(end_time - start_time).days + 1)\n        data[start_time:end_time] += trend * step\n\n        df = pd.DataFrame(data, index=pd.date_range(start=start_time, periods=end_time - start_time))\n        ax = df.plot(x='Time', y='Value', title=f'Time Series Plot for {start_time} to {end_time}', legend=False)\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/528": [
+      {
+        "task_id": "BigCodeBench/528",
+        "solution": "def task_func(file_path):\n    with open(file_path, 'r') as f:\n            reader = csv.reader(f)\n            data = list(reader)\n\n        # Remove duplicates by converting to a set and back to a list\n        unique_data = list(set(data))\n\n        # Count occurrences of each row\n        counter = Counter(unique_data)\n\n        # Create a DataFrame with the count for each row\n        df = pd.DataFrame(counter.items(), columns=['Row', 'Count'])\n\n        # Plotting\n        fig, ax = plt.subplots()\n        df.plot(kind='bar')\n        return df, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 7)"
+        }
+      }
+    ],
+    "BigCodeBench/326": [
+      {
+        "task_id": "BigCodeBench/326",
+        "solution": "def task_func(directory_path):\n    files = []\n        for filename in glob.glob(os.path.join(directory_path, \"*.bat\")):\n            try:\n                process = subprocess.Popen([filename], stdout=subprocess.PIPE)\n                out, err = process.communicate()\n                files.append((os.path.basename(filename), process.returncode))\n            except Exception as e:\n                files.append((os.path.basename(filename), None))\n\n        return files",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/509": [
+      {
+        "task_id": "BigCodeBench/509",
+        "solution": "def task_func(file_path1, file_path2, delimiter=',', quotechar='\"'):\n    try:\n            df1 = pd.read_csv(file_path1, delimiter=delimiter, quotechar=quotechar)\n            df2 = pd.read_csv(file_path2, delimiter=delimiter, quotechar=quotechar)\n\n            if len(df1) == 0 or len(df2) == 0:\n                raise ValueError(\"One or more files are empty.\")\n\n            diff_df = pd.DataFrame(\n                ndiff(df1.values.tolist(), df2.values.tolist())\n            )\n\n            return diff_df\n\n        except FileNotFoundError:\n            raise FileNotFoundError(f\"File '{file_path1}' not found.\")\n        except Exception as e:\n            raise Exception(f\"An error occurred while reading the files: {e}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 15)"
+        }
+      }
+    ],
+    "BigCodeBench/1015": [
+      {
+        "task_id": "BigCodeBench/1015",
+        "solution": "try:\n        response = requests.get(webpage_url)\n        response.raise_for_status()  # Raise an error for bad responses\n\n        tree = html.fromstring(response.text)\n\n        df = pd.DataFrame(tree.xpath('//table[@class=\"data-table\"]//tr'))\n        df.to_sql(database_name, con=sqlite3.connect(database_name), index=False, if_exists='replace')\n\n        return len(df)  # Return the number of rows in the DataFrame\n    except Exception as e:\n        print(f\"An error occurred: {e}\")\n        return 0",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 11)"
+        }
+      }
+    ],
+    "BigCodeBench/567": [
+      {
+        "task_id": "BigCodeBench/567",
+        "solution": "def task_func(data):\n    df = pd.DataFrame({'Value': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})\n        bin_edges = np.arange(df['Value'].min(), df['Value'].max() + 2) - 0.5\n\n        fig, ax = plt.subplots()\n        ax.hist(df['Value'], bins=bin_edges)\n        ax.set_title('Histogram of Values')\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/302": [
+      {
+        "task_id": "BigCodeBench/302",
+        "solution": "def task_func(df, plot=False):\n    if not df.empty and isinstance(df[COLUMNS][0], list):\n            # Splitting the values into separate columns\n            df[COLUMNS] = df[COLUMNS].apply(lambda x: [x[i:i+1] for i in range(0, len(x), 2)])\n\n            # Calculating the Pearson correlation coefficient\n            corr_matrix = df[COLUMNS].corr()\n\n            # Plotting the correlation matrix\n            if plot:\n                fig, ax = plt.subplots(figsize=(8, 6))\n                sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')\n                return df, ax\n\n            return df",
+        "status": "fail",
+        "details": {
+          "test_empty_dataframe": "Traceback (most recent call last):\n  File \"__test__.py\", line 30, in test_empty_dataframe\nAssertionError: ValueError not raised\n",
+          "test_basic_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 24, in test_basic_functionality\n  File \"__test__.py\", line 2, in task_func\nNameError: name 'COLUMNS' is not defined\n",
+          "test_invalid_data": "Traceback (most recent call last):\n  File \"__test__.py\", line 43, in test_invalid_data\n  File \"__test__.py\", line 2, in task_func\nNameError: name 'COLUMNS' is not defined\n",
+          "test_plot_data_correlation": "Traceback (most recent call last):\n  File \"__test__.py\", line 49, in test_plot_data_correlation\n  File \"__test__.py\", line 2, in task_func\nNameError: name 'COLUMNS' is not defined\n",
+          "test_plot_generation": "Traceback (most recent call last):\n  File \"__test__.py\", line 35, in test_plot_generation\n  File \"__test__.py\", line 2, in task_func\nNameError: name 'COLUMNS' is not defined\n"
+        }
+      }
+    ],
+    "BigCodeBench/914": [
+      {
+        "task_id": "BigCodeBench/914",
+        "solution": "def task_func(df):\n    # Generate future timestamps\n        df['timestamp'] = pd.to_datetime(df['date'].apply(lambda x: x + pd.Timedelta(days=1)))\n\n        # Split into training and test sets\n        train_df = df.iloc[:len(df) // 2]\n        test_df = df.iloc[len(df) // 2:]\n\n        # Create features and target variables\n        X_train = train_df[['open', 'high', 'low']]\n        y_train = train_df['close']\n        X_test = test_df[['open', 'high', 'low']]\n        y_test = test_df['close']\n\n        # Fit model\n        model = LinearRegression()\n        model.fit(X_train, y_train)\n\n        # Predict future prices\n        predictions = model.predict(X_test)\n\n        return predictions, plt.gca()",
+        "status": "fail",
+        "details": {
+          "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 31, in test_case_1\n  File \"__test__.py\", line 10, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/frame.py\", line 3767, in __getitem__\n    indexer = self.columns._get_indexer_strict(key, \"columns\")[1]\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5877, in _get_indexer_strict\n    self._raise_if_missing(keyarr, indexer, axis_name)\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5938, in _raise_if_missing\n    raise KeyError(f\"None of [{key}] are in the [{axis_name}]\")\nKeyError: \"None of [Index(['open', 'high', 'low'], dtype='object')] are in the [columns]\"\n",
+          "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 39, in test_case_2\n  File \"__test__.py\", line 10, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/frame.py\", line 3767, in __getitem__\n    indexer = self.columns._get_indexer_strict(key, \"columns\")[1]\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5877, in _get_indexer_strict\n    self._raise_if_missing(keyarr, indexer, axis_name)\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5938, in _raise_if_missing\n    raise KeyError(f\"None of [{key}] are in the [{axis_name}]\")\nKeyError: \"None of [Index(['open', 'high', 'low'], dtype='object')] are in the [columns]\"\n",
+          "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 47, in test_case_3\n  File \"__test__.py\", line 10, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/frame.py\", line 3767, in __getitem__\n    indexer = self.columns._get_indexer_strict(key, \"columns\")[1]\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5877, in _get_indexer_strict\n    self._raise_if_missing(keyarr, indexer, axis_name)\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5938, in _raise_if_missing\n    raise KeyError(f\"None of [{key}] are in the [{axis_name}]\")\nKeyError: \"None of [Index(['open', 'high', 'low'], dtype='object')] are in the [columns]\"\n",
+          "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 55, in test_case_4\n  File \"__test__.py\", line 10, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/frame.py\", line 3767, in __getitem__\n    indexer = self.columns._get_indexer_strict(key, \"columns\")[1]\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5877, in _get_indexer_strict\n    self._raise_if_missing(keyarr, indexer, axis_name)\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5938, in _raise_if_missing\n    raise KeyError(f\"None of [{key}] are in the [{axis_name}]\")\nKeyError: \"None of [Index(['open', 'high', 'low'], dtype='object')] are in the [columns]\"\n",
+          "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in test_case_5\n  File \"__test__.py\", line 10, in task_func\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/frame.py\", line 3767, in __getitem__\n    indexer = self.columns._get_indexer_strict(key, \"columns\")[1]\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5877, in _get_indexer_strict\n    self._raise_if_missing(keyarr, indexer, axis_name)\n  File \"/usr/local/lib/python3.10/site-packages/pandas/core/indexes/base.py\", line 5938, in _raise_if_missing\n    raise KeyError(f\"None of [{key}] are in the [{axis_name}]\")\nKeyError: \"None of [Index(['open', 'high', 'low'], dtype='object')] are in the [columns]\"\n"
+        }
+      }
+    ],
+    "BigCodeBench/34": [
+      {
+        "task_id": "BigCodeBench/34",
+        "solution": "def task_func(text):\n    try:\n            # Remove URLs using regex\n            cleaned_text = re.sub(r'http\\S+', '', text)\n\n            if not cleaned_text:\n                raise ValueError(\"No words available to generate a word cloud after removing URLs.\")\n\n            # Generate word cloud\n            wc = WordCloud(width=800, height=400, background_color=\"white\").generate(cleaned_text)\n\n            return wc\n        except Exception as e:\n            print(f\"An error occurred: {e}\")\n            return None",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 13)"
+        }
+      }
+    ],
+    "BigCodeBench/129": [
+      {
+        "task_id": "BigCodeBench/129",
+        "solution": "def task_func(url='http://example.com'):\n    from the first table\n            table_data = []\n            for row in soup.find_all('tr')[1:]:\n                cells = [cell.text.strip() for cell in row.find_all('td')]\n                table_data.append(cells)\n\n            df = pd.DataFrame(table_data, columns=soup.find('table').find_all('th'))\n            return df\n\n        except Exception as e:\n            print(f\"An error occurred: {e}\")\n            return None",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/199": [
+      {
+        "task_id": "BigCodeBench/199",
+        "solution": "def task_func(utc_datetime,\n    cities=['New York', 'London', 'Beijing', 'Tokyo', 'Sydney'],\n    weather_conditions=['Sunny', 'Cloudy', 'Rainy', 'Snowy', 'Stormy'],\n    timezones={\n        'New York': 'America/New_York',\n        'London': 'Europe/London',\n        'Beijing': 'Asia/Shanghai',\n        'Tokyo': 'Asia/Tokyo',\n        'Sydney': 'Australia/Sydney'\n    },\n    seed=42):\n    set_seed(seed)\n\n        # Convert utc_datetime to datetime object\n        utc_datetime = datetime.utcfromtimestamp(utc_datetime).replace(tzinfo=pytz.UTC)\n\n        df = pd.DataFrame({\n            'City': cities,\n            'Local Time': [str(datetime.now(pytz.timezone(timezone)).strftime('%Y-%m-%d %H:%M:%S')) for timezone in timezones],\n            'Weather Condition': [weather_conditions[randint(0, len(weather_conditions) - 1)] for _ in range(len(cities))]\n        })\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 15)"
+        }
+      }
+    ],
+    "BigCodeBench/492": [
+      {
+        "task_id": "BigCodeBench/492",
+        "solution": "def task_func(epoch_milliseconds,\n    random_seed=0,\n    products=[\"Product1\", \"Product2\", \"Product3\", \"Product4\", \"Product5\"],):\n    if not isinstance(epoch_milliseconds, int) or epoch_milliseconds < 0:\n            raise ValueError(\"Epoch milliseconds must be a positive integer.\")\n\n        if not isinstance(random_seed, int) or random_seed < 0:\n            raise ValueError(\"Random seed must be a non-negative integer.\")\n\n        start_date = datetime.fromtimestamp(epoch_milliseconds / 1000)\n        end_date = datetime.now()\n\n        df = pd.DataFrame(columns=[\"Product\", \"Date\", \"Sales\"])\n        for _ in range(5):\n            product_sales = []\n            while True:\n                date = start_date + datetime.timedelta(days=random.randint(0, 365))\n                if date > end_date:\n                    break\n\n                sales = random.randint(10, 50)\n                product_sales.append({\"Product\": products[_], \"Date\": date.strftime(\"%Y-%m-%d\"), \"Sales\": sales})\n\n            df = df.append(pd.Series(product_sales))\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 7)"
+        }
+      }
+    ],
+    "BigCodeBench/417": [
+      {
+        "task_id": "BigCodeBench/417",
+        "solution": "def task_func(X, Y):\n    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25)\n        model = Sequential()\n        model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid'))\n        model.compile(loss='binary_crossentropy', optimizer=SGD(lr=0.01))\n        history = model.fit(X_train, Y_train, epochs=100, batch_size=32, verbose=0)\n\n        return model, plt.gca()",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/17": [
+      {
+        "task_id": "BigCodeBench/17",
+        "solution": "if not psutil.Process(process_name).is_running():\n        print(f\"Process {process_name} not found.\")\n        return \"Process not found. Starting {process_name}.\"\n    \n    try:\n        subprocess.Popen([process_name])\n    except Exception as e:\n        print(f\"Error starting {process_name}: {e}\")\n        return \"Process not found. Starting {process_name}.\"\n    \n    print(f\"Process {process_name} restarted.\")\n    return \"Process found. Restarting {process_name}.\"",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/418": [
+      {
+        "task_id": "BigCodeBench/418",
+        "solution": "def task_func(X, Y):\n    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3)\n        model = keras.models.Sequential([\n            keras.layers.Dense(128, activation='sigmoid', input_shape=(X_train.shape[1],)),\n            keras.layers.Dense(1, activation='sigmoid')\n        ])\n        model.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])\n        history = model.fit(X_train, Y_train, epochs=50, batch_size=64, validation_data=(X_test, Y_test))\n\n        # Plot ROC curve\n        fpr, tpr, _ = roc_curve(Y_test, model.predict_proba(X_test)[:, 1])\n        roc_auc = auc(fpr, tpr)\n        plt.figure()\n        plt.plot(fpr, tpr, color='darkorange',\n                 lw=2, label=f'ROC curve (area = {roc_auc:.2f})')\n        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')\n        plt.xlim([0.0, 1.0])\n        plt.ylim([0.0, 1.05])\n        plt.xlabel('False Positive Rate')\n        plt.ylabel('True Positive Rate')\n        plt.title('Receiver Operating Characteristic')\n        plt.legend(loc=\"lower right\")\n        plt.show()\n\n        return model, plt.gca()",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/120": [
+      {
+        "task_id": "BigCodeBench/120",
+        "solution": "def task_func(start_date=datetime(2020, 1, 1), end_date=datetime(2020, 12, 31), seed=42):\n    from start_date to end_date\n        dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]\n\n        return pd.Series(dates)",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/19": [
+      {
+        "task_id": "BigCodeBench/19",
+        "solution": "def task_func(directory):\n    if not os.path.exists(directory):\n            raise FileNotFoundError(f\"The directory '{directory}' does not exist.\")\n\n        try:\n            with zipfile.ZipFile('files.zip', 'w') as zip_file:\n                for filename in glob.glob(os.path.join(directory, '*')):\n                    zip_file.write(filename)\n        except Exception as e:\n            print(f\"An error occurred while creating the zip file: {e}\")\n        return 'files.zip'",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/511": [
+      {
+        "task_id": "BigCodeBench/511",
+        "solution": "def task_func(column, data):\n    if not data:\n            return {'sum': 0, 'mean': None, 'min': None, 'max': None}, plt.pie(data['Age'].values)",
+        "status": "fail",
+        "details": {
+          "test_case_6": "Traceback (most recent call last):\n  File \"__test__.py\", line 62, in test_case_6\nAssertionError: KeyError not raised\n",
+          "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 17, in test_case_1\nTypeError: cannot unpack non-iterable NoneType object\n",
+          "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 30, in test_case_2\nTypeError: cannot unpack non-iterable NoneType object\n",
+          "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 41, in test_case_3\nTypeError: cannot unpack non-iterable NoneType object\n",
+          "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 46, in test_case_4\n  File \"__test__.py\", line 3, in task_func\nTypeError: list indices must be integers or slices, not str\n",
+          "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 53, in test_case_5\nTypeError: cannot unpack non-iterable NoneType object\n",
+          "test_case_7": "Traceback (most recent call last):\n  File \"__test__.py\", line 73, in test_case_7\nTypeError: cannot unpack non-iterable NoneType object\n"
+        }
+      }
+    ],
+    "BigCodeBench/401": [
+      {
+        "task_id": "BigCodeBench/401",
+        "solution": "def task_func(app_name):\n    app = Flask(__name__)\n        app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')\n        app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))\n        app.config['MAIL_USE_TLS'] = bool(os.getenv('MAIL_USE_TLS'))\n        app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')\n        app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')\n\n        mail = Mail(app)\n\n        return mail, {\n            'MAIL_SERVER': app.config['MAIL_SERVER'],\n            'MAIL_PORT': app.config['MAIL_PORT'],\n            'MAIL_USE_TLS': app.config['MAIL_USE_TLS'],\n            'MAIL_USERNAME': app.config['MAIL_USERNAME'],\n            'MAIL_PASSWORD': app.config['MAIL_PASSWORD']\n        }",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/424": [
+      {
+        "task_id": "BigCodeBench/424",
+        "solution": "def task_func(image_path='image.jpg', n_clusters=3, random_seed=42):\n    if not os.path.exists(image_path):\n            raise FileNotFoundError(f\"The file {image_path} does not exist.\")\n\n        if not isinstance(n_clusters, int) or n_clusters <= 0:\n            raise ValueError(\"n_clusters must be a positive integer.\")\n\n        # Load the image\n        img = cv2.imread(image_path)\n        if img is None:\n            raise IOError(\"Failed to load image.\")\n\n        # Apply K-means clustering\n        kmeans = KMeans(n_clusters=n_clusters).fit(img.reshape(-1, 3))\n        centroids = kmeans.cluster_centers_\n        labels = kmeans.labels_\n\n        # Save the original image\n        orig_img = img.copy()\n        cv2.imwrite('orig_image.png', orig_img)\n\n        # Segment the image using K-means\n        seg_img = np.zeros_like(img)\n        for i in range(len(centroids)):\n            seg_img[labels == i] = centroids[i]\n\n        # Save the segmented image\n        seg_img = cv2.cvtColor(seg_img, cv2.COLOR_BGR2RGB)\n        seg_img = cv2.resize(seg_img, (img.shape[1], img.shape[0]))\n        seg_img = np.hstack((orig_img, seg_img))\n\n        return orig_img, seg_img",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/513": [
+      {
+        "task_id": "BigCodeBench/513",
+        "solution": "def task_func(column, data):\n    if not isinstance(data, pd.DataFrame) or len(data.columns) != 1:\n            raise ValueError(\"Invalid input type.\")\n\n        if not all(isinstance(x, (int, float)) for x in data[column]):\n            raise ValueError(f\"Column '{column}' contains invalid numeric values.\")\n\n        df = pd.DataFrame(data)\n        if not df.empty:\n            data = df[column]\n\n        if not all(np.isfinite(x).all() for x in data):\n            raise ValueError(\"Numeric values for 'steps', 'calories burned', and 'distance walked' must be non-negative.\")\n\n        total_sum = np.sum(data)\n        mean_value = np.mean(data)\n        min_value = np.min(data)\n        max_value = np.max(data)\n\n        fig, ax = plt.subplots()\n        ax.plot(df.index, data, label=column)\n        ax.set_title(f\"{column} Data\")\n        ax.set_xlabel('Date')\n        ax.set_ylabel(data.name)\n        ax.legend()\n\n        return {'sum': total_sum, 'mean': mean_value, 'min': min_value, 'max': max_value}, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/985": [
+      {
+        "task_id": "BigCodeBench/985",
+        "solution": "def task_func(json_data, output_dir=\".\", file_name=\"country_population_report.csv\"):\n    try:\n            df = pd.read_json(json_data)\n            if not isinstance(df['Population'], list):\n                df['Population'] = [df['Population']]\n\n            # Check if all values in 'Population' are numeric\n            if not all(isinstance(val, (int, float)) for val in df['Population']):\n                raise ValueError(\"All values in 'Population' must be numeric.\")\n\n            # Round down to the nearest integer\n            df['Population'] = df['Population'].apply(lambda x: int(math.floor(x)))\n\n            # Write DataFrame to CSV\n            df.to_csv(os.path.join(output_dir, file_name), index=False)\n\n            return f\"{output_dir}/{file_name}\"\n        except Exception as e:\n            raise IOError(f\"Failed to generate report: {e}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 18)"
+        }
+      }
+    ],
+    "BigCodeBench/1137": [
+      {
+        "task_id": "BigCodeBench/1137",
+        "solution": "if not url.startswith(\"http://\") and not url.startswith(\"https://\"):\n        raise ValueError(\"URL must start with 'http://' or 'https://'.\")\n    \n    if not os.path.exists(output_path):\n        os.makedirs(output_path)\n    \n    soup = bs4.BeautifulSoup(requests.get(url).text, \"html.parser\")\n    phones = []\n    for link in soup.find_all(\"a\", href=True):\n        href = link[\"href\"]\n        if href.startswith(\"/phone/\"):\n            phone_number = re.search(r\"\\d{3}-\\d{3}-\\d{4}\", href).group()\n            phones.append(phone_number)\n\n    with open(output_path, \"w\") as f:\n        json.dump(phones, f, indent=2)\n\n    return phones",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/553": [
+      {
+        "task_id": "BigCodeBench/553",
+        "solution": "def task_func(a, b):\n    df = pd.DataFrame(np.random.rand(len(a), len(b)), columns=COLUMNS)\n        ax = df.plot(kind='bar')\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/826": [
+      {
+        "task_id": "BigCodeBench/826",
+        "solution": "def task_func(source_dir, target_dir, file_pattern=r'\\b[A-Za-z0-9]+\\.(txt|doc|docx)\\b'):\n    moved_files_count = 0\n\n        for filename in os.listdir(source_dir):\n            match = re.match(file_pattern, filename)\n            if match:\n                shutil.move(os.path.join(source_dir, filename), os.path.join(target_dir, filename))\n                moved_files_count += 1\n\n        return moved_files_count",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/1013": [
+      {
+        "task_id": "BigCodeBench/1013",
+        "solution": "with open(csv_file, 'w', newline='') as csvfile:\n        writer = csv.writer(csvfile)\n        writer.writerow([\"URL\"])\n        \n        soup = BeautifulSoup(requests.get(url).text, 'html.parser')\n        links = [urljoin(base_url, link['href']) for link in soup.find_all('a')]\n        links = list(set(links))\n        links.sort()\n        writer.writerow(links)\n\n    return len(links)",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 11)"
+        }
+      }
+    ],
+    "BigCodeBench/579": [
+      {
+        "task_id": "BigCodeBench/579",
+        "solution": "def task_func(csv_file):\n    try:\n            with open(csv_file, 'r') as f:\n                reader = csv.reader(f)\n                next(reader)  # Skip header row if present\n\n                text_data = [unicodedata.normalize('NFKD', line.strip()).encode('ascii', 'ignore').decode() for line in reader]\n                word_counts = Counter(text_data)\n\n                fig, ax = plt.subplots()\n                ax.bar(word_counts.keys(), word_counts.values())\n                ax.set_xlabel('Words')\n                ax.set_ylabel('Frequency')\n\n                return ax, word_counts.most_common(10)\n\n        except FileNotFoundError:\n            raise FileNotFoundError(\"File not found.\")\n        except IOError:\n            raise IOError(\"Error reading file.\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 17)"
+        }
+      }
+    ],
+    "BigCodeBench/241": [
+      {
+        "task_id": "BigCodeBench/241",
+        "solution": "def task_func(original):\n    # Normalize the data\n        min_val = np.min(original)\n        max_val = np.max(original)\n\n        normalized_data = (original - min_val) / (max_val - min_val)\n\n        # Plotting the original and normalized data\n        fig, ax = plt.subplots()\n        ax.plot(original, label='Original')\n        ax.plot(normalized_data, label='Normalized')\n\n        ax.set_title('Original vs. Normalized Data')\n        ax.legend()\n\n        return np.array(original), np.array(normalized_data), ax",
+        "status": "fail",
+        "details": {
+          "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 23, in test_case_1\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 36, in test_case_2\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 52, in test_case_3\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 65, in test_case_4\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 82, in test_case_5\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n"
+        }
+      }
+    ],
+    "BigCodeBench/785": [
+      {
+        "task_id": "BigCodeBench/785",
+        "solution": "def task_func(pattern):\n    archive_file = None\n\n        for filename in glob.glob(f'{ARCHIVE_DIR}/*'):\n            if pattern in filename:\n                archive_file = filename\n                break\n\n        if not archive_file:\n            raise ValueError(\"No matching files found.\")\n\n        try:\n            subprocess.run(['rm', '-rf', ARCHIVE_DIR], check=True)\n        except Exception as e:\n            print(f\"Error deleting archive directory: {e}\")\n\n        return archive_file",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/162": [
+      {
+        "task_id": "BigCodeBench/162",
+        "solution": "def task_func(text, rwidth=0.8):\n    from the text\n        cleaned_text = re.sub(r'[^\\w\\s]', '', text)\n\n        if len(cleaned_text) == 0:\n            return None\n\n        # Split the text into words\n        words = cleaned_text.split()\n\n        # Filter out any words that contain only whitespace characters\n        words = [word for word in words if word.strip()]\n\n        # Calculate the length of each word\n        word_lengths = [len(word) for word in words]\n\n        # Plotting the histogram\n        _, ax = plt.subplots()\n        ax.hist(word_lengths, rwidth=rwidth)\n        ax.set_xlabel('Word Length')\n        ax.set_ylabel('Frequency')\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/93": [
+      {
+        "task_id": "BigCodeBench/93",
+        "solution": "def task_func(data, n_components=2):\n    try:\n            pca = PCA(n_components=n_components)\n            transformed_data = pca.fit_transform(data)\n            df = pd.DataFrame(transformed_data, columns=['PC1', 'PC2'])\n            ax = df.plot.scatter(x='PC1', y='PC2')\n            return df, ax\n\n        except ValueError as e:\n            print(f\"ValueError: {e}\")\n            return None, None",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 9)"
+        }
+      }
+    ],
+    "BigCodeBench/274": [
+      {
+        "task_id": "BigCodeBench/274",
+        "solution": "def task_func(smtp_server, smtp_port, smtp_username, smtp_password):\n    class EmailHandler(http.server.BaseHTTPRequestHandler):\n            def do_POST(self):\n                try:\n                    content_length = int(self.headers['Content-Length'])\n                    post_data = self.rfile.read(content_length)\n                    data = json.loads(post_data.decode('utf-8'))\n\n                    subject = data.get('subject')\n                    message = data.get('message')\n                    to = data.get('to')\n\n                    if not subject or not message or not to:\n                        raise ValueError(\"Missing required fields\")\n\n                    msg = MIMEText(message)\n                    msg['Subject'] = subject\n                    msg['From'] = smtp_username\n                    msg['To'] = to\n\n                    server = smtplib.SMTP(smtp_server, smtp_port)\n                    server.starttls()\n                    server.login(smtp_username, smtp_password)\n\n                    server.sendmail(smtp_username, to, msg.as_string())\n                    server.quit()\n\n                    return \"Email sent successfully.\"\n                except Exception as e:\n                    return str(e) + \" - Error sending email.\"\n\n        return EmailHandler()",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 32)"
+        }
+      }
+    ],
+    "BigCodeBench/1053": [
+      {
+        "task_id": "BigCodeBench/1053",
+        "solution": "def task_func(file_path, save_path=None):\n    from None\n        except Exception as e:\n            print(e)\n            return None",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/870": [
+      {
+        "task_id": "BigCodeBench/870",
+        "solution": "def task_func(data_list=[('a', 1, 2.1), ('b', 2, 3.2), ('c', 3, 4.3), ('d', 4, 5.4), ('e', 5, 6.5)]):\n    df = pd.DataFrame(data_list)\n        if not df.empty:\n            df['Mean Value'] = df.apply(lambda row: np.mean([v for v in row if v is not None]), axis=1)\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/374": [
+      {
+        "task_id": "BigCodeBench/374",
+        "solution": "def task_func(directory_path='./xlsx_files/'):\n    files = glob.glob(os.path.join(directory_path, '*.xlsx'))\n        count = 0\n\n        for file in files:\n            wb = load_workbook(file)\n            sheet = wb.active\n            for row in sheet.iter_rows():\n                if isinstance(row[0], str):\n                    # Check if the cell contains double quotes\n                    if any(cell.value == '\"' and cell.value != '\"' for cell in row):\n                        # Prefix the cell with a double backslash\n                        new_row = [f\"'{cell.value}'\" for cell in row]\n                        sheet.append(new_row)\n\n            wb.save(file)\n            count += 1\n\n        return count",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/963": [
+      {
+        "task_id": "BigCodeBench/963",
+        "solution": "def task_func(source_directory, target_directory, zip_name):\n    if not os.path.exists(source_directory):\n            raise OSError(f\"Source directory '{source_directory}' does not exist.\")\n\n        if not os.path.isdir(target_directory):\n            raise OSError(f\"Target directory '{target_directory}' does not exist.\")\n\n        try:\n            # Get all .txt, .docx, .xlsx, .csv files in the source directory\n            txt_files = glob.glob(os.path.join(source_directory, '*.txt'))\n            docx_files = glob.glob(os.path.join(source_directory, '*.docx'))\n            xlsx_files = glob.glob(os.path.join(source_directory, '*.xlsx'))\n            csv_files = glob.glob(os.path.join(source_directory, '*.csv'))\n\n            # Create a list of tuples containing the file name and extension\n            filenames = [(f, ext) for f, ext in zip(txt_files, [\".txt\", \".docx\", \".xlsx\", \".csv\"])]\n\n            # Create a ZipFile object\n            zip_file = zipfile.ZipFile(Path(target_directory) / zip_name, 'w')\n\n            # Add each file to the ZipFile object\n            for filename, extension in filenames:\n                zip_file.write(filename, arcname=filename)\n\n            zip_file.close()\n\n            return f\"/{Path(target_directory)}/zip_name.zip\"\n        except Exception as e:\n            raise e",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/720": [
+      {
+        "task_id": "BigCodeBench/720",
+        "solution": "def task_func():\n    csv_file_path = 'task_func_data/Output.txt'\n        if not os.path.exists(csv_file_path):\n            with open(csv_file_path, 'a', newline='') as f:\n                writer = csv.writer(f)\n                writer.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 0])\n        else:\n            with open(csv_file_path, 'r') as f:\n                reader = csv.reader(f)\n                last_row = next(reader)  # Skip header row\n                last_row.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))\n                writer = csv.writer(f)\n                writer.writerows(last_row)\n\n        return csv_file_path",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/800": [
+      {
+        "task_id": "BigCodeBench/800",
+        "solution": "def task_func(goals, penalties, csv_file_path=CSV_FILE_PATH):\n    if not os.path.exists(csv_file_path):\n            print(f\"File '{csv_file_path}' does not exist.\")\n            return\n\n        data = []\n        with open(csv_file_path, 'r') as file:\n            reader = csv.reader(file)\n            for row in reader:\n                if len(row) != 2 or row[0] not in ('team', 'goals', 'penalties'):\n                    continue\n                team, goal, penalty = row\n                data.append((team, int(goal), int(penalty)))\n\n        counter = Counter(data)\n\n        # Update the counter with the provided values\n        counter.update([(team, goal) for team, _, _ in data], goals)\n        counter.update([(team, penalty) for team, _, _ in data], penalties)\n\n        return counter",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/942": [
+      {
+        "task_id": "BigCodeBench/942",
+        "solution": "def task_func(start_date=START_DATE, periods=PERIODS, freq=FREQ, categories=CATEGORIES):\n    df = pd.DataFrame(columns=['Date', 'Category', 'Sales'])\n        for i in range(periods):\n            df.loc[i] = [start_date + pd.DateOffset(days=i * freq), categories[np.random.randint(0, len(categories))], np.random.randint(0, 100)]\n\n        fig, ax = plt.subplots()\n        df.plot(ax=ax)\n        return df, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/916": [
+      {
+        "task_id": "BigCodeBench/916",
+        "solution": "fig, ax = plt.subplots()\n    # Box plot\n    df.boxplot(column='Closing Price', ax=ax)\n    \n    # Histogram\n    sns.histplot(data=df, x='Closing Price', kde=True, bins=30, ax=ax)\n\n    return fig.gca(), ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/1012": [
+      {
+        "task_id": "BigCodeBench/1012",
+        "solution": "def task_func(url, filename):\n    try:\n            response = requests.get(url)\n            response.raise_for_status()  # Raise an exception for HTTP errors\n\n            with open(DOWNLOAD_DIR / filename, 'wb') as f:\n                f.write(response.content)\n\n            return (\"Success\", [filename])\n\n        except Exception as e:\n            return (\"Error\", [])",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 11)"
+        }
+      }
+    ],
+    "BigCodeBench/636": [
+      {
+        "task_id": "BigCodeBench/636",
+        "solution": "def task_func(rows):\n    df = pd.DataFrame(np.random.randint(0, 10, size=(rows, len(COLUMNS))), columns=COLUMNS)\n\n        # Counting non-zero values in each column\n        non_zero_counts = df.applymap(lambda x: x != 0).sum(axis=0)\n\n        fig, ax = plt.subplots()\n        ax.bar(non_zero_counts.index, non_zero_counts.values)\n        ax.set_xlabel('Column')\n        ax.set_ylabel('Count')\n\n        return df, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/765": [
+      {
+        "task_id": "BigCodeBench/765",
+        "solution": "def task_func(kwargs, target_dir=\"non_none_files\"):\n    if not kwargs.get(\"target_dir\", None):\n            kwargs[\"target_dir\"] = \"non_none_files\"\n\n        for key in kwargs.keys():\n            if isinstance(kwargs[key], dict) or isinstance(kwargs[key], list):\n                for value in kwargs[key]:\n                    if isinstance(value, str):\n                        if os.path.exists(os.path.join(target_dir, value)):\n                            shutil.copy2(value, os.path.join(target_dir, value))\n                        else:\n                            print(f\"File {value} does not exist.\")\n                    elif isinstance(value, Path):\n                        if value.is_file():\n                            shutil.copy2(value, os.path.join(target_dir, value.name))\n                        else:\n                            print(f\"File {value} is not a file.\")\n                    else:\n                        raise TypeError(f\"Unsupported type: {type(value)}\")\n            elif isinstance(kwargs[key], dict):\n                for k, v in kwargs[key].items():\n                    if isinstance(v, str):\n                        if os.path.exists(os.path.join(target_dir, k, v)):\n                            shutil.copy2(k, os.path.join(target_dir, k, v))\n                        else:\n                            print(f\"File {k} does not exist.\")\n                    elif isinstance(v, Path):\n                        if v.is_file():\n                            shutil.copy2(k, os.path.join(target_dir, k, v.name))\n                        else:\n                            print(f\"File {k} is not a file.\")\n                    else:\n                        raise TypeError(f\"Unsupported type: {type(v)}\")\n\n        return copied_files",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/760": [
+      {
+        "task_id": "BigCodeBench/760",
+        "solution": "def task_func(start_year=1980, end_year=2000, email_domain='example.com',\n           latin_names=['Sopet\u00f3n', 'M\u00e9ndez', 'G\u00f3mez', 'P\u00e9rez', 'Mu\u00f1oz'],\n           other_names=['Smith', 'Johnson', 'Williams', 'Brown', 'Jones'], \n           rng_seed=None):\n    if rng_seed is not None:\n            np.random.seed(rng_seed)\n\n        # Generate random IDs\n        ids = list(range(1, start_year + 100))\n        for _ in range(100):\n            id_ = np.random.randint(low=1, high=start_year + 100)\n            if id_ % 10 == 0:\n                ids.append(id_)\n\n        # Randomize names\n        names = []\n        for i in range(len(latin_names)):\n            name = latin_names[i] + \" \" + other_names[i]\n            while True:\n                name = re.sub(r'[^\\w\\s]', '', name)\n                if name.isalpha():\n                    break\n            names.append(name)\n\n        # Randomize date of birth\n        dob = np.random.randint(low=rng_seed - 100, high=rng_seed + 100)\n        dob_str = f\"{rng_seed}-{dob}\"\n        dob = datetime.datetime.strptime(dob_str, \"%Y-%m-%d\")\n        dob = datetime.date(dob.year, dob.month, dob.day)\n\n        # Randomize email\n        email = f\"{name}@{email_domain}\"\n        while True:\n            email = re.sub(r'[^a-zA-Z0-9._]+', '', email)\n            if email.isalnum() or email.endswith('@' + email_domain):\n                break\n\n        return pd.DataFrame({\n            'ID': ids,\n            'Name': names,\n            'Date of Birth': [dob],\n            'Email': [email]\n        })",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 9)"
+        }
+      }
+    ],
+    "BigCodeBench/227": [
+      {
+        "task_id": "BigCodeBench/227",
+        "solution": "def task_func(L, M, N, audio_file):\n    if not os.path.exists(audio_file):\n            raise FileNotFoundError(f\"File '{audio_file}' not found.\")\n\n        data, sample_rate = librosa.load(audio_file)\n        if len(data.shape) != 1 or data.shape[0] != M*N:\n            raise ValueError(\"Invalid input shape for data.\")\n\n        # Normalize the data\n        norm_data = data / np.max(np.abs(data))\n\n        # Calculate SPL\n        SPL = 20 * np.log10(np.sqrt(np.mean(norm_data**2)))\n\n        fig, ax = plt.subplots()\n        ax.set_title('Spectrogram')\n        ax.set_xlabel('Frequency [Hz]')\n        ax.set_ylabel('Amplitude')\n\n        # Generate the spectrogram\n        spec = librosa.amplitude_to_db(np.abs(librosa.stft(norm_data)), ref=np.max)\n\n        return norm_data, spec",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/618": [
+      {
+        "task_id": "BigCodeBench/618",
+        "solution": "def task_func(goals, penalties):\n    df = pd.DataFrame({\n        'Team': TEAMS,\n        'Goals': goals,\n        'Penalty Cost': [penalty_cost * penalty for penalty in penalties]\n    })\n\n        fig, ax1 = plt.subplots()\n        ax2 = ax1.twinx()\n\n        df['Goal'] = df['Goals'].apply(lambda x: x if x > 0 else 0)\n        df['Fines'] = df['Penalty Cost'] / PENALTY_COST\n\n        ax1.plot(df['Goals'], label='Goals')\n        ax1.set_ylabel('Goals')\n\n        ax2.plot(df['Fines'], label='Fines')\n        ax2.set_ylabel('Fines')\n\n        return df, [ax1, ax2]",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 8)"
+        }
+      }
+    ],
+    "BigCodeBench/845": [
+      {
+        "task_id": "BigCodeBench/845",
+        "solution": "def task_func(text1, text2):\n    text1 = ALPHANUMERIC.sub('', text1).lower()\n        text2 = ALPHANUMERIC.sub('', text2).lower()\n\n        # Calculate cosine similarity\n        cos_sim = np.dot(Counter(text1.split()).values(), \n                         Counter(text2.split()).values()) / \\\n                   np.sqrt(np.sum((Counter(text1.split()) - Counter(text2.split())) ** 2))\n\n        # Calculate Levenshtein ratio\n        levenshtein_ratio = ratio(text1, text2)\n\n        return cos_sim, levenshtein_ratio",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/1022": [
+      {
+        "task_id": "BigCodeBench/1022",
+        "solution": "def task_func(csv_file_path, column_name, date_format=\"%Y-%m-%d\"):\n    from e\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/187": [
+      {
+        "task_id": "BigCodeBench/187",
+        "solution": "def task_func(dic={'Lon': (-180, 180), 'Lat': (-90, 90)}, cities=['New York', 'London', 'Beijing', 'Tokyo', 'Sydney']):\n    df = pd.DataFrame(cities, columns=['City'])\n        df['Coordinates'] = [Point(lon, lat) for lon, lat in zip(df['Lon'], df['Lat'])]\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/560": [
+      {
+        "task_id": "BigCodeBench/560",
+        "solution": "def task_func(data):\n    df = pd.DataFrame(data)\n        df['date'] = pd.to_datetime(df['date'])\n        fig, ax = plt.subplots()\n        ax.bar(df['date'].dt.strftime('%B'), df['value'], color='blue')\n        ax.set_title('Monthly Data for {}'.format(datetime.now().strftime('%Y')))\n        ax.set_xlabel('Month')\n        ax.set_ylabel('Value')\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/368": [
+      {
+        "task_id": "BigCodeBench/368",
+        "solution": "random.seed(seed)\n    files = [f for f in os.listdir(src_dir) if os.path.isfile(os.path.join(src_dir, f))]\n    filename = random.choice(files)\n\n    shutil.move(os.path.join(src_dir, filename), os.path.join(dest_dir, filename))\n    \n    return filename",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/587": [
+      {
+        "task_id": "BigCodeBench/587",
+        "solution": "def task_func(file_path):\n    from the file\n        with open(\"rsa_public_key.pem\", \"rb\") as f:\n            rsa_pub_key = rsa.PrivateKey.load_pkcs1(f.read())\n\n        # Encrypt the file using AES encryption\n        with open(file_path, 'rb') as f_in:\n            data = f_in.read()\n        iv = b'random_iv'\n        cipher_aes = Cipher(algorithms.AES(rsa_pub_key.e), modes.CBC(iv))\n        encryptor = cipher_aes.encryptor()\n\n        encrypted_data = encryptor.update(data) + encryptor.finalize()\n        with open('encrypted_file.txt', 'wb') as f_out:\n            f_out.write(encrypted_data)\n\n        # Decrypt the AES key using the RSA public key\n        with open('encrypted_file.txt', 'rb') as f_in:\n            encrypted_data = f_in.read()\n        iv = b'random_iv'\n        cipher_aes = Cipher(algorithms.AES(rsa_pub_key.e), modes.CBC(iv))\n        decryptor = cipher_aes.decryptor()\n\n        aes_key = decryptor.update(encrypted_data) + decryptor.finalize()\n        with open('aes_key.txt', 'wb') as f_out:\n            f_out.write(aes_key)\n\n        return rsa_pub_key, 'encrypted_file.txt', 'aes_key.txt'",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/590": [
+      {
+        "task_id": "BigCodeBench/590",
+        "solution": "def task_func(url):\n    try:\n            response = urllib.request.urlopen(url)\n            doc = pq(response.read())\n\n            df = pd.DataFrame(doc.items(), columns=['text', 'href'])\n            df['fetch_time'] = [datetime.now().strftime('%Y-%m-%d %H:%M:%S') for _ in range(len(df))]\n            return df\n\n        except Exception as e:\n            raise ValueError(f\"Failed to extract data due to {e}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 10)"
+        }
+      }
+    ],
+    "BigCodeBench/308": [
+      {
+        "task_id": "BigCodeBench/308",
+        "solution": "def task_func(additional_fields = []):\n    df = pd.DataFrame(columns=FIELDS)\n        for student in STUDENTS:\n            df.loc[student] = [random.randint(0, 100), random.randint(0, 100), random.randint(0, 100)]\n\n        # Calculate average grades\n        for field in FIELDS:\n            avg_grade = round(mean(df[field]), 2)\n            df[f'{field}_Avg'] = avg_grade\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/1124": [
+      {
+        "task_id": "BigCodeBench/1124",
+        "solution": "def task_func(myString):\n    if not myString:\n            return 'No valid URL found in the provided string.'\n\n        url = re.search(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\\\(\\\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', myString)\n\n        if url:\n            try:\n                response = requests.get(url)\n                soup = BeautifulSoup(response.text, 'html.parser')\n                title = soup.title.string\n                return title\n            except Exception as e:\n                return f\"Unable to fetch the content of the URL: {url}\"",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/99": [
+      {
+        "task_id": "BigCodeBench/99",
+        "solution": "def task_func():\n    from data\n        df = pd.DataFrame(data.data, columns=data.feature_names)\n        # Set the global font to Arial for better readability\n        plt.rcParams['font.family'] = 'Arial'\n\n        # Generate pair plot\n        ax = sns.pairplot(df, hue='species')\n        ax.set_title('Iris Dataset Pair Plot', fontsize=14)\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/1039": [
+      {
+        "task_id": "BigCodeBench/1039",
+        "solution": "def task_func(client_socket, cert_file, key_file, buffer_size=1024):\n    from the server\n            response = sock.recv(buffer_size).decode()\n            if \"HTTP/1.1 200 OK\" in response:\n                # Extract the file name from the response\n                filename = response.split(\"Content-Disposition\")[1].split(\";\")[0]\n                file_path = os.path.join(os.getcwd(), filename)\n                with open(file_path, \"wb\") as f:\n                    while True:\n                        chunk = sock.recv(buffer_size)\n                        if not chunk:\n                            break\n                        f.write(chunk)\n                return hashlib.sha256(open(file_path, \"rb\").read()).hexdigest()\n            else:\n                raise Exception(f\"Error: {response}\")\n        except Exception as e:\n            return f\"An error occurred: {e}\"",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/123": [
+      {
+        "task_id": "BigCodeBench/123",
+        "solution": "def task_func(my_list, file_dir='./data_files/', file_ext='.csv'):\n    if not isinstance(my_list, list):\n            raise TypeError(\"my_list must be a list.\")\n\n        if not os.path.exists(file_dir):\n            raise FileNotFoundError(f\"Directory '{file_dir}' does not exist.\")\n\n        df = pd.DataFrame()\n        num_files = 0\n\n        for filename in glob.glob(os.path.join(file_dir, '**', '*.{}'.format(file_ext))):\n            if os.path.isfile(filename):\n                df = df.append(pd.read_csv(filename))\n                num_files += 1\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/526": [
+      {
+        "task_id": "BigCodeBench/526",
+        "solution": "def task_func(input_file=\"data.json\"):\n    with open(input_file, \"r\") as f:\n            data = json.load(f)\n\n        # Initialize empty lists to store means and medians\n        means = []\n        medians = []\n\n        for item in data:\n            if isinstance(item, dict):\n                for key in item.keys():\n                    if key not in [\"id\", \"name\"]:\n                        try:\n                            value = float(item[key])\n                            means.append(value)\n                            medians.append(np.median(value))\n                        except ValueError:\n                            pass\n\n        # Create a dictionary to hold the result\n        result_dict = {\n            \"means\": means,\n            \"medians\": medians,\n        }\n\n        # Convert the result dictionary to a DataFrame\n        df = pd.DataFrame(result_dict).set_index(\"name\")\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/461": [
+      {
+        "task_id": "BigCodeBench/461",
+        "solution": "if not os.path.exists(script_path):\n        raise FileNotFoundError(f\"Script '{script_path}' does not exist.\")\n\n    try:\n        # Execute the script using subprocess\n        result = subprocess.run(\n            ['bash', '-c', f'{script_path}'],\n            stdout=subprocess.PIPE,\n            stderr=subprocess.PIPE,\n            text=True,\n        )\n        return {\n            'CPU Usage': result.stdout.strip(),\n            'Memory Usage': psutil.Process(os.getpid()).memory_info().rss / 1024 ** 3,\n        }\n    except Exception as e:\n        print(f\"An error occurred while executing the script: {e}\")\n        return {'CPU Usage': 0, 'Memory Usage': 0}",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/752": [
+      {
+        "task_id": "BigCodeBench/752",
+        "solution": "if not isinstance(data, pd.DataFrame):\n        raise ValueError(\"data must be a DataFrame.\")\n    \n    if len(data.columns) != 1 or data.empty:\n        raise ValueError(\"Dataframe cannot contain columns other than 'x1'.\")\n\n    if not all(isinstance(col, str) for col in data.columns):\n        raise ValueError(\"All columns in data must be strings.\")\n\n    if not all(np.issubdtype(col.dtype, np.number) for col in data.columns):\n        raise ValueError(\"All columns in data must have numeric dtype.\")\n\n    if not isinstance(random_state, int) or random_state < 0:\n        raise ValueError(\"random_state must be an integer.\")\n\n    X_train, X_test, y_train, y_test = train_test_split(\n        data[[target_column]], data[target_column], test_size=test_size, random_state=random_state)\n\n    model = LinearRegression()\n    model.fit(X_train, y_train)\n    score = model.score(X_test, y_test)\n\n    return score",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/37": [
+      {
+        "task_id": "BigCodeBench/37",
+        "solution": "def task_func(df, target_column):\n    # Train the model\n        rf = RandomForestClassifier()\n        rf.fit(df.drop(target_column, axis=1), df[target_column])\n\n        # Plot the bar plot\n        fig, ax = plt.subplots(figsize=(8, 6))\n        sns.barplot(x=\"feature_importance\", y=target_column, data=df)\n        ax.set_xlabel(\"Feature Importance Score\")\n        ax.set_ylabel(\"Features\")\n        ax.set_title(\"Visualizing Important Features\")\n\n        return rf, ax",
+        "status": "fail",
+        "details": {
+          "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 28, in test_case_1\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'RandomForestClassifier' is not defined\n",
+          "test_case_2": "Traceback (most recent call last):\n  File \"__test__.py\", line 40, in test_case_2\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'RandomForestClassifier' is not defined\n",
+          "test_case_3": "Traceback (most recent call last):\n  File \"__test__.py\", line 53, in test_case_3\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'RandomForestClassifier' is not defined\n",
+          "test_case_4": "Traceback (most recent call last):\n  File \"__test__.py\", line 63, in test_case_4\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'RandomForestClassifier' is not defined\n",
+          "test_case_5": "Traceback (most recent call last):\n  File \"__test__.py\", line 80, in test_case_5\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'RandomForestClassifier' is not defined\n"
+        }
+      }
+    ],
+    "BigCodeBench/273": [
+      {
+        "task_id": "BigCodeBench/273",
+        "solution": "def task_func():\n    class DataHandler(http.server.BaseHTTPRequestHandler):\n            def do_POST(self):\n                try:\n                    content_length = int(self.headers['content-length'])\n                    data = json.loads(self.rfile.read(content_length))\n                    if 'data' not in data:\n                        return ERROR_RESPONSE\n\n                    # Validate data\n                    if not isinstance(data['data'], dict) or 'key' not in data['data']:\n                        return ERROR_RESPONSE\n\n                    # Process data\n                    processed_data = process_data(data)\n                    self.send_response(200)\n                    self.end_headers()\n                    self.wfile.write(json.dumps(processed_data).encode('utf-8'))\n\n                except Exception as e:\n                    self.send_error(400, str(e))\n\n        def send_response(self, status_code):\n            self.send_response(status_code)\n\n        def end_headers(self):\n            self.send_header('Content-Type', 'application/json')\n            self.send_header('Content-Length', str(len(self.rfile.read())))\n            self.end_headers()\n\n        def process_data(self, data):\n            # Implement your logic here to process the data\n            pass\n\n    ```",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 23)"
+        }
+      }
+    ],
+    "BigCodeBench/582": [
+      {
+        "task_id": "BigCodeBench/582",
+        "solution": "def task_func(size=1000):\n    # Generate normally distributed data\n        x = np.random.normal(loc=5, scale=2, size=size)\n\n        # Plotting\n        fig, ax = plt.subplots()\n        ax.hist(x, bins='auto', edgecolor='black')\n        ax.set_xlabel('Value')\n        ax.set_ylabel('Frequency')\n        ax.set_title('Histogram of Normally Distributed Data')\n\n        # Calculating PDF\n        pdf = stats.norm.pdf(x, loc=5, scale=2)\n\n        return fig, pdf",
+        "status": "fail",
+        "details": {
+          "test_case_1": "Traceback (most recent call last):\n  File \"__test__.py\", line 20, in test_case_1\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_histogram_pdf_overlay": "Traceback (most recent call last):\n  File \"__test__.py\", line 36, in test_histogram_pdf_overlay\nNameError: name 'np' is not defined\n",
+          "test_return_type": "Traceback (most recent call last):\n  File \"__test__.py\", line 50, in test_return_type\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_standard_functionality": "Traceback (most recent call last):\n  File \"__test__.py\", line 27, in test_standard_functionality\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n",
+          "test_varying_sizes": "Traceback (most recent call last):\n  File \"__test__.py\", line 32, in test_varying_sizes\n  File \"__test__.py\", line 3, in task_func\nNameError: name 'np' is not defined\n"
+        }
+      }
+    ],
+    "BigCodeBench/360": [
+      {
+        "task_id": "BigCodeBench/360",
+        "solution": "def task_func(file_location, sheet_name):\n    if not os.path.exists(file_location):\n            raise FileNotFoundError(f\"File '{file_location}' not found.\")\n\n        if sheet_name not in df.columns:\n            raise ValueError(f\"No such sheet named '{sheet_name}' exists.\")\n\n        df = pd.read_excel(file_location, sheet_name=sheet_name)\n        columns = list(df.columns)\n\n        mean_values = []\n        std_dev_values = []\n\n        for col in columns:\n            values = df[col].values\n            mean_value = np.mean(values)\n            std_dev_value = np.std(values)\n            mean_values.append(mean_value)\n            std_dev_values.append(std_dev_value)\n\n        fig, ax = plt.subplots()\n        ax.bar(columns, mean_values, label='Mean')\n        ax.bar(columns, std_dev_values, bottom=mean_values, label='Standard Deviation')\n\n        ax.set_xlabel('Columns')\n        ax.set_ylabel('Values')\n        ax.set_title('Mean and Standard Deviation')\n        ax.legend()\n\n        return {'mean': mean_values, 'std_dev': std_dev_values}",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/367": [
+      {
+        "task_id": "BigCodeBench/367",
+        "solution": "def task_func(activities):\n    if not all(isinstance(activity, datetime) for activity in activities):\n            raise TypeError(\"All elements in the activities list must be datetime objects.\")\n\n        fig, ax = plt.subplots()\n        days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']\n        data = [len([activity for activity in activities if isinstance(activity, datetime)]) for _ in range(len(days_of_week))]\n\n        ax.bar(days_of_week, data)\n        ax.set_xlabel('Day of the Week')\n        ax.set_ylabel('Number of Activities')\n        ax.set_title('Weekly Activity')\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/101": [
+      {
+        "task_id": "BigCodeBench/101",
+        "solution": "def task_func(data_url=\"http://lib.stat.cmu.edu/datasets/boston\", seed=42):\n    if not data_url.startswith(\"http\"):\n            raise ValueError(f\"Invalid URL '{data_url}'\")\n\n        df = pd.read_csv(data_url)\n        if \"id\" not in df.columns:\n            raise ValueError(\"DataFrame does not contain 'id' column.\")\n\n        # Set random seed for reproducibility\n        np.random.seed(seed)\n\n        corr_matrix = df.corr()\n\n        fig, ax = plt.subplots()\n        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', cbar_kws={\"shrink\": 0.5})\n        ax.set_title('Correlation Heatmap')\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/399": [
+      {
+        "task_id": "BigCodeBench/399",
+        "solution": "def task_func(frequency, sample_size=10000):\n    if not isinstance(sample_size, int) or sample_size <= 0:\n            raise ValueError(\"sample_size must be positive.\")\n\n        if not isinstance(frequency, float) or frequency < 0:\n            raise ValueError(\"frequency must be a positive number.\")\n\n        fig, ax = plt.subplots()\n        x = np.linspace(0, 2 * math.pi, sample_size)\n        y_sine = np.sin(x * frequency)\n        y_cosine = np.cos(x * frequency)\n\n        ax.plot(x, y_sine, label=\"Sine Wave\")\n        ax.plot(x, y_cosine, label=\"Cosine Wave\")\n\n        ax.set_xlabel(\"Time\")\n        ax.set_ylabel(\"Amplitude\")\n        ax.legend()\n\n        return fig, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/100": [
+      {
+        "task_id": "BigCodeBench/100",
+        "solution": "def task_func(seed=42):\n    if not isinstance(seed, int) or seed < 0:\n            raise ValueError(\"seed must be a positive integer\")\n\n        np.random.seed(seed)\n        df = pd.DataFrame({'Date': [datetime.now().strftime('%Y-%m-%d') for _ in range(30)],\n                           'Value': [random.randint(-100, 100) for _ in range(30)]})\n\n        fig, ax = plt.subplots()\n        ax.plot(df['Date'], df['Value'])\n        ax.set_xlabel('Date')\n        ax.set_ylabel('Value')\n        ax.set_title('Random Time Series Data')\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/108": [
+      {
+        "task_id": "BigCodeBench/108",
+        "solution": "def task_func(df, freq='D', decomposition_model='multiplicative'):\n    from e\n\n        ax = decomposed_df.plot()\n        return DecomposeResult(decomposed_df, ax=ax), ax",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/945": [
+      {
+        "task_id": "BigCodeBench/945",
+        "solution": "def task_func(start_date='2016-01-01', periods=13, freq='WOM-2FRI', sales_data=None):\n    if not sales_data:\n            # Generate random sales data\n            sales_data = pd.DataFrame(np.random.randint(0, 50, size=(periods, len(sales_data.columns))), columns=sales_data.columns)\n\n        df = pd.read_csv('sales_data.csv') if sales_data is None else sales_data\n\n        # Create a DataFrame with dates and sales values\n        df['Date'] = pd.to_datetime(df['Date'])\n        df.set_index('Date', inplace=True)\n        df = df.reindex(pd.date_range(start=start_date, periods=len(df), freq=freq))\n\n        # Fit the model\n        X = df[['Sales']]\n        y = df['Sales']\n        model = LinearRegression()\n        model.fit(X, y)\n\n        # Forecast future sales\n        future_dates = pd.date_range(start=start_date, periods=periods, freq=freq)\n        future_sales = model.predict(future_dates)[np.newaxis, :]\n\n        return future_sales",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/969": [
+      {
+        "task_id": "BigCodeBench/969",
+        "solution": "if not isinstance(df, pd.DataFrame):\n        raise TypeError(\"Input must be a DataFrame.\")\n    \n    if df.empty:\n        raise ValueError(\"DataFrame cannot be empty.\")\n\n    scaler = MinMaxScaler()\n    df_scaled = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)\n\n    return df_scaled",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/211": [
+      {
+        "task_id": "BigCodeBench/211",
+        "solution": "def task_func(url, destination_directory, headers=None):\n    if not url or not destination_directory:\n            raise ValueError(\"URL and destination directory must be provided.\")\n\n        response = requests.get(url, headers=headers)\n        if response.status_code != 200:\n            raise Exception(f\"Failed to download {url}. Status code: {response.status_code}\")\n\n        with open(destination_directory, 'wb') as f:\n            f.write(response.content)\n\n        with zipfile.ZipFile(destination_directory + '/extracted.zip', 'r') as z:\n            for filename in z.namelist():\n                yield filename",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/147": [
+      {
+        "task_id": "BigCodeBench/147",
+        "solution": "def task_func(ip_range, port):\n    with open('ip_ranges.txt', 'r') as f:\n            ip_ranges = [line.strip() for line in f.readlines()]\n\n        threads = []\n        for ip_range in ip_ranges:\n            thread = Thread(target=check_port_status, args=(ip_range, port))\n            thread.start()\n            threads.append(thread)\n\n        for thread in threads:\n            thread.join()\n\n        return {ip: port_status for ip, port_status in zip(ip_ranges, [False] * len(ip_ranges))}",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/990": [
+      {
+        "task_id": "BigCodeBench/990",
+        "solution": "def task_func(hex_string):\n    encoded_strings = {\n            'hex': binascii.unhexlify(hex_string).decode('utf-8').encode('utf-8').hex(),\n            'base64': base64.b64encode(binascii.unhexlify(hex_string)).decode('utf-8').encode('utf-8').hex(),\n            'utf-8': binascii.unhexlify(hex_string).decode('utf-8').encode('utf-8'),\n            'utf-16': binascii.unhexlify(hex_string).decode('utf-16le').encode('utf-16le').hex(),\n            'utf-32': binascii.unhexlify(hex_string).decode('utf-32le').encode('utf-32le').hex(),\n            'ASCII': hex_string.encode('ascii').decode('ascii'),\n            'URL': urllib.parse.quote(hex_string),\n            'ROT13': chr(ord(hex_string) ^ 0x21)\n        }\n\n        return encoded_strings",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 13)"
+        }
+      }
+    ],
+    "BigCodeBench/346": [
+      {
+        "task_id": "BigCodeBench/346",
+        "solution": "def task_func(script_path, wait=True, *args):\n    from e\n\n        return_code = 0\n        while True:\n            try:\n                return_code = subprocess.call(args, shell=True)\n                break\n            except KeyboardInterrupt:\n                return_code = 1\n            except Exception as e:\n                return_code = 2\n            finally:\n                time.sleep(0.5)\n\n        return return_code",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/443": [
+      {
+        "task_id": "BigCodeBench/443",
+        "solution": "def task_func(P: np.ndarray,\n    T: np.ndarray,\n    n_clusters: int = 3,\n    random_state: int = 0,\n    n_init: int = 10,\n) -> (np.ndarray, plt.Axes):\n    # Convert P and T to numpy arrays for compatibility\n        P = np.array(P)\n        T = np.array(T)\n\n        # Flatten the matrices\n        P_flattened = P.flatten()\n        T_flattened = T.flatten()\n\n        # Perform KMeans clustering on the flattened data\n        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state).fit(P_flattened)\n        cluster_result = kmeans.labels_\n\n        # Visualize the results\n        fig, ax = plt.subplots(figsize=(8, 6))\n        ax.scatter(T_flattened[:, 0], T_flattened[:, 1], c=cluster_result, cmap='viridis')\n        ax.set_title('KMeans Clustering Visualization')\n        return cluster_result, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "name 'np' is not defined"
+        }
+      }
+    ],
+    "BigCodeBench/657": [
+      {
+        "task_id": "BigCodeBench/657",
+        "solution": "def task_func(texts, stopwords=None):\n    def clean_text(text):\n            text = ALPHANUMERIC.sub('', text).lower()\n            return text\n\n        texts = [clean_text(text) for text in texts]\n        if stopwords:\n            texts = [text for text in texts if text not in stopwords]\n\n        model = Word2Vec(sentences=texts, vector_size=100, window=5, min_count=1)\n        return model",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/161": [
+      {
+        "task_id": "BigCodeBench/161",
+        "solution": "def task_func(log_file):\n    try:\n            df = pd.read_csv(log_file)\n            df['timestamp'] = pd.to_datetime(df['timestamp'])\n            df['message_type'] = df['message'].apply(lambda x: re.search(r'\\b\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\b', x).group())\n            df['message'] = df['message'].apply(lambda x: re.sub(r'[\\n\\r]', '', x))\n            df['message'] = df['message'].str.strip()\n            df['message'] = df['message'].astype(str)\n\n            # Write the DataFrame to a new CSV file\n            df.to_csv('structured_log_data.csv', index=False)\n\n            return 'structured_log_data.csv'\n        except Exception as e:\n            raise ValueError(f\"An error occurred while processing the log file: {e}\")",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 14)"
+        }
+      }
+    ],
+    "BigCodeBench/988": [
+      {
+        "task_id": "BigCodeBench/988",
+        "solution": "if not dir_path:\n        raise ValueError(\"Directory path cannot be empty.\")\n\n    if not os.path.isdir(dir_path):\n        raise FileNotFoundError(f\"Invalid directory '{dir_path}'\")\n\n    result = {}\n    for predicate in predicates:\n        try:\n            predicate_result = predicate(dir_path)\n            if isinstance(predicate_result, bool):\n                result[predicate] = predicate_result\n            else:\n                result[predicate] = [predicate_result]\n        except Exception as e:\n            result[predicate] = [str(e)]\n\n    return result",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 4)"
+        }
+      }
+    ],
+    "BigCodeBench/771": [
+      {
+        "task_id": "BigCodeBench/771",
+        "solution": "new_files = []\n\n    for filename in os.listdir(directory):\n        if re.match(pattern, filename):\n            new_filename = f\"{re.sub(pattern, \"\", filename)}.csv\"\n            new_file_path = os.path.join(directory, new_filename)\n            with open(new_file_path, 'w', newline='') as csvfile:\n                writer = csv.writer(csvfile)\n                writer.writerow([\"Column1\", \"Column2\"])\n                writer.writerow([filename])\n            new_files.append(new_filename)\n\n    return new_files",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/13": [
+      {
+        "task_id": "BigCodeBench/13",
+        "solution": "def task_func(ftp_server='ftp.dlptest.com', ftp_user='dlpuser', ftp_password='rNrKYTX9g7z3RgJRmxWuGHbeu', ftp_dir='/ftp/test'):\n    try:\n            ftp = ftplib.FTP(ftp_server)\n            ftp.login(ftp_user, ftp_password)\n            ftp.cwd(ftp_dir)\n\n            # Downloading files\n            download_list = []\n            for filename in os.listdir(ftp_dir):\n                if filename.endswith('.txt') or filename.endswith('.csv'):\n                    download_list.append(filename)\n\n            return download_list\n\n        except Exception as e:\n            print(f\"Failed to connect to FTP server {ftp_server}: {e}\")\n            return [\"Failed to connect to FTP server {ftp_server}: {e}\", \"Failed to log into FTP server {ftp_server} with user {ftp_user}: {e}\", \"Failed to change to directory {ftp_dir} on server {ftp_server}: {e}\"]\n\n        finally:\n            ftp.quit()",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 15)"
+        }
+      }
+    ],
+    "BigCodeBench/915": [
+      {
+        "task_id": "BigCodeBench/915",
+        "solution": "def task_func(df, z_threshold=2):\n    df['z_score'] = zscore(df['closing_price'])\n        outliers_df = df[df['z_score'] > z_threshold]\n\n        if not outliers_df.empty:\n            fig, ax = plt.subplots()\n            ax.scatter(outliers_df.index, outliers_df['closing_price'], color='red')\n            ax.set_xlabel('Index')\n            ax.set_ylabel('Closing Price')\n            ax.set_title('Outliers in Closing Prices')\n\n            return outliers_df, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/854": [
+      {
+        "task_id": "BigCodeBench/854",
+        "solution": "def task_func(numbers):\n    def factorial(n):\n            return math.factorial(n)\n\n        # Generate all permutations\n        perms = list(permutations(numbers))\n\n        # Calculate the sum of factorials for each permutation\n        fac_sum = [sum(factorial(num) for num in perm) for perm in perms]\n\n        return fac_sum, perms",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/1057": [
+      {
+        "task_id": "BigCodeBench/1057",
+        "solution": "def task_func(animals=None, foods=None):\n    if animals is None and foods is None:\n            return pd.DataFrame(columns=['animal', 'food'])\n\n        if animals is None:\n            animals = ['cat', 'dog']\n        if foods is None:\n            foods = ['chicken', 'fish']\n\n        # Generate all possible combinations\n        combinations = list(itertools.product(animals, foods))\n\n        # Shuffle the combinations to ensure randomness\n        random.shuffle(combinations)\n\n        df = pd.DataFrame(combinations, columns=['animal', 'food'])\n\n        return df",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/574": [
+      {
+        "task_id": "BigCodeBench/574",
+        "solution": "def task_func(array_length=100, noise_level=0.2):\n    x = np.linspace(0, 2 * np.pi, array_length)\n        y = np.sin(x) + noise_level * np.random.randn(len(x))\n\n        popt, pcov = curve_fit(lambda x, a, b: a * np.cos(b * x), x, y)\n\n        fig, ax = plt.subplots()\n        ax.plot(x, y, 'o', label='Original Data')\n        ax.plot(x, popt[0] * np.cos(popt[1] * x), '--', label='Adjusted Curve')\n\n        ax.set_xlabel('X-axis')\n        ax.set_ylabel('Y-axis')\n        ax.legend()\n\n        return ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/928": [
+      {
+        "task_id": "BigCodeBench/928",
+        "solution": "word = ''.join(itertools.chain(*[string.ascii_lowercase[i:i+2] for i in range(0, len(string.ascii_lowercase), 2)]))\n    freq_dict = Counter(word)\n    \n    return dict(freq_dict.items())",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/454": [
+      {
+        "task_id": "BigCodeBench/454",
+        "solution": "def task_func(src_dir, dest_dir, ext):\n    if not os.path.exists(src_dir) or not os.path.exists(dest_dir):\n            raise FileNotFoundError(f\"Source directory {src_dir} or destination directory {dest_dir} does not exist.\")\n\n        src_files = glob.glob(os.path.join(src_dir, f'*{ext}'))\n        dst_files = []\n\n        for src_file in src_files:\n            dst_file = os.path.join(dest_dir, os.path.basename(src_file))\n            try:\n                shutil.move(src_file, dst_file)\n                dst_files.append(dst_file)\n            except Exception as e:\n                print(f\"Failed to move file '{src_file}' to '{dst_file}': {e}\")\n\n        return dst_files",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/879": [
+      {
+        "task_id": "BigCodeBench/879",
+        "solution": "def task_func(data, col1, col2):\n    if not isinstance(col1, list) or not isinstance(col2, list):\n            raise TypeError(\"Both 'col1' and 'col2' must be lists.\")\n\n        if len(col1) != len(col2):\n            raise ValueError(\"'col1' and 'col2' must have the same length.\")\n\n        if any(len(set(col1)) < 5 or len(set(col2)) < 5 for _ in range(len(col1))):\n            raise ValueError(\"One or both of the columns must have at least 5 unique values.\")\n\n        df = pd.DataFrame(data)\n        contingency_table = pd.crosstab(df[col1], df[col2])\n        _, p_value = chi2_contingency(contingency_table)\n\n        return p_value",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/409": [
+      {
+        "task_id": "BigCodeBench/409",
+        "solution": "def task_func(excel_file_path, file_name, column_name):\n    if not os.path.exists(excel_file_path):\n            raise FileNotFoundError(f\"The file {excel_file_path} does not exist.\")\n\n        if not column_name in excel_file_path.columns:\n            raise ValueError(f\"Column '{column_name}' not found in the Excel file.\")\n\n        df = pd.read_excel(excel_file_path, sheet_name=0)\n        values = df[column_name].values\n\n        mean = np.mean(values)\n        median = np.median(values)\n        std_dev = np.std(values)\n\n        return {\"mean\": mean, \"median\": median, \"std_dev\": std_dev}",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/1129": [
+      {
+        "task_id": "BigCodeBench/1129",
+        "solution": "def task_func(json_data, unknown_key, save_dir=None):\n    if not isinstance(json_data, dict) or not all(key in json_data for key in ['url', 'filename']):\n            raise ValueError(\"Invalid JSON data\")\n\n        if 'url' not in json_data or 'filename' not in json_data:\n            raise KeyError(\"Missing required fields in JSON data\")\n\n        url = json_data['url']\n        filename = f\"{unknown_key}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}\"\n        filepath = os.path.join(save_dir, filename)\n\n        try:\n            response = requests.get(url)\n            response.raise_for_status()\n            with open(filepath, 'wb') as f:\n                f.write(response.content)\n            return filepath\n\n        except Exception as e:\n            print(f\"Error downloading {json_data['url']}: {e}\")\n            return None",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/1004": [
+      {
+        "task_id": "BigCodeBench/1004",
+        "solution": "def task_func(url):\n    from the text\n        words = re.findall(r'\\b\\w+\\b', data)\n\n        # Counting word frequencies\n        word_counts = Counter(words)\n\n        # Plotting the bar chart\n        fig, ax = plt.subplots()\n        ax.bar(word_counts.keys(), word_counts.values())\n        ax.set_title(\"Top 10 Most Frequent Words\")\n        ax.set_xlabel(\"Words\")\n        ax.set_ylabel(\"Frequency\")\n\n        return word_counts, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/477": [
+      {
+        "task_id": "BigCodeBench/477",
+        "solution": "def task_func(N=100, CATEGORIES=[\"A\", \"B\", \"C\", \"D\", \"E\"], seed=42):\n    from CATEGORIES\n            categories = np.random.choice(CATEGORIES, size=len(CATEGORIES), replace=False)\n\n        df[\"category\"] = categories\n\n        fig, ax = plt.subplots()\n        ax.scatter(df[\"x\"], df[\"y\"], c=df[\"category\"])\n\n        return df, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/445": [
+      {
+        "task_id": "BigCodeBench/445",
+        "solution": "def task_func(points, seed=0):\n    if not isinstance(points, list) or len(points) < 3:\n            raise ValueError(\"Points must be a list of at least three elements.\")\n\n        if not all(isinstance(point, list) and len(point) == 2 for point in points):\n            raise ValueError(\"Each element in 'points' must be a list of two numbers.\")\n\n        if not all(np.all(point >= 0 for point in points)):\n            raise ValueError(\"'points' must contain only non-negative values.\")\n\n        if not all(len(point) == 2 for point in points):\n            raise ValueError(\"'points' must have exactly two elements per point.\")\n\n        # Initialize the Voronoi diagram\n        vor = Voronoi(points)\n\n        # Apply jittering before plotting\n        x, y = np.random.rand(*points[0].shape), np.random.rand(*points[1].shape)\n        jittered_points = np.array([x, y]).T\n\n        fig, ax = plt.subplots()\n        voronoi_plot_2d(vor, ax=ax, show_jitter=True)\n        return vor, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/184": [
+      {
+        "task_id": "BigCodeBench/184",
+        "solution": "def task_func(dataframe, text_column):\n    stopwords = set(STOPWORDS)\n        df = dataframe.copy()\n        df[text_column] = df[text_column].apply(lambda x: \" \".join([word for word in x.split() if word not in stopwords]))\n        cv = CountVectorizer(stop_words=stopwords)\n        X = cv.fit_transform(df[text_column])\n        return df[['text_column']].add_prefix('Word_')",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/89": [
+      {
+        "task_id": "BigCodeBench/89",
+        "solution": "def task_func(data, column, outlier_z_score):\n    from the original data\n        data_no_outliers = data[~np.isin(range(len(data)), outliers_indices)]\n\n        return data, data_no_outliers, outliers_indices",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/92": [
+      {
+        "task_id": "BigCodeBench/92",
+        "solution": "def task_func(data, n_clusters=3):\n    if not isinstance(data, pd.DataFrame) or not isinstance(n_clusters, int) or n_clusters <= 1:\n            raise ValueError(\"Invalid input data type or number of clusters.\")\n\n        if n_clusters < 2:\n            raise ValueError(\"Number of clusters must be at least 2.\")\n\n        kmeans = KMeans(n_clusters=n_clusters)\n        labels = kmeans.fit_predict(data)\n\n        fig, ax = plt.subplots()\n        ax.scatter(data.iloc[:, 0], data.iloc[:, 1], c=labels, cmap='viridis')\n\n        # Plotting centroids\n        centroids = kmeans.cluster_centers_\n        ax.plot(centroids[:, 0], centroids[:, 1], 'ro', markersize=15)\n\n        return labels, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/897": [
+      {
+        "task_id": "BigCodeBench/897",
+        "solution": "def task_func(rolls, seed=None):\n    if seed is not None:\n            random.seed(seed)\n\n        frequencies = [0] * len(NUMBERS)\n        for _ in range(rolls):\n            roll = random.randint(1, 6)\n            frequencies[roll - 1] += 1\n\n        fig, ax = plt.subplots()\n        ax.hist(frequencies, bins=range(min(frequencies) + 2, max(frequencies) + 3), edgecolor='black')\n        ax.set_xlabel('Dice Value')\n        ax.set_ylabel('Frequency')\n\n        return np.array(frequencies), ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/177": [
+      {
+        "task_id": "BigCodeBench/177",
+        "solution": "def task_func(df):\n    def extract_words(text):\n            return [word.lower() for word in re.findall(r'\\b\\w+\\b', text) if word.isalpha()]\n\n        article_df = df[['Title', 'Content']]\n        article_df['Words'] = article_df.apply(extract_words, axis=1)\n\n        freq_dict = {}\n        for word in set(article_df['Words']):\n            freq_dict[word] = len(article_df[article_df['Words'] == word].dropna(subset=['Content']))\n\n        return freq_dict",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/1040": [
+      {
+        "task_id": "BigCodeBench/1040",
+        "solution": "def task_func(server_address=\"localhost\", server_port=12345, buffer_size=1024, run_duration=5):\n    from clients\n        data_queue = queue.Queue()\n\n        try:\n            while True:\n                readable, writable, exceptional = select.select([server], [], [])\n                if server in readable:\n                    data = server.recv(buffer_size).decode()\n                    if not data:\n                        break\n\n                    timestamp = datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n                    data_queue.put((timestamp, data))\n\n                elif server in writable:\n                    data = data_queue.get_nowait()\n                    data[0] += \" \" + data[1]\n                    server.send(data[1].encode())\n\n        except Exception as e:\n            print(f\"An error occurred: {e}\")\n            return f\"Error: {e}\"\n\n        finally:\n            server.close()\n\n        return f\"Operation completed successfully after {run_duration} seconds.\"",
+        "status": "fail",
+        "details": {
+          "ALL": "invalid syntax (__test__.py, line 2)"
+        }
+      }
+    ],
+    "BigCodeBench/208": [
+      {
+        "task_id": "BigCodeBench/208",
+        "solution": "def task_func(elements, seed=0):\n    if not isinstance(elements, int) or elements <= 0:\n            raise ValueError(\"Elements must be a positive integer.\")\n\n        np.random.seed(seed)\n        random_walk = [np.random.choice([-1, 1]) for _ in range(elements)]\n        df = pd.DataFrame(random_walk, columns=[\"Step\"])\n        df[\"Count\"] = len(df)\n\n        fig, ax = plt.subplots()\n        ax.plot(df[\"Step\"], label=\"Random Walk\")\n        ax.set_title(\"Random Walk\")\n        ax.set_xlabel(\"Steps\")\n        ax.set_ylabel(\"Value\")\n\n        return {\"count\": df[\"Count\"].iloc[-1], \"mean\": np.mean(df[\"Step\"]), \"std\": np.std(df[\"Step\"]), \"min\": min(df[\"Step\"]), \"5th_percentile\": np.percentile(df[\"Step\"], 5), \"25th_percentile\": np.percentile(df[\"Step\"], 25), \"median\": np.median(df[\"Step\"]), \"75th_percentile\": np.percentile(df[\"Step\"], 75), \"95th_percentile\": np.percentile(df[\"Step\"], 95), \"max\": max(df[\"Step\"])}, ax=ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/287": [
+      {
+        "task_id": "BigCodeBench/287",
+        "solution": "def task_func(filename, directory):\n    if not os.path.exists(directory):\n            raise FileNotFoundError(f\"Directory '{directory}' does not exist.\")\n\n        word_counts = Counter()\n        for filename in os.listdir(directory):\n            if filename.endswith('.txt'):\n                filepath = os.path.join(directory, filename)\n                with open(filepath, 'r') as f:\n                    text = f.read().strip()\n                    word_counts.update(text.split())\n\n        with open('word_counts.json', 'w') as f:\n            json.dump(word_counts, f)\n\n        return len(word_counts)",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/458": [
+      {
+        "task_id": "BigCodeBench/458",
+        "solution": "def task_func(json_str):\n    data = json.loads(json_str)\n        df = pd.DataFrame(data)\n\n        # Normalize numerical values\n        normalized_df = df.applymap(lambda x: float(x) * 2 if isinstance(x, str) else x)\n\n        return normalized_df",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ],
+    "BigCodeBench/501": [
+      {
+        "task_id": "BigCodeBench/501",
+        "solution": "def task_func(json_str, filename, sheet_name=\"sheet1\"):\n    if not isinstance(json_str, str):\n            raise TypeError(\"json_str must be a string\")\n\n        if not isinstance(filename, str):\n            raise TypeError(\"filename must be a string\")\n\n        if not isinstance(sheet_name, str):\n            raise TypeError(\"sheet_name must be a string\")\n\n        try:\n            df = pd.read_json(json_str)\n        except ValueError:\n            raise ValueError(f\"Invalid JSON format in {json_str}\")\n\n        workbook = xlwt.Workbook()\n        worksheet = workbook.add_sheet(sheet_name)\n\n        # Write headers\n        header_row = 0\n        for col_num, cell_value in enumerate(df.columns.values):\n            worksheet.write(header_row, col_num, cell_value)\n\n        # Write data rows\n        row_count = len(df.index)\n        for i in range(row_count):\n            row_data = df.iloc[i].values.tolist()\n            worksheet.write(i + 1, 0, row_data[0])\n            for j in range(1, len(row_data)):\n                worksheet.write(i + 1, j, row_data[j])\n\n        workbook.save(os.path.join(os.getcwd(), filename))\n        return os.path.abspath(filename)",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 5)"
+        }
+      }
+    ],
+    "BigCodeBench/530": [
+      {
+        "task_id": "BigCodeBench/530",
+        "solution": "def task_func(df: pd.DataFrame) -> (Counter, plt.Axes):\n    if df.empty or df['age'].min() < 0:\n            raise ValueError(\"Dataframe cannot be empty or contains negative values.\")\n\n        # Round down age to the nearest integer\n        df['age'] = df['age'].apply(lambda x: int(x))\n\n        # Check if age is float\n        if isinstance(df['age'], str):\n            df['age'] = df['age'].astype(float)\n\n        # Identify duplicate names\n        duplicates = df[df.duplicated(subset=['name', 'age'])]\n\n        if len(duplicates) == 1:\n            return Counter(), None\n\n        # Calculate age distribution\n        age_distribution = Counter()\n        for name, group in duplicates.groupby('name'):\n            age_distribution[name] += sum(group['age'])\n\n        # Plot histogram\n        fig, ax = plt.subplots()\n        ax.hist(age_distribution.keys(), bins=np.arange(min(age_distribution.values()) - .5, max(age_distribution.values()) + .5, .5), edgecolor='black')\n        ax.set_xlabel('Age Distribution')\n        ax.set_ylabel('Count')\n        return age_distribution, ax",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 6)"
+        }
+      }
+    ],
+    "BigCodeBench/82": [
+      {
+        "task_id": "BigCodeBench/82",
+        "solution": "def task_func(secret_key, template_folder):\n    def login():\n            if request.method == 'POST':\n                form = LoginForm(request.form)\n                if form.validate_on_submit():\n                    user = User.query.filter_by(username=form.username.data).first()\n                    if user and check_password_hash(user.password, form.password.data):\n                        login_user(user)\n                        return redirect(url_for('protected'))\n                    else:\n                        return \"Invalid credentials\"\n            return render_template('login.html', form=form)\n\n        @app.route('/logout')\n        @login_required\n        def logout():\n            logout_user()\n            return redirect(url_for('login'))\n\n        @app.route('/protected')\n        @login_required\n        def protected():\n            return render_template('protected.html')\n\n        return app",
+        "status": "fail",
+        "details": {
+          "ALL": "unindent does not match any outer indentation level (__test__.py, line 14)"
+        }
+      }
+    ],
+    "BigCodeBench/214": [
+      {
+        "task_id": "BigCodeBench/214",
+        "solution": "def task_func(seed=42, image_size=(100, 100, 3), range_low=0, range_high=255):\n    random.seed(seed)\n        if range_low >= range_high:\n            raise ValueError(\"range_low must be less than range_high\")\n\n        image = np.random.randint(range_low, range_high, size=image_size).astype(np.uint8)\n\n        fig, ax = plt.subplots()\n        ax.imshow(image)\n        return ax, image",
+        "status": "fail",
+        "details": {
+          "ALL": "unexpected indent (__test__.py, line 3)"
+        }
+      }
+    ]
+  }
+}

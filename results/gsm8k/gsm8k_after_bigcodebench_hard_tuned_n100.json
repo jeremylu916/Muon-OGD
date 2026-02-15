@@ -1,0 +1,12 @@
+{
+  "task": "gsm8k",
+  "model_id": "outputs/sft_bigcodebench_hard_tuned",
+  "split": "test",
+  "num_examples": 100,
+  "seed": 42,
+  "max_new_tokens": 128,
+  "accuracy": 0.03,
+  "correct": 3,
+  "total": 100,
+  "timestamp_utc": "2026-02-15T00:44:52.412803+00:00"
+}

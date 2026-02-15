@@ -25,7 +25,7 @@ Always include the script name:
 
 Baseline (samples tasks and saves them to results/bigcodebench/task_ids.json):
 
-* `python eval_bigcodebench_remote.py --num_tasks 150 --split instruct --subset hard --seed 42`
+* `python eval_bigcodebench_remote.py --model_id Qwen/Qwen2.5-0.5B-Instruct --num_tasks 150 --split instruct --subset hard --seed 42`
 
 Re-eval on the exact same tasks (after sft):
 
@@ -34,3 +34,17 @@ Re-eval on the exact same tasks (after sft):
 ### BigCodeBench SFT (pilot)
 
 * `python train_bigcodebench_sft.py --num_train_examples 128 --max_steps 200 --output_dir outputs/sft_bigcodebench`
+
+### Medical domain (HuatuoGPT-o1 style)
+
+Train SFT (English-only, 20k by default):
+
+* `python train_huatuo_sft.py --model_id outputs/sft_bigcodebench_qwen1.5b --dataset_id FreedomIntelligence/medical-o1-reasoning-SFT --dataset_config en --train_split train --num_train_examples 20000 --max_steps 1200 --output_dir outputs/sft_huatuo_qwen1.5b`
+
+Evaluate on verifiable-style subset (sample 1000):
+
+* `python eval_huatuo_verifiable.py --model_id outputs/sft_huatuo_qwen1.5b --dataset_id FreedomIntelligence/medical-o1-verifiable-problem --dataset_config default --split train --num_examples 1000 --out_file results/medical/huatuo_qwen1.5b_eval.json`
+
+If your dataset uses different field names, override:
+
+* `--question_field ... --answer_field ... --language_field ... --verifiable_field ...`
