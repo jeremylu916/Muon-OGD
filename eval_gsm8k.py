@@ -16,16 +16,42 @@ DEFAULT_MAX_NEW_TOKENS = 128
 DEFAULT_OUT_FILE = ""
 
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
+
+
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     """Load tokenizer with best-effort compatibility flags.
 
     Some Transformers versions emit a warning about an incorrect regex pattern
     for certain tokenizers. Newer versions support fix_mistral_regex=True.
     """
     try:
-        return AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
+    except Exception:
+        # Compatibility fix for some locally saved Qwen tokenizers where
+        # tokenizer_config.json stores extra_special_tokens as a list.
+        if os.path.isdir(model_id):
+            cfg_path = os.path.join(model_id, "tokenizer_config.json")
+            if os.path.exists(cfg_path):
+                try:
+                    with open(cfg_path, "r") as f:
+                        cfg = json.load(f)
+                    if isinstance(cfg.get("extra_special_tokens"), list):
+                        cfg.pop("extra_special_tokens", None)
+                        with open(cfg_path, "w") as f:
+                            json.dump(cfg, f, indent=2)
+                        print("Patched tokenizer_config.json: removed incompatible extra_special_tokens list.")
+                except Exception:
+                    pass
+
+        try:
+            return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
+        except TypeError:
+            return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
 
 def extract_last_number(text: str):
@@ -70,14 +96,16 @@ def parse_args():
 
 def main():
     args = parse_args()
-    dataset = load_dataset("gsm8k", "main", split=args.split)
+    cache_dir = get_hf_cache_dir()
+    dataset = load_dataset("gsm8k", "main", split=args.split, cache_dir=cache_dir)
     indices = list(range(len(dataset)))
     random.Random(args.seed).shuffle(indices)
     indices = indices[: args.num_examples]
 
-    tokenizer = load_tokenizer(args.model_id)
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
+        cache_dir=cache_dir,
         dtype=torch.float16,
         device_map="auto",
     )

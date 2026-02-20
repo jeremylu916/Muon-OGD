@@ -12,7 +12,13 @@ import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+try:
+    from tqdm.auto import tqdm
+except Exception:
+    def tqdm(x, **kwargs):
+        return x
+
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
 DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-verifiable-problem"
 DEFAULT_DATASET_CONFIG = "default"
 DEFAULT_SPLIT = "train"
@@ -24,18 +30,25 @@ DEFAULT_NUM_EXAMPLES = 1000
 DEFAULT_SEED = 42
 DEFAULT_MAX_NEW_TOKENS = 384
 DEFAULT_OUT_FILE = "results/medical/huatuo_verifiable_eval.json"
-DEFAULT_JUDGE_MODEL = "gpt-5-mini"
+DEFAULT_JUDGE_MODEL = "llama4:lastest"
+DEFAULT_JUDGE_API_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
+# DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
+# DEFAULT_JUDGE_API_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_JUDGE_MAX_RETRIES = 10
 DEFAULT_JUDGE_MIN_SLEEP = 0.5
 DEFAULT_PROGRESS_EVERY = 10
 DEFAULT_JUDGE_MAX_SLEEP = 30.0
 
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     try:
-        return AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
 
 def parse_args():
@@ -53,6 +66,7 @@ def parse_args():
     p.add_argument("--num_examples", type=int, default=DEFAULT_NUM_EXAMPLES)
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p.add_argument("--max_new_tokens", type=int, default=DEFAULT_MAX_NEW_TOKENS)
+    p.add_argument("--judge_api_url", type=str, default=DEFAULT_JUDGE_API_URL)
     p.add_argument("--judge_model", type=str, default=DEFAULT_JUDGE_MODEL)
     p.add_argument("--judge_max_retries", type=int, default=DEFAULT_JUDGE_MAX_RETRIES)
     p.add_argument("--judge_min_sleep", type=float, default=DEFAULT_JUDGE_MIN_SLEEP)
@@ -62,7 +76,7 @@ def parse_args():
         "--openai_api_key",
         type=str,
         default="",
-        help="Optional OpenAI API key. If empty, reads OPENAI_API_KEY from environment.",
+        help="Optional API key override. If empty, reads OPENAI_API_KEY then PURDUE_API_KEY.",
     )
     p.add_argument("--out_file", type=str, default=DEFAULT_OUT_FILE)
     return p.parse_args()
@@ -133,13 +147,14 @@ def build_judge_prompt(question: str, reference_answer: str, model_response: str
 
 def call_openai_judge(
     api_key: str,
+    api_url: str,
     model: str,
     prompt: str,
     max_retries: int,
     min_sleep: float,
     max_sleep: float,
 ) -> str:
-    url = "https://api.openai.com/v1/chat/completions"
+    url = api_url
     payload = {
         "model": model,
         "temperature": 0,
@@ -216,11 +231,19 @@ def call_openai_judge(
 
 def main():
     args = parse_args()
-    api_key = args.openai_api_key.strip() or os.environ.get("OPENAI_API_KEY", "").strip()
+    cache_dir = get_hf_cache_dir()
+    api_key = (
+        args.openai_api_key.strip()
+        or os.environ.get("OPENAI_API_KEY", "").strip()
+        or os.environ.get("PURDUE_API_KEY", "").strip()
+    )
     if not api_key:
-        raise ValueError("OPENAI_API_KEY is required for GPT-judge evaluation. Set env var or pass --openai_api_key.")
+        raise ValueError(
+            "API key is required for judge evaluation. Set OPENAI_API_KEY (preferred for gpt-4o-mini) "
+            "or PURDUE_API_KEY, or pass --openai_api_key."
+        )
 
-    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.split)
+    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.split, cache_dir=cache_dir)
 
     if args.english_only:
         if args.language_field in ds.column_names:
@@ -244,8 +267,13 @@ def main():
     random.Random(args.seed).shuffle(indices)
     indices = indices[: args.num_examples]
 
-    tokenizer = load_tokenizer(args.model_id)
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, dtype=torch.float16, device_map="auto")
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id,
+        cache_dir=cache_dir,
+        dtype=torch.float16,
+        device_map="auto",
+    )
 
     # Avoid noisy warnings from baked-in sampling params when do_sample=False.
     model.generation_config.temperature = 1.0
@@ -256,7 +284,7 @@ def main():
     judge_errors = 0
     rows = []
 
-    for i, idx in enumerate(indices, start=1):
+    for i, idx in enumerate(tqdm(indices, total=len(indices), desc="Judging", unit="sample"), start=1):
         ex = ds[idx]
         q = to_text(ex.get(args.question_field, ""))
         gold = to_text(ex.get(args.answer_field, ""))
@@ -274,6 +302,7 @@ def main():
         try:
             verdict = call_openai_judge(
                 api_key,
+                args.judge_api_url,
                 args.judge_model,
                 judge_prompt,
                 args.judge_max_retries,
@@ -307,9 +336,6 @@ def main():
                 flush=True,
             )
 
-        if i % 20 == 0:
-            print(f"Processed {i}/{len(indices)}")
-
     total = len(indices)
     judge_accuracy = correct / total if total else 0.0
 
@@ -327,6 +353,7 @@ def main():
         "num_examples": total,
         "seed": args.seed,
         "max_new_tokens": args.max_new_tokens,
+        "judge_api_url": args.judge_api_url,
         "judge_model": args.judge_model,
         "judge_max_retries": args.judge_max_retries,
         "judge_min_sleep": args.judge_min_sleep,

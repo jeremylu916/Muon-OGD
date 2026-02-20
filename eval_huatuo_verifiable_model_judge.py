@@ -9,7 +9,14 @@ import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+try:
+    from tqdm.auto import tqdm
+except Exception:
+    def tqdm(x, **kwargs):
+        return x
+
 DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_JUDGE_MODEL_ID = "Qwen/Qwen3-8B"
 DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-verifiable-problem"
 DEFAULT_DATASET_CONFIG = "default"
 DEFAULT_SPLIT = "train"
@@ -19,20 +26,27 @@ DEFAULT_LANGUAGE_FIELD = "language"
 DEFAULT_NUM_EXAMPLES = 1000
 DEFAULT_SEED = 42
 DEFAULT_MAX_NEW_TOKENS = 384
+DEFAULT_JUDGE_MAX_NEW_TOKENS = 16
 DEFAULT_PROGRESS_EVERY = 20
-DEFAULT_OUT_FILE = "results/medical/huatuo_zero_shot_tokenf1.json"
+DEFAULT_OUT_FILE = "results/medical/huatuo_zero_shot_model_judge.json"
 
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
+
+
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     try:
-        return AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Evaluate Huatuo verifiable set with Exact Match + Token F1.")
+    p = argparse.ArgumentParser(description="Evaluate Huatuo verifiable set with a local LLM judge model.")
     p.add_argument("--model_id", type=str, default=DEFAULT_MODEL_ID)
+    p.add_argument("--judge_model_id", type=str, default=DEFAULT_JUDGE_MODEL_ID)
     p.add_argument("--dataset_id", type=str, default=DEFAULT_DATASET_ID)
     p.add_argument("--dataset_config", type=str, default=DEFAULT_DATASET_CONFIG)
     p.add_argument("--split", type=str, default=DEFAULT_SPLIT)
@@ -43,6 +57,7 @@ def parse_args():
     p.add_argument("--num_examples", type=int, default=DEFAULT_NUM_EXAMPLES)
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p.add_argument("--max_new_tokens", type=int, default=DEFAULT_MAX_NEW_TOKENS)
+    p.add_argument("--judge_max_new_tokens", type=int, default=DEFAULT_JUDGE_MAX_NEW_TOKENS)
     p.add_argument("--progress_every", type=int, default=DEFAULT_PROGRESS_EVERY)
     p.add_argument("--out_file", type=str, default=DEFAULT_OUT_FILE)
     return p.parse_args()
@@ -67,40 +82,6 @@ def looks_english(text: str) -> bool:
     return ratio > 0.85 and alpha >= 10
 
 
-def normalize_text(s: str) -> str:
-    s = s.lower().strip()
-    s = re.sub(r"\s+", " ", s)
-    s = re.sub(r"[^a-z0-9\s]", "", s)
-    return s
-
-
-def token_f1(pred: str, gold: str) -> float:
-    p = normalize_text(pred).split()
-    g = normalize_text(gold).split()
-
-    if not p and not g:
-        return 1.0
-    if not p or not g:
-        return 0.0
-
-    g_count = {}
-    for t in g:
-        g_count[t] = g_count.get(t, 0) + 1
-
-    common = 0
-    for t in p:
-        if g_count.get(t, 0) > 0:
-            common += 1
-            g_count[t] -= 1
-
-    if common == 0:
-        return 0.0
-
-    precision = common / len(p)
-    recall = common / len(g)
-    return 2 * precision * recall / (precision + recall)
-
-
 def build_prompt(tokenizer, question: str):
     messages = [
         {
@@ -112,10 +93,57 @@ def build_prompt(tokenizer, question: str):
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
 
+def build_judge_prompt(question: str, reference_answer: str, model_response: str) -> str:
+    return (
+        "You are an expert medical evaluator assessing whether a model's response correctly answers a medical question. "
+        "Your task is to compare the model's response to the reference answer and determine if the model's response is:\n"
+        "1. CORRECT: The response contains the key medical information from the reference answer, even if phrased differently "
+        "or includes additional correct medical details.\n"
+        "2. INCORRECT: The response is medically wrong, misses the main point, or provides incorrect medical information.\n"
+        "Focus on medical accuracy and completeness, not on writing style or verbosity.\n"
+        "[Medical Question]\n"
+        f"{question}\n"
+        "[Reference Answer]\n"
+        f"{reference_answer}\n"
+        "[Model Response]\n"
+        f"{model_response}\n"
+        "Evaluate the model's response. Output ONLY one of: \"CORRECT\" or \"INCORRECT\"."
+    )
+
+
+def build_judge_chat_prompt(tokenizer, judge_prompt: str) -> str:
+    messages = [
+        {"role": "system", "content": "You are a strict medical answer evaluator."},
+        {"role": "user", "content": judge_prompt},
+    ]
+    try:
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+    except TypeError:
+        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+
+def parse_judge_verdict(text: str) -> str:
+    content = (text or "").strip().upper()
+    if "CORRECT" in content and "INCORRECT" not in content:
+        return "CORRECT"
+    if "INCORRECT" in content:
+        return "INCORRECT"
+    first = re.split(r"\s+", content)[0] if content else ""
+    if first in {"CORRECT", "INCORRECT"}:
+        return first
+    return "INCORRECT"
+
+
 def main():
     args = parse_args()
+    cache_dir = get_hf_cache_dir()
 
-    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.split)
+    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.split, cache_dir=cache_dir)
 
     if args.english_only:
         if args.language_field in ds.column_names:
@@ -132,18 +160,30 @@ def main():
     random.Random(args.seed).shuffle(indices)
     indices = indices[: args.num_examples]
 
-    tokenizer = load_tokenizer(args.model_id)
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, dtype=torch.float16, device_map="auto")
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id,
+        cache_dir=cache_dir,
+        dtype=torch.float16,
+        device_map="auto",
+    )
+
+    judge_tokenizer = load_tokenizer(args.judge_model_id, cache_dir=cache_dir)
+    judge_model = AutoModelForCausalLM.from_pretrained(
+        args.judge_model_id,
+        cache_dir=cache_dir,
+        dtype=torch.float16,
+        device_map="auto",
+    )
 
     model.generation_config.temperature = 1.0
     model.generation_config.top_p = 1.0
     model.generation_config.top_k = 50
 
-    exact = 0
-    f1_sum = 0.0
+    judge_correct = 0
     rows = []
 
-    for i, idx in enumerate(indices, start=1):
+    for i, idx in enumerate(tqdm(indices, total=len(indices), desc="Judging", unit="sample"), start=1):
         ex = ds[idx]
         q = to_text(ex.get(args.question_field, ""))
         gold = to_text(ex.get(args.answer_field, ""))
@@ -157,13 +197,22 @@ def main():
         prompt_len = inputs["input_ids"].shape[1]
         pred = tokenizer.decode(out[0][prompt_len:], skip_special_tokens=True).strip()
 
-        pred_n = normalize_text(pred)
-        gold_n = normalize_text(gold)
-        em = int(pred_n == gold_n)
-        f1 = token_f1(pred, gold)
+        judge_prompt = build_judge_prompt(q, gold, pred)
+        judge_chat_prompt = build_judge_chat_prompt(judge_tokenizer, judge_prompt)
+        judge_inputs = judge_tokenizer(judge_chat_prompt, return_tensors="pt").to(judge_model.device)
 
-        exact += em
-        f1_sum += f1
+        with torch.no_grad():
+            judge_out = judge_model.generate(
+                **judge_inputs,
+                max_new_tokens=args.judge_max_new_tokens,
+                do_sample=False,
+            )
+
+        judge_prompt_len = judge_inputs["input_ids"].shape[1]
+        judge_text = judge_tokenizer.decode(judge_out[0][judge_prompt_len:], skip_special_tokens=True)
+        verdict = parse_judge_verdict(judge_text)
+        ok = int(verdict == "CORRECT")
+        judge_correct += ok
 
         if i <= 30:
             rows.append(
@@ -172,8 +221,8 @@ def main():
                     "question": q,
                     "gold": gold,
                     "pred": pred,
-                    "em": em,
-                    "f1": f1,
+                    "judge_raw": judge_text.strip(),
+                    "judge_verdict": verdict,
                 }
             )
 
@@ -181,13 +230,13 @@ def main():
             print(f"Processed {i}/{len(indices)}")
 
     total = len(indices)
-    em_score = exact / total if total else 0.0
-    f1_score = f1_sum / total if total else 0.0
+    judge_accuracy = judge_correct / total if total else 0.0
 
     payload = {
         "task": "huatuo_verifiable",
-        "metric": "exact_match_and_token_f1",
+        "metric": "local_model_judge_accuracy",
         "model_id": args.model_id,
+        "judge_model_id": args.judge_model_id,
         "dataset_id": args.dataset_id,
         "dataset_config": args.dataset_config,
         "split": args.split,
@@ -197,8 +246,10 @@ def main():
         "num_examples": total,
         "seed": args.seed,
         "max_new_tokens": args.max_new_tokens,
-        "exact_match": em_score,
-        "token_f1": f1_score,
+        "judge_max_new_tokens": args.judge_max_new_tokens,
+        "judge_accuracy": judge_accuracy,
+        "judge_correct": judge_correct,
+        "judge_total": total,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "sample_predictions": rows,
     }
@@ -207,8 +258,7 @@ def main():
     with open(args.out_file, "w") as f:
         json.dump(payload, f, indent=2)
 
-    print(f"Exact match: {em_score:.4f} ({exact}/{total})")
-    print(f"Token F1: {f1_score:.4f}")
+    print(f"Judge accuracy: {judge_accuracy:.4f} ({judge_correct}/{total})")
     print(f"Wrote: {args.out_file}")
 
 

@@ -8,7 +8,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
 DEFAULT_OUTPUT_DIR = "outputs/sft_huatuo"
 DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-reasoning-SFT"
 DEFAULT_DATASET_CONFIG = "en"
@@ -26,11 +26,16 @@ DEFAULT_NUM_TRAIN_EXAMPLES = 20000
 DEFAULT_MAX_STEPS = 1200
 
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
+
+
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     try:
-        return AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
 
 def parse_args():
@@ -87,11 +92,12 @@ def build_messages(question: str, answer: str) -> List[Dict[str, str]]:
 
 def main():
     args = parse_args()
+    cache_dir = get_hf_cache_dir()
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.train_split)
+    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.train_split, cache_dir=cache_dir)
 
     if args.english_only:
         if args.language_field in ds.column_names:
@@ -102,7 +108,7 @@ def main():
     if args.num_train_examples and args.num_train_examples < len(ds):
         ds = ds.shuffle(seed=args.seed).select(range(args.num_train_examples))
 
-    tokenizer = load_tokenizer(args.model_id)
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -156,7 +162,7 @@ def main():
     else:
         dtype = torch.float16 if use_cuda else torch.float32
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, dtype=dtype)
+    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=dtype)
     device = torch.device("cuda" if use_cuda else "cpu")
     model.to(device)
     model.train()

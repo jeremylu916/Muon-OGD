@@ -1,0 +1,42 @@
+Traceback (most recent call last):
+  File "/u/blu7/muon_CL/train_bigcodebench_sft.py", line 8, in <module>
+    import torch
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/__init__.py", line 2680, in <module>
+    from torch import _meta_registrations
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_meta_registrations.py", line 12, in <module>
+    from torch._decomp import (
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_decomp/__init__.py", line 276, in <module>
+    import torch._decomp.decompositions
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_decomp/decompositions.py", line 16, in <module>
+    import torch._prims as prims
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_prims/__init__.py", line 525, in <module>
+    abs = _make_elementwise_unary_prim(
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_prims/__init__.py", line 493, in _make_elementwise_unary_prim
+    return _make_prim(
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_prims/__init__.py", line 321, in _make_prim
+    prim_def = torch.library.custom_op(
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_library/custom_ops.py", line 172, in custom_op
+    return inner(fn)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_library/custom_ops.py", line 153, in inner
+    result = CustomOpDef(namespace, opname, schema_str, fn, tags)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_library/custom_ops.py", line 211, in __init__
+    self._register_to_dispatcher(self._tags)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_library/custom_ops.py", line 629, in _register_to_dispatcher
+    lib._register_fake(self._name, fake_impl, _stacklevel=4)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/library.py", line 190, in _register_fake
+    source = torch._library.utils.get_source(_stacklevel + 1)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/_library/utils.py", line 44, in get_source
+    frame = inspect.getframeinfo(sys._getframe(stacklevel))
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/inspect.py", line 1624, in getframeinfo
+    lines, lnum = findsource(frame)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/inspect.py", line 952, in findsource
+    module = getmodule(object, file)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/inspect.py", line 875, in getmodule
+    f = getabsfile(module)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/inspect.py", line 844, in getabsfile
+    _filename = getsourcefile(object) or getfile(object)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/inspect.py", line 826, in getsourcefile
+    if os.path.exists(filename):
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/genericpath.py", line 19, in exists
+    os.stat(path)
+KeyboardInterrupt

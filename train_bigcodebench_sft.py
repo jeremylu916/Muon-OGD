@@ -29,6 +29,11 @@ DEFAULT_MAX_GRAD_NORM = 1.0
 DEFAULT_LOG_EVERY = 10
 
 
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
+
+
 def parse_args():
     p = argparse.ArgumentParser(description="SFT on BigCodeBench (Corrected).")
     p.add_argument("--model_id", type=str, default=DEFAULT_MODEL_ID)
@@ -51,11 +56,11 @@ def parse_args():
     return p.parse_args()
 
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
     
     # Qwen 2.5 usually has an eos_token. If pad is missing, use eos.
     if tokenizer.pad_token is None:
@@ -87,6 +92,7 @@ def build_prompt_text(args, prompt: str) -> str:
 
 def main():
     args = parse_args()
+    cache_dir = get_hf_cache_dir()
 
     # Reproducibility
     random.seed(args.seed)
@@ -97,10 +103,10 @@ def main():
     # Load Dataset
     print(f"Loading dataset {args.bcb_version}...")
     try:
-        ds = load_dataset("bigcode/bigcodebench", split="train") # 'train' usually contains the full set on HF
+        ds = load_dataset("bigcode/bigcodebench", split="train", cache_dir=cache_dir) # 'train' usually contains the full set on HF
     except Exception:
         # Fallback if specific version/split names differ
-        ds = load_dataset("bigcode/bigcodebench", split=args.bcb_version)
+        ds = load_dataset("bigcode/bigcodebench", split=args.bcb_version, cache_dir=cache_dir)
 
     # Filter by task IDs if provided
     if args.task_ids_file.strip():
@@ -116,7 +122,7 @@ def main():
         ds = ds.shuffle(seed=args.seed).select(range(args.num_train_examples))
         print(f"Subsampled to {len(ds)} examples.")
 
-    tokenizer = load_tokenizer(args.model_id)
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
 
     # --- Corrected Tokenization Logic ---
     def tok(example):
@@ -179,7 +185,7 @@ def main():
     print(f"Loading model {args.model_id}...")
     use_cuda = torch.cuda.is_available()
     dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, torch_dtype=dtype)
+    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, torch_dtype=dtype)
     device = torch.device("cuda" if use_cuda else "cpu")
     model.to(device)
     model.train()

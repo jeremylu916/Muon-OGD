@@ -5,6 +5,12 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
+try:
+    from tqdm.auto import tqdm
+except Exception:
+    def tqdm(x, **kwargs):
+        return x
+
 DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
 DEFAULT_OUTPUT_DIR = "outputs/sft_gsm8k"
 DEFAULT_MAX_LENGTH = 512
@@ -17,16 +23,21 @@ DEFAULT_MAX_STEPS = 200
 DEFAULT_NUM_TRAIN_EXAMPLES = 512
 
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
+
+
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     """Load tokenizer with best-effort compatibility flags.
 
     Some Transformers versions emit a warning about an incorrect regex pattern
     for certain tokenizers. Newer versions support fix_mistral_regex=True.
     """
     try:
-        return AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
 
 def parse_args():
@@ -65,14 +76,15 @@ def build_prompt(tokenizer, question: str, answer: str):
 
 def main():
     args = parse_args()
+    cache_dir = get_hf_cache_dir()
 
     torch.manual_seed(args.seed)
 
-    dataset = load_dataset("gsm8k", "main", split="train")
+    dataset = load_dataset("gsm8k", "main", split="train", cache_dir=cache_dir)
     if args.num_train_examples and args.num_train_examples < len(dataset):
         dataset = dataset.shuffle(seed=args.seed).select(range(args.num_train_examples))
 
-    tokenizer = load_tokenizer(args.model_id)
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -95,7 +107,7 @@ def main():
     else:
         model_dtype = torch.float16 if use_cuda else torch.float32
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, dtype=model_dtype)
+    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=model_dtype)
 
     device = torch.device("cuda" if use_cuda else "cpu")
     model.to(device)
@@ -119,8 +131,9 @@ def main():
     seen_steps = 0
     opt_step = 0
 
-    for _epoch in range(args.epochs):
-        for batch in loader:
+    for epoch in range(args.epochs):
+        pbar = tqdm(loader, total=len(loader), desc=f"Epoch {epoch + 1}/{args.epochs}", unit="batch")
+        for batch in pbar:
             seen_steps += 1
             batch = {k: v.to(device) for k, v in batch.items()}
 
@@ -134,6 +147,8 @@ def main():
 
                 if opt_step % 10 == 0:
                     print(f"opt_step={opt_step} loss={loss.item():.4f}")
+
+                pbar.set_postfix(opt_step=opt_step, loss=f"{loss.item():.4f}")
 
                 if args.max_steps and opt_step >= args.max_steps:
                     break

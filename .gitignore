@@ -10,5 +10,6 @@ venv/
 outputs/
 *.log
 
-# Optional: comment out if you want to version evaluation artifacts
-# results/
+
+# Ignore experiment results to prevent large files from being added to git
+results/

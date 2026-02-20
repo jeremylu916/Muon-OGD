@@ -30,11 +30,16 @@ DEFAULT_GRADIO_ENDPOINT = "https://bigcode-bigcodebench-evaluator.hf.space/"
 # Regex for markdown code blocks
 _CODEBLOCK_RE = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
-def load_tokenizer(model_id: str) -> AutoTokenizer:
+def get_hf_cache_dir():
+    cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
+    return cache_dir or None
+
+
+def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     try:
-        return AutoTokenizer.from_pretrained(model_id, fix_mistral_regex=True)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id)
+        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
 def extract_code(text: str) -> str:
     # 1. Try Markdown
@@ -49,16 +54,15 @@ def extract_code(text: str) -> str:
         t = re.sub(r"^```(?:python)?\s*", "", t, flags=re.IGNORECASE)
         t = t.replace("```", "").strip()
 
-    # 3. Fallback: Find first python keyword that starts a solution
-    anchors = [
-        t.find("def task_func"),
-        t.find("import "),
-        t.find("from "),
-    ]
-    # Filter out -1
-    valid_anchors = [a for a in anchors if a >= 0]
-    if valid_anchors:
-        t = t[min(valid_anchors):]
+    # 3. Fallback: Find first line that looks like Python code start.
+    # Use line-start anchors to avoid false matches like "from user" in comments/text.
+    candidates = []
+    for pat in [r"(?m)^\s*def\s+task_func\s*\(", r"(?m)^\s*import\s+", r"(?m)^\s*from\s+"]:
+        m = re.search(pat, t)
+        if m:
+            candidates.append(m.start())
+    if candidates:
+        t = t[min(candidates):]
 
     # 4. Aggressive cleanup of trailing chat
     # If the model adds text after the code, it breaks execution.
@@ -153,12 +157,13 @@ def task_id_to_index(task_id: str) -> str:
 
 def main():
     args = parse_args()
+    cache_dir = get_hf_cache_dir()
     os.makedirs(args.out_dir, exist_ok=True)
     samples_path = os.path.join(args.out_dir, "samples.jsonl")
 
     # Load Dataset
     print(f"Loading BigCodeBench {args.subset} subset...")
-    ds = load_dataset("bigcode/bigcodebench", split=args.bcb_version)
+    ds = load_dataset("bigcode/bigcodebench", split=args.bcb_version, cache_dir=cache_dir)
     
     if args.subset == "hard":
         try:
@@ -179,13 +184,18 @@ def main():
     task_indices = [task_id_to_index(t.task_id) for t in tasks]
 
     # Load Model
-    tokenizer = load_tokenizer(args.model_id)
+    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     
     use_cuda = torch.cuda.is_available()
     dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, torch_dtype=dtype, device_map="auto")
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id,
+        cache_dir=cache_dir,
+        torch_dtype=dtype,
+        device_map="auto",
+    )
     model.eval()
 
     # Generate
