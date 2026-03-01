@@ -84,8 +84,20 @@ Train SFT (English-only, 20k by default):
 
 Evaluate with GPT judge (matches paper-style setting; requires OpenAI key):
 
-* `export OPENAI_API_KEY="sk-..."`
-* `python eval_huatuo_verifiable.py --model_id Qwen/Qwen2.5-0.5B-Instruct --dataset_id FreedomIntelligence/medical-o1-verifiable-problem --dataset_config default --split train --num_examples 4000 --progress_every 5 --judge_model gpt-5-mini --judge_max_retries 6 --judge_min_sleep 2.0 --judge_max_sleep 30 --out_file results/medical/huatuo_zero_shot_qwen0.5b_judge_n200.json`
+* nohup python eval_huatuo_verifiable_api.py \
+  --model_id Qwen/Qwen2.5-0.5B-Instruct \
+  --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
+  --dataset_config default \
+  --split train \
+  --num_examples 4000 \
+  --progress_every 5 \
+  --judge_api_url https://genai.rcac.purdue.edu/api/chat/completions \
+  --judge_model llama4:latest \
+  --judge_max_retries 6 \
+  --judge_min_sleep 2.0 \
+  --judge_max_sleep 30 \
+  --out_file results/medical/huatuo_zero_shot_qwen0.5b_purdue_n4000.json \
+  > logs/huatuo_eval_purdue.log 2>&1
 
 Evaluate bigcodebench
 python eval_bigcodebench_remote.py \

@@ -6,6 +6,8 @@ import random
 from typing import Dict, List
 
 import torch
+from tqdm.auto import tqdm
+import time
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
@@ -216,6 +218,10 @@ def main():
 
     print(f"Starting training: Epochs={args.epochs}, Batch={args.batch_size}, GradAccum={args.grad_accum}")
     print(f"Total optimization steps: {max_train_steps}")
+    # progress bar and timing
+    pbar = tqdm(total=max_train_steps, desc="Training", unit="step")
+    _step_time_accum = 0.0
+    _step_time_count = 0
 
     # Training Loop
     global_step = 0
@@ -224,6 +230,7 @@ def main():
     for epoch in range(args.epochs):
         print(f"Epoch {epoch+1}/{args.epochs}")
         for step, batch in enumerate(loader):
+            batch_start_time = time.perf_counter()
             batch = {k: v.to(device) for k, v in batch.items()}
             
             outputs = model(**batch)
@@ -243,16 +250,30 @@ def main():
                 opt.zero_grad()
                 global_step += 1
 
+                # record iteration time (counts only completed optimizer steps)
+                iter_dt = time.perf_counter() - batch_start_time
+                _step_time_accum += iter_dt
+                _step_time_count += 1
+
                 if global_step % args.log_every == 0:
                     avg_loss = total_loss * args.grad_accum / args.log_every
-                    print(f"Step {global_step}/{max_train_steps} | Loss: {avg_loss:.4f} | LR: {scheduler.get_last_lr()[0]:.2e}")
+                    avg_step_s = _step_time_accum / max(1, _step_time_count)
+                    lr = scheduler.get_last_lr()[0]
+                    print(f"Step {global_step}/{max_train_steps} | Loss: {avg_loss:.4f} | LR: {lr:.2e} | avg_step_s={avg_step_s:.2f}s")
+                    pbar.set_postfix({"loss": f"{avg_loss:.4f}", "lr": f"{lr:.2e}", "step_s": f"{avg_step_s:.2f}s"})
                     total_loss = 0
 
+                pbar.update(1)
                 if global_step >= max_train_steps:
                     break
         
         if global_step >= max_train_steps:
             break
+
+    try:
+        pbar.close()
+    except Exception:
+        pass
 
     # Save
     print(f"Saving model to {args.output_dir}")

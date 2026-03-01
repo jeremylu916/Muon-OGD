@@ -30,10 +30,8 @@ DEFAULT_NUM_EXAMPLES = 1000
 DEFAULT_SEED = 42
 DEFAULT_MAX_NEW_TOKENS = 384
 DEFAULT_OUT_FILE = "results/medical/huatuo_verifiable_eval.json"
-DEFAULT_JUDGE_MODEL = "llama4:lastest"
+DEFAULT_JUDGE_MODEL = "llama4:latest"
 DEFAULT_JUDGE_API_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
-# DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
-# DEFAULT_JUDGE_API_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_JUDGE_MAX_RETRIES = 10
 DEFAULT_JUDGE_MIN_SLEEP = 0.5
 DEFAULT_PROGRESS_EVERY = 10
@@ -76,7 +74,7 @@ def parse_args():
         "--openai_api_key",
         type=str,
         default="",
-        help="Optional API key override. If empty, reads OPENAI_API_KEY then PURDUE_API_KEY.",
+        help="Optional API key override. If empty, reads PURDUE_API_KEY then OPENAI_API_KEY.",
     )
     p.add_argument("--out_file", type=str, default=DEFAULT_OUT_FILE)
     return p.parse_args()
@@ -234,13 +232,13 @@ def main():
     cache_dir = get_hf_cache_dir()
     api_key = (
         args.openai_api_key.strip()
-        or os.environ.get("OPENAI_API_KEY", "").strip()
         or os.environ.get("PURDUE_API_KEY", "").strip()
+        or os.environ.get("OPENAI_API_KEY", "").strip()
     )
     if not api_key:
         raise ValueError(
-            "API key is required for judge evaluation. Set OPENAI_API_KEY (preferred for gpt-4o-mini) "
-            "or PURDUE_API_KEY, or pass --openai_api_key."
+            "API key is required for judge evaluation. Set PURDUE_API_KEY (preferred) "
+            "or OPENAI_API_KEY, or pass --openai_api_key."
         )
 
     ds = load_dataset(args.dataset_id, args.dataset_config, split=args.split, cache_dir=cache_dir)
