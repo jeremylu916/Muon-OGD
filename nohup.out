@@ -40,3 +40,24 @@ Traceback (most recent call last):
   File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/genericpath.py", line 19, in exists
     os.stat(path)
 KeyboardInterrupt
+/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/u/blu7/muon_CL/train_huatuo_sft_svd.py", line 24, in <module>
+    from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/transformers/__init__.py", line 958, in <module>
+    import_structure = define_import_structure(Path(__file__).parent / "models", prefix="models")
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/transformers/utils/import_utils.py", line 2867, in define_import_structure
+    import_structure = create_import_structure_from_path(module_path)
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/transformers/utils/import_utils.py", line 2580, in create_import_structure_from_path
+    import_structure[f] = create_import_structure_from_path(os.path.join(module_path, f))
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/transformers/utils/import_utils.py", line 2578, in create_import_structure_from_path
+    for f in os.listdir(module_path):
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/u/blu7/muon_CL/eval_huatuo_verifiable_api.py", line 11, in <module>
+    import torch
+  File "/work/nvme/bgeo/conda/blu_envs/bigcodebench/lib/python3.10/site-packages/torch/__init__.py", line 427, in <module>
+    from torch._C import *  # noqa: F403
+  File "<frozen importlib._bootstrap>", line 216, in _lock_unlock_module
+KeyboardInterrupt

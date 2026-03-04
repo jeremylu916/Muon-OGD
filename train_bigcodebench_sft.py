@@ -54,6 +54,8 @@ def parse_args():
     p.add_argument("--warmup_ratio", type=float, default=DEFAULT_WARMUP_RATIO)
     p.add_argument("--max_grad_norm", type=float, default=DEFAULT_MAX_GRAD_NORM)
     p.add_argument("--log_every", type=int, default=DEFAULT_LOG_EVERY)
+    p.add_argument("--save_strategy", type=str, default="no", choices=["no", "steps"], help="Checkpoint save strategy")
+    p.add_argument("--save_steps", type=int, default=500, help="Save checkpoint every X optimizer steps")
     p.add_argument("--task_ids_file", type=str, default="")
     return p.parse_args()
 
@@ -249,6 +251,13 @@ def main():
                 scheduler.step()
                 opt.zero_grad()
                 global_step += 1
+
+                if args.save_strategy == "steps" and args.save_steps > 0 and global_step % args.save_steps == 0:
+                    checkpoint_dir = os.path.join(args.output_dir, f"checkpoint-{global_step}")
+                    print(f"\nSaving intermediate checkpoint at step {global_step} to {checkpoint_dir} ...", flush=True)
+                    os.makedirs(checkpoint_dir, exist_ok=True)
+                    model.save_pretrained(checkpoint_dir)
+                    tokenizer.save_pretrained(checkpoint_dir)
 
                 # record iteration time (counts only completed optimizer steps)
                 iter_dt = time.perf_counter() - batch_start_time

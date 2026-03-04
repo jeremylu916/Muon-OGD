@@ -127,6 +127,8 @@ def parse_args():
     p.add_argument("--gradio_endpoint", type=str, default=DEFAULT_GRADIO_ENDPOINT)
     p.add_argument("--task_ids", type=str, default="")
     p.add_argument("--task_ids_file", type=str, default="")
+    p.add_argument("--samples_path", type=str, default="", help="Optional path to existing samples.jsonl")
+    p.add_argument("--submit_only", action="store_true", help="Skip generation and submit existing samples")
     return p.parse_args()
 
 def select_tasks(ds, split: str, num_tasks: int, seed: int, task_ids_csv: str) -> List[Task]:
@@ -159,100 +161,115 @@ def main():
     args = parse_args()
     cache_dir = get_hf_cache_dir()
     os.makedirs(args.out_dir, exist_ok=True)
-    samples_path = os.path.join(args.out_dir, "samples.jsonl")
+    samples_path = args.samples_path.strip() or os.path.join(args.out_dir, "samples.jsonl")
+    task_indices = []
 
-    # Load Dataset
-    print(f"Loading BigCodeBench {args.subset} subset...")
-    ds = load_dataset("bigcode/bigcodebench", split=args.bcb_version, cache_dir=cache_dir)
-    
-    if args.subset == "hard":
-        try:
-            from bigcodebench.data import get_bigcodebench
-            hard_ids = set(get_bigcodebench(subset="hard").keys())
-            ds = ds.filter(lambda ex: ex["task_id"] in hard_ids)
-        except Exception:
-            print("Warning: bigcodebench module not found or failed. Falling back to full dataset.")
-
-    # Select Tasks
-    if args.task_ids_file.strip():
-        with open(args.task_ids_file, "r") as f:
-            task_ids_list = json.load(f)
-        tasks = select_tasks(ds, args.split, args.num_tasks, args.seed, ",".join(task_ids_list))
+    if args.submit_only:
+        if not os.path.exists(samples_path):
+            raise FileNotFoundError(f"samples file not found: {samples_path}")
+        print(f"Using existing samples file: {samples_path}")
+        with open(samples_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                rec = json.loads(line)
+                tid = rec.get("task_id", "")
+                if tid:
+                    task_indices.append(task_id_to_index(tid))
+        if not task_indices:
+            raise ValueError(f"No task_id entries found in {samples_path}")
     else:
-        tasks = select_tasks(ds, args.split, args.num_tasks, args.seed, args.task_ids)
-    
-    task_indices = [task_id_to_index(t.task_id) for t in tasks]
+        # Load Dataset
+        print(f"Loading BigCodeBench {args.subset} subset...")
+        ds = load_dataset("bigcode/bigcodebench", split=args.bcb_version, cache_dir=cache_dir)
+        
+        if args.subset == "hard":
+            try:
+                from bigcodebench.data import get_bigcodebench
+                hard_ids = set(get_bigcodebench(subset="hard").keys())
+                ds = ds.filter(lambda ex: ex["task_id"] in hard_ids)
+            except Exception:
+                print("Warning: bigcodebench module not found or failed. Falling back to full dataset.")
 
-    # Load Model
-    tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    
-    use_cuda = torch.cuda.is_available()
-    dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_id,
-        cache_dir=cache_dir,
-        torch_dtype=dtype,
-        device_map="auto",
-    )
-    model.eval()
+        # Select Tasks
+        if args.task_ids_file.strip():
+            with open(args.task_ids_file, "r") as f:
+                task_ids_list = json.load(f)
+            tasks = select_tasks(ds, args.split, args.num_tasks, args.seed, ",".join(task_ids_list))
+        else:
+            tasks = select_tasks(ds, args.split, args.num_tasks, args.seed, args.task_ids)
+        
+        task_indices = [task_id_to_index(t.task_id) for t in tasks]
 
-    # Generate
-    print(f"Generating solutions for {len(tasks)} tasks...")
-    results_list = []
-    
-    with open(samples_path, "w") as f:
-        for n, task in enumerate(tasks, start=1):
-            if args.split == "instruct":
-                user_prompt = build_instruct_prompt(task.prompt)
-                messages = [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": user_prompt},
-                ]
-                full_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            else:
-                full_prompt = task.prompt
+        # Load Model
+        tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        
+        use_cuda = torch.cuda.is_available()
+        dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_id,
+            cache_dir=cache_dir,
+            torch_dtype=dtype,
+            device_map="auto",
+        )
+        model.eval()
 
-            inputs = tokenizer(full_prompt, return_tensors="pt").to(model.device)
-            
-            with torch.no_grad():
-                out = model.generate(
-                    **inputs, 
-                    max_new_tokens=args.max_new_tokens,
-                    do_sample=(args.temperature > 0),
-                    temperature=args.temperature if args.temperature > 0 else None,
-                    top_p=0.95 if args.temperature > 0 else None,
-                    pad_token_id=tokenizer.pad_token_id,
-                    eos_token_id=tokenizer.eos_token_id
-                )
+        # Generate
+        print(f"Generating solutions for {len(tasks)} tasks...")
+        with open(samples_path, "w") as f:
+            for n, task in enumerate(tasks, start=1):
+                if args.split == "instruct":
+                    user_prompt = build_instruct_prompt(task.prompt)
+                    messages = [
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": user_prompt},
+                    ]
+                    full_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+                else:
+                    full_prompt = task.prompt
 
-            prompt_len = inputs["input_ids"].shape[1]
-            raw_output = tokenizer.decode(out[0][prompt_len:], skip_special_tokens=True)
-            
-            # --- DEBUG: Print first sample to check format ---
-            if n == 1:
-                print("\n" + "="*40)
-                print(f"DEBUG SAMPLE (Task: {task.task_id})")
-                print("-" * 20)
-                print(f"PROMPT:\n{full_prompt}")
-                print("-" * 20)
-                print(f"RAW OUTPUT:\n{raw_output}")
-                print("-" * 20)
+                inputs = tokenizer(full_prompt, return_tensors="pt").to(model.device)
+                
+                with torch.no_grad():
+                    out = model.generate(
+                        **inputs, 
+                        max_new_tokens=args.max_new_tokens,
+                        do_sample=(args.temperature > 0),
+                        temperature=args.temperature if args.temperature > 0 else None,
+                        top_p=0.95 if args.temperature > 0 else None,
+                        pad_token_id=tokenizer.pad_token_id,
+                        eos_token_id=tokenizer.eos_token_id
+                    )
+
+                prompt_len = inputs["input_ids"].shape[1]
+                raw_output = tokenizer.decode(out[0][prompt_len:], skip_special_tokens=True)
+                
+                # --- DEBUG: Print first sample to check format ---
+                if n == 1:
+                    print("\n" + "="*40)
+                    print(f"DEBUG SAMPLE (Task: {task.task_id})")
+                    print("-" * 20)
+                    print(f"PROMPT:\n{full_prompt}")
+                    print("-" * 20)
+                    print(f"RAW OUTPUT:\n{raw_output}")
+                    print("-" * 20)
+                    extracted = extract_code(raw_output)
+                    print(f"EXTRACTED CODE:\n{extracted}")
+                    print("="*40 + "\n")
+                # -----------------------------------------------
+
                 extracted = extract_code(raw_output)
-                print(f"EXTRACTED CODE:\n{extracted}")
-                print("="*40 + "\n")
-            # -----------------------------------------------
-
-            extracted = extract_code(raw_output)
-            final_code = normalize_solution(task.prompt, extracted)
-            
-            # Use 'completion' key for compatibility with standard evaluators
-            record = {"task_id": task.task_id, "completion": final_code}
-            f.write(json.dumps(record) + "\n")
-            
-            if n % 10 == 0:
-                print(f"Generated {n}/{len(tasks)}")
+                final_code = normalize_solution(task.prompt, extracted)
+                
+                # Use 'completion' key for compatibility with standard evaluators
+                record = {"task_id": task.task_id, "completion": final_code}
+                f.write(json.dumps(record) + "\n")
+                
+                if n % 10 == 0:
+                    print(f"Generated {n}/{len(tasks)}")
 
     # Evaluate
     print("Submitting to Remote Evaluator...")

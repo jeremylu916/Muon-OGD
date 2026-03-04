@@ -1,9 +1,10 @@
 import argparse
 import os
+import time
 from datasets import load_dataset
 import torch
 from torch.utils.data import DataLoader
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
 
 try:
     from tqdm.auto import tqdm
@@ -21,6 +22,10 @@ DEFAULT_LR = 2e-5
 DEFAULT_SEED = 42
 DEFAULT_MAX_STEPS = 200
 DEFAULT_NUM_TRAIN_EXAMPLES = 512
+DEFAULT_WEIGHT_DECAY = 0.01
+DEFAULT_WARMUP_RATIO = 0.03
+DEFAULT_MAX_GRAD_NORM = 1.0
+DEFAULT_LOG_EVERY = 10
 
 
 def get_hf_cache_dir():
@@ -62,6 +67,12 @@ def parse_args():
         default=DEFAULT_MAX_STEPS,
         help="Max optimizer steps (after grad accumulation).",
     )
+    parser.add_argument("--weight_decay", type=float, default=DEFAULT_WEIGHT_DECAY)
+    parser.add_argument("--warmup_ratio", type=float, default=DEFAULT_WARMUP_RATIO)
+    parser.add_argument("--max_grad_norm", type=float, default=DEFAULT_MAX_GRAD_NORM)
+    parser.add_argument("--log_every", type=int, default=DEFAULT_LOG_EVERY)
+    parser.add_argument("--save_strategy", type=str, default="no", choices=["no", "steps"], help="Checkpoint save strategy")
+    parser.add_argument("--save_steps", type=int, default=500, help="Save checkpoint every X optimizer steps")
     return parser.parse_args()
 
 
@@ -125,35 +136,87 @@ def main():
         return {"input_ids": input_ids, "attention_mask": attention_mask, "labels": labels}
 
     loader = DataLoader(tokenized, batch_size=args.batch_size, shuffle=True, collate_fn=collate)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+
+    num_update_steps_per_epoch = max(1, len(loader) // args.grad_accum)
+    max_train_steps = args.max_steps if args.max_steps > 0 else args.epochs * num_update_steps_per_epoch
+    num_warmup_steps = int(max_train_steps * args.warmup_ratio)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=max_train_steps)
+    print(f"Total optimization steps: {max_train_steps} | Warmup: {num_warmup_steps}")
 
     optimizer.zero_grad(set_to_none=True)
     seen_steps = 0
     opt_step = 0
+    total_loss = 0.0
+    _step_time_accum = 0.0
+    _step_time_count = 0
+
+    pbar = tqdm(total=max_train_steps, desc="Training", unit="step")
 
     for epoch in range(args.epochs):
-        pbar = tqdm(loader, total=len(loader), desc=f"Epoch {epoch + 1}/{args.epochs}", unit="batch")
-        for batch in pbar:
+        print(f"Epoch {epoch + 1}/{args.epochs}")
+        for batch in loader:
+            batch_start_time = time.perf_counter()
             seen_steps += 1
             batch = {k: v.to(device) for k, v in batch.items()}
 
-            loss = model(**batch).loss
-            (loss / args.grad_accum).backward()
+            outputs = model(**batch)
+            loss = outputs.loss / args.grad_accum
+
+            if not torch.isfinite(outputs.loss):
+                print(f"[skip] opt_step={opt_step}: non-finite loss={outputs.loss.item():.4f}, skipping.", flush=True)
+                optimizer.zero_grad(set_to_none=True)
+                seen_steps -= 1
+                continue
+
+            loss.backward()
+            total_loss += loss.item()
 
             if seen_steps % args.grad_accum == 0:
+                has_bad_grad = any(
+                    p.grad is not None and not torch.isfinite(p.grad).all()
+                    for p in model.parameters()
+                )
+                if has_bad_grad:
+                    print(f"[skip] opt_step={opt_step}: NaN/Inf in gradients, skipping.", flush=True)
+                    optimizer.zero_grad(set_to_none=True)
+                    continue
+
+                if args.max_grad_norm > 0:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+
                 optimizer.step()
+                scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
                 opt_step += 1
 
-                if opt_step % 10 == 0:
-                    print(f"opt_step={opt_step} loss={loss.item():.4f}")
+                if args.save_strategy == "steps" and args.save_steps > 0 and opt_step % args.save_steps == 0:
+                    checkpoint_dir = os.path.join(args.output_dir, f"checkpoint-{opt_step}")
+                    print(f"\nSaving intermediate checkpoint at step {opt_step} to {checkpoint_dir} ...", flush=True)
+                    os.makedirs(checkpoint_dir, exist_ok=True)
+                    model.save_pretrained(checkpoint_dir)
+                    tokenizer.save_pretrained(checkpoint_dir)
 
-                pbar.set_postfix(opt_step=opt_step, loss=f"{loss.item():.4f}")
+                iter_dt = time.perf_counter() - batch_start_time
+                _step_time_accum += iter_dt
+                _step_time_count += 1
+
+                if opt_step % args.log_every == 0:
+                    avg_loss = total_loss / args.log_every
+                    lr = scheduler.get_last_lr()[0]
+                    avg_step_s = _step_time_accum / max(1, _step_time_count)
+                    pbar.set_postfix({"loss": f"{avg_loss:.4f}", "lr": f"{lr:.2e}", "step_s": f"{avg_step_s:.2f}s"})
+                    print(f"Step {opt_step}/{max_train_steps} | Loss: {avg_loss:.4f} | LR: {lr:.2e} | avg_step_s={avg_step_s:.2f}s")
+                    total_loss = 0.0
+
+                pbar.update(1)
 
                 if args.max_steps and opt_step >= args.max_steps:
                     break
         if args.max_steps and opt_step >= args.max_steps:
             break
+
+    pbar.close()
 
     os.makedirs(args.output_dir, exist_ok=True)
     model.save_pretrained(args.output_dir)
