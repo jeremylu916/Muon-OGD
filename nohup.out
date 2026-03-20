@@ -61,3 +61,7 @@ Traceback (most recent call last):
     from torch._C import *  # noqa: F403
   File "<frozen importlib._bootstrap>", line 216, in _lock_unlock_module
 KeyboardInterrupt
+Traceback (most recent call last):
+  File "/u/blu7/muon_CL/eval_gsm8k.py", line 7, in <module>
+    from datasets import load_dataset
+ModuleNotFoundError: No module named 'datasets'

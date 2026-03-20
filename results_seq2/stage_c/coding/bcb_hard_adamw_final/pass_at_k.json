@@ -1,0 +1,11 @@
+{
+  "pass@1": 0.02702702702702703,
+  "model": "samples.jsonl",
+  "split": "instruct",
+  "subset": "hard",
+  "calibrated": false,
+  "gt_pass_rate": 0.9932432432432432,
+  "failed_tasks": [
+    "BigCodeBench/590"
+  ]
+}

@@ -4,6 +4,8 @@ import json
 import os
 import random
 import re
+import time
+import traceback
 import textwrap
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -15,17 +17,21 @@ from gradio_client import Client, handle_file
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # --- Configuration ---
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_BCB_SPLIT = "instruct"   # bigcodebench split: instruct|complete
 DEFAULT_BCB_SUBSET = "hard"      # bigcodebench subset: hard|full
 DEFAULT_BCB_VERSION = "v0.1.4"   # dataset version on HF hub
-DEFAULT_NUM_TASKS = 10
+DEFAULT_NUM_TASKS = 0
 DEFAULT_SEED = 42
 DEFAULT_MAX_NEW_TOKENS = 1024
 DEFAULT_TEMPERATURE = 0.0 # Greedy for pass@1
 DEFAULT_NUM_CANDIDATES = 1
 DEFAULT_OUT_DIR = "results/bigcodebench"
 DEFAULT_GRADIO_ENDPOINT = "https://bigcode-bigcodebench-evaluator.hf.space/"
+DEFAULT_TRAIN_SIZE = 800
+DEFAULT_USE_REST_SPLIT = True
+DEFAULT_SUBMIT_RETRIES = 3
+DEFAULT_SUBMIT_RETRY_DELAY_SEC = 20
 
 # Regex for markdown code blocks
 _CODEBLOCK_RE = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL | re.IGNORECASE)
@@ -99,6 +105,50 @@ def normalize_solution(task_prompt: str, code: str) -> str:
         body = "pass"
     return sig + "\n" + textwrap.indent(body, "    ")
 
+
+def _is_valid_python(code: str) -> bool:
+    try:
+        ast.parse(code)
+        return True
+    except Exception:
+        return False
+
+
+def _indent_task_func_body(code: str) -> str:
+    lines = code.splitlines()
+    out = []
+    in_task_func = False
+    for line in lines:
+        out.append(line)
+        if re.match(r"^\s*def\s+task_func\s*\(.*\)\s*:\s*$", line):
+            in_task_func = True
+            continue
+        if in_task_func and line.strip() and re.match(r"^\S", line):
+            out[-1] = "    " + line
+    return "\n".join(out)
+
+
+def make_syntax_safe(task_prompt: str, code: str) -> tuple[str, bool, bool, bool]:
+    candidate = code.replace("\t", "    ").rstrip()
+    raw_valid = _is_valid_python(candidate)
+    if raw_valid:
+        return candidate, False, True, True
+
+    attempts = []
+    attempts.append(textwrap.dedent(candidate).strip())
+    attempts.append(normalize_solution(task_prompt, textwrap.dedent(candidate).strip()))
+    attempts.append(_indent_task_func_body(normalize_solution(task_prompt, candidate)))
+
+    for repaired in attempts:
+        repaired = repaired.rstrip()
+        if not repaired:
+            continue
+        if _is_valid_python(repaired):
+            return repaired, True, False, True
+
+    # Return best-effort fallback if no repair succeeded.
+    return normalize_solution(task_prompt, candidate), False, False, _is_valid_python(normalize_solution(task_prompt, candidate))
+
 def build_instruct_prompt(task_prompt: str) -> str:
     # Matches the SFT training script format
     return (
@@ -127,8 +177,13 @@ def parse_args():
     p.add_argument("--gradio_endpoint", type=str, default=DEFAULT_GRADIO_ENDPOINT)
     p.add_argument("--task_ids", type=str, default="")
     p.add_argument("--task_ids_file", type=str, default="")
+    p.add_argument("--train_size", type=int, default=DEFAULT_TRAIN_SIZE, help="Number of shuffled tasks treated as training split")
+    p.add_argument("--use_rest_split", action=argparse.BooleanOptionalAction, default=DEFAULT_USE_REST_SPLIT,
+                   help="If true and no explicit task_ids/task_ids_file are provided, evaluate on tasks after the first train_size shuffled tasks")
     p.add_argument("--samples_path", type=str, default="", help="Optional path to existing samples.jsonl")
     p.add_argument("--submit_only", action="store_true", help="Skip generation and submit existing samples")
+    p.add_argument("--submit_retries", type=int, default=DEFAULT_SUBMIT_RETRIES, help="Number of retry attempts for remote submission")
+    p.add_argument("--submit_retry_delay_sec", type=int, default=DEFAULT_SUBMIT_RETRY_DELAY_SEC, help="Delay in seconds between submission retries")
     return p.parse_args()
 
 def select_tasks(ds, split: str, num_tasks: int, seed: int, task_ids_csv: str) -> List[Task]:
@@ -143,10 +198,11 @@ def select_tasks(ds, split: str, num_tasks: int, seed: int, task_ids_csv: str) -
                 tasks.append(Task(task_id=tid, prompt=ex[f"{split}_prompt"]))
         return tasks
 
-    rng = random.Random(seed)
     indices = list(range(len(ds)))
-    rng.shuffle(indices)
-    indices = indices[:num_tasks]
+    if num_tasks > 0:
+        rng = random.Random(seed)
+        rng.shuffle(indices)
+        indices = indices[:num_tasks]
     tasks = []
     for i in indices:
         ex = ds[i]
@@ -197,6 +253,17 @@ def main():
             with open(args.task_ids_file, "r") as f:
                 task_ids_list = json.load(f)
             tasks = select_tasks(ds, args.split, args.num_tasks, args.seed, ",".join(task_ids_list))
+        elif args.use_rest_split and not args.task_ids.strip():
+            if len(ds) <= args.train_size:
+                raise ValueError(
+                    f"Dataset has {len(ds)} tasks, cannot create held-out rest split with train_size={args.train_size}."
+                )
+            shuffled = ds.shuffle(seed=args.seed)
+            rest_ds = shuffled.select(range(args.train_size, len(shuffled)))
+            tasks = select_tasks(rest_ds, args.split, args.num_tasks, args.seed, "")
+            print(
+                f"Using held-out rest split: train_size={args.train_size}, eval_candidates={len(rest_ds)}, selected={len(tasks)}"
+            )
         else:
             tasks = select_tasks(ds, args.split, args.num_tasks, args.seed, args.task_ids)
         
@@ -219,6 +286,9 @@ def main():
 
         # Generate
         print(f"Generating solutions for {len(tasks)} tasks...")
+        raw_valid_count = 0
+        final_valid_count = 0
+        repaired_count = 0
         with open(samples_path, "w") as f:
             for n, task in enumerate(tasks, start=1):
                 if args.split == "instruct":
@@ -262,7 +332,11 @@ def main():
                 # -----------------------------------------------
 
                 extracted = extract_code(raw_output)
-                final_code = normalize_solution(task.prompt, extracted)
+                normalized = normalize_solution(task.prompt, extracted)
+                final_code, was_repaired, raw_valid, final_valid = make_syntax_safe(task.prompt, normalized)
+                raw_valid_count += int(raw_valid)
+                final_valid_count += int(final_valid)
+                repaired_count += int(was_repaired)
                 
                 # Use 'completion' key for compatibility with standard evaluators
                 record = {"task_id": task.task_id, "completion": final_code}
@@ -271,38 +345,52 @@ def main():
                 if n % 10 == 0:
                     print(f"Generated {n}/{len(tasks)}")
 
+        print(
+            f"Syntax check summary: raw_valid={raw_valid_count}/{len(tasks)} | "
+            f"final_valid={final_valid_count}/{len(tasks)} | repaired={repaired_count}"
+        )
+
     # Evaluate
     print("Submitting to Remote Evaluator...")
-    try:
-        client = Client(args.gradio_endpoint)
-        results, pass_at_k = client.predict(
-            split=args.split,
-            subset=args.subset,
-            samples=handle_file(samples_path),
-            pass_k="1",
-            parallel=1,
-            min_time_limit=1,
-            max_as_limit=30 * 1024,
-            max_data_limit=30 * 1024,
-            max_stack_limit=10,
-            calibrated=False,
-            check_gt_only=False,
-            no_gt=False,
-            selective_evaluate=",".join(task_indices),
-            api_name="/predict",
-        )
-        print("Results received.")
-        
-        with open(os.path.join(args.out_dir, "eval_results.json"), "w") as f:
-            json.dump(results, f, indent=2)
-        with open(os.path.join(args.out_dir, "pass_at_k.json"), "w") as f:
-            json.dump(pass_at_k, f, indent=2)
-            
-        print(f"pass@1: {pass_at_k.get('pass@1')}")
-        
-    except Exception as e:
-        print(f"\nEvaluation Failed: {e}")
-        print("Check if the generated file 'samples.jsonl' looks correct.")
+    client = Client(args.gradio_endpoint)
+    max_attempts = max(1, int(args.submit_retries))
+    for attempt in range(1, max_attempts + 1):
+        try:
+            results, pass_at_k = client.predict(
+                split=args.split,
+                subset=args.subset,
+                samples=handle_file(samples_path),
+                pass_k="1",
+                parallel=1,
+                min_time_limit=1,
+                max_as_limit=30 * 1024,
+                max_data_limit=30 * 1024,
+                max_stack_limit=10,
+                calibrated=False,
+                check_gt_only=False,
+                no_gt=False,
+                selective_evaluate=",".join(task_indices),
+                api_name="/predict",
+            )
+            print("Results received.")
+
+            with open(os.path.join(args.out_dir, "eval_results.json"), "w") as f:
+                json.dump(results, f, indent=2)
+            with open(os.path.join(args.out_dir, "pass_at_k.json"), "w") as f:
+                json.dump(pass_at_k, f, indent=2)
+
+            print(f"pass@1: {pass_at_k.get('pass@1')}")
+            break
+        except Exception as e:
+            print(f"\nEvaluation attempt {attempt}/{max_attempts} failed: {e!r}")
+            if attempt == max_attempts:
+                print("Submission failed after all retries.")
+                print("Check if 'samples.jsonl' is valid JSONL with task_id/completion keys.")
+                print("Full traceback:")
+                print(traceback.format_exc())
+                raise
+            print(f"Retrying in {args.submit_retry_delay_sec} seconds...")
+            time.sleep(max(0, args.submit_retry_delay_sec))
 
 if __name__ == "__main__":
     main()

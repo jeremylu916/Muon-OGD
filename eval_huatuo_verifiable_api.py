@@ -18,7 +18,7 @@ except Exception:
     def tqdm(x, **kwargs):
         return x
 
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-verifiable-problem"
 DEFAULT_DATASET_CONFIG = "default"
 DEFAULT_SPLIT = "train"
@@ -36,6 +36,7 @@ DEFAULT_JUDGE_MAX_RETRIES = 10
 DEFAULT_JUDGE_MIN_SLEEP = 0.5
 DEFAULT_PROGRESS_EVERY = 10
 DEFAULT_JUDGE_MAX_SLEEP = 30.0
+DEFAULT_JUDGE_FINAL_ANSWER_ONLY = True
 
 def get_hf_cache_dir():
     cache_dir = os.environ.get("HF_CACHE_DIR", "").strip()
@@ -69,6 +70,12 @@ def parse_args():
     p.add_argument("--judge_max_retries", type=int, default=DEFAULT_JUDGE_MAX_RETRIES)
     p.add_argument("--judge_min_sleep", type=float, default=DEFAULT_JUDGE_MIN_SLEEP)
     p.add_argument("--judge_max_sleep", type=float, default=DEFAULT_JUDGE_MAX_SLEEP)
+    p.add_argument(
+        "--judge_final_answer_only",
+        action=argparse.BooleanOptionalAction,
+        default=DEFAULT_JUDGE_FINAL_ANSWER_ONLY,
+        help="If true, judge only the final answer span after CoT/reasoning markers for both prediction and reference.",
+    )
     p.add_argument("--progress_every", type=int, default=DEFAULT_PROGRESS_EVERY)
     p.add_argument(
         "--openai_api_key",
@@ -118,11 +125,35 @@ def build_prompt(tokenizer, question: str):
     messages = [
         {
             "role": "system",
-            "content": "You are a careful medical reasoning assistant. Answer clearly and concisely.",
+            "content": "You are a careful medical assistant. Answer the medical question directly and concisely. Give the final answer first. Do not include unnecessary explanation.",
         },
         {"role": "user", "content": question.strip()},
     ]
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+
+def extract_final_answer_only(text: str) -> str:
+    s = (text or "").strip()
+    if not s:
+        return s
+
+    if "</think>" in s:
+        tail = s.rsplit("</think>", 1)[-1].strip()
+        if tail:
+            return tail
+
+    for pat in [
+        r"(?is)final\s*answer\s*[:：]\s*(.+)$",
+        r"(?is)answer\s*[:：]\s*(.+)$",
+        r"(?is)####\s*(.+)$",
+    ]:
+        m = re.search(pat, s)
+        if m:
+            tail = m.group(1).strip()
+            if tail:
+                return tail
+
+    return s
 
 
 def build_judge_prompt(question: str, reference_answer: str, model_response: str) -> str:
@@ -280,6 +311,8 @@ def main():
 
     correct = 0
     judge_errors = 0
+    final_trimmed_pred = 0
+    final_trimmed_gold = 0
     rows = []
 
     for i, idx in enumerate(tqdm(indices, total=len(indices), desc="Judging", unit="sample"), start=1):
@@ -296,7 +329,17 @@ def main():
         prompt_len = inputs["input_ids"].shape[1]
         pred = tokenizer.decode(out[0][prompt_len:], skip_special_tokens=True).strip()
 
-        judge_prompt = build_judge_prompt(q, gold, pred)
+        pred_for_judge = pred
+        gold_for_judge = gold
+        if args.judge_final_answer_only:
+            pred_for_judge = extract_final_answer_only(pred)
+            gold_for_judge = extract_final_answer_only(gold)
+            if pred_for_judge != pred:
+                final_trimmed_pred += 1
+            if gold_for_judge != gold:
+                final_trimmed_gold += 1
+
+        judge_prompt = build_judge_prompt(q, gold_for_judge, pred_for_judge)
         try:
             verdict = call_openai_judge(
                 api_key,
@@ -329,6 +372,8 @@ def main():
                     "question": q,
                     "gold": gold,
                     "pred": pred,
+                    "gold_for_judge": gold_for_judge,
+                    "pred_for_judge": pred_for_judge,
                     "judge_verdict": verdict,
                 }
             )
@@ -357,6 +402,9 @@ def main():
         "num_examples": total,
         "seed": args.seed,
         "max_new_tokens": args.max_new_tokens,
+        "judge_final_answer_only": args.judge_final_answer_only,
+        "final_trimmed_pred": final_trimmed_pred,
+        "final_trimmed_gold": final_trimmed_gold,
         "judge_api_url": args.judge_api_url,
         "judge_model": args.judge_model,
         "judge_max_retries": args.judge_max_retries,

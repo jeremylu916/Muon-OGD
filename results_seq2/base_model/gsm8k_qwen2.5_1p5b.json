@@ -1,0 +1,12 @@
+{
+  "task": "gsm8k",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "split": "test",
+  "num_examples": 500,
+  "seed": 42,
+  "max_new_tokens": 128,
+  "accuracy": 0.176,
+  "correct": 88,
+  "total": 500,
+  "timestamp_utc": "2026-03-11T20:59:02.244495+00:00"
+}

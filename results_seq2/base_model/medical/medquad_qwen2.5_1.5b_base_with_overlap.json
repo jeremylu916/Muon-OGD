@@ -1,0 +1,437 @@
+{
+  "task": "medquad",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "dataset_id": "keivalya/MedQuad-MedicalQnADataset",
+  "dataset_config": "",
+  "source_split": "train",
+  "eval_split_name": "test",
+  "question_field": "Question",
+  "answer_field": "Answer",
+  "qtype_field": "qtype",
+  "qtype_filter": "",
+  "num_examples": 100,
+  "seed": 42,
+  "max_new_tokens": 256,
+  "batch_size": 4,
+  "bertscore_max_chars": 1200,
+  "bertscore_batch_size": 1,
+  "bertscore_device": "",
+  "metrics": {
+    "exact_match": 0.0,
+    "avg_token_f1": 0.2763595887818741,
+    "rouge1": 0.29418084278404555,
+    "rouge2": 0.0691557938714987,
+    "rougeL": 0.16046809871539347,
+    "rougeLsum": 0.20465617364320465,
+    "bertscore_precision": 0.5688932499289513,
+    "bertscore_recall": 0.5880093142390251,
+    "bertscore_f1": 0.576408389210701
+  },
+  "per_qtype": {
+    "information": {
+      "count": 33,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.3065965027259505,
+      "rouge1": 0.3298153657081049,
+      "rouge2": 0.08331198414183844,
+      "rougeL": 0.17880165317397567,
+      "rougeLsum": 0.2246580101067568,
+      "bertscore_precision": 0.6119935557697759,
+      "bertscore_recall": 0.61363039504398,
+      "bertscore_f1": 0.6115608350797133
+    },
+    "causes": {
+      "count": 7,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.2812927629927539,
+      "rouge1": 0.30648713697310614,
+      "rouge2": 0.08908486978600144,
+      "rougeL": 0.1624914739472652,
+      "rougeLsum": 0.2201567190775518,
+      "bertscore_precision": 0.5687317933355059,
+      "bertscore_recall": 0.580414525100163,
+      "bertscore_f1": 0.5722211854798454
+    },
+    "genetic changes": {
+      "count": 9,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.36897252712786605,
+      "rouge1": 0.3766455672950413,
+      "rouge2": 0.10532753700011704,
+      "rougeL": 0.19336162495566694,
+      "rougeLsum": 0.2469049641038313,
+      "bertscore_precision": 0.5755368206236098,
+      "bertscore_recall": 0.605259637037913,
+      "bertscore_f1": 0.5891250703069899
+    },
+    "symptoms": {
+      "count": 19,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.23693963962826303,
+      "rouge1": 0.26832639214185805,
+      "rouge2": 0.045743252040042974,
+      "rougeL": 0.14086152962856915,
+      "rougeLsum": 0.18888329319417796,
+      "bertscore_precision": 0.5411305929485121,
+      "bertscore_recall": 0.5209636656861556,
+      "bertscore_f1": 0.5303678026324824
+    },
+    "frequency": {
+      "count": 4,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.2500648407511153,
+      "rouge1": 0.26181818181818184,
+      "rouge2": 0.08478873542236304,
+      "rougeL": 0.18369594824651003,
+      "rougeLsum": 0.1897565543071161,
+      "bertscore_precision": 0.5868019461631775,
+      "bertscore_recall": 0.6947934031486511,
+      "bertscore_f1": 0.6324305385351181
+    },
+    "inheritance": {
+      "count": 6,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.25975130748923375,
+      "rouge1": 0.26139887695776337,
+      "rouge2": 0.0654094940010433,
+      "rougeL": 0.16351796192929724,
+      "rougeLsum": 0.17078975949636713,
+      "bertscore_precision": 0.558587114016215,
+      "bertscore_recall": 0.6097136537233988,
+      "bertscore_f1": 0.5810811420281728
+    },
+    "exams and tests": {
+      "count": 2,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.2590987008939323,
+      "rouge1": 0.25946275946275943,
+      "rouge2": 0.062450184501845016,
+      "rougeL": 0.14957264957264957,
+      "rougeLsum": 0.15995115995115997,
+      "bertscore_precision": 0.5030043721199036,
+      "bertscore_recall": 0.5950834453105927,
+      "bertscore_f1": 0.5451655089855194
+    },
+    "treatment": {
+      "count": 13,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.21961492921959963,
+      "rouge1": 0.221258839784789,
+      "rouge2": 0.04588659063485258,
+      "rougeL": 0.12432283268350948,
+      "rougeLsum": 0.16949263598133396,
+      "bertscore_precision": 0.512124458184609,
+      "bertscore_recall": 0.5761628976235023,
+      "bertscore_f1": 0.5411728024482727
+    },
+    "susceptibility": {
+      "count": 2,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.2413836163836164,
+      "rouge1": 0.26450299672057,
+      "rouge2": 0.05189709238371998,
+      "rougeL": 0.11552317410057997,
+      "rougeLsum": 0.17440752168785642,
+      "bertscore_precision": 0.5749483108520508,
+      "bertscore_recall": 0.5629328191280365,
+      "bertscore_f1": 0.5625184178352356
+    },
+    "prevention": {
+      "count": 2,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.28350285011735776,
+      "rouge1": 0.2864817432847463,
+      "rouge2": 0.0490535857104772,
+      "rougeL": 0.13528981621410813,
+      "rougeLsum": 0.23691317700970116,
+      "bertscore_precision": 0.5740483701229095,
+      "bertscore_recall": 0.5896732211112976,
+      "bertscore_f1": 0.5812293291091919
+    },
+    "research": {
+      "count": 3,
+      "exact_match": 0.0,
+      "avg_token_f1": 0.24829580920316907,
+      "rouge1": 0.2504903523901895,
+      "rouge2": 0.02386020176388448,
+      "rougeL": 0.1427794885498511,
+      "rougeLsum": 0.17259592275448057,
+      "bertscore_precision": 0.5302506387233734,
+      "bertscore_recall": 0.5732093850771586,
+      "bertscore_f1": 0.5484624107678732
+    }
+  },
+  "timestamp_utc": "2026-03-14T22:16:58.370998+00:00",
+  "sample_predictions": [
+    {
+      "dataset_idx": 4884,
+      "question": "Do you have information about Oil Spills",
+      "gold": "Summary : Oil spills often happen because of accidents, when people make mistakes or equipment breaks down. Other causes include natural disasters or deliberate acts. Oil spills have major environmental and economic effects.    Oil spills can also affect human health. These effects can depend on what kind of oil was spilled and where (on land, in a river, or in the ocean). Other factors include what kind of exposure and how much exposure there was. People who clean up the spill are more at risk. Problems could include skin and eye irritation, neurologic and breathing problems, and stress. Not much is known about the long-term effects of oil spills.",
+      "pred": "assistant\nOil spills can be catastrophic for marine life and ecosystems. They occur when oil from ships, offshore drilling platforms, or other sources leaks into water bodies. The effects of an oil spill include:\n\n1. Immediate harm to wildlife: Birds, fish, mammals, and plants can ingest or become coated in oil, leading to death.\n2. Long-term damage: Oil can contaminate habitats, affecting species over time.\n3. Economic impacts: Cleanup efforts and lost revenue due to reduced tourism and fishing.\n\nPrevention measures include:\n- Proper maintenance of vessels\n- Strict regulations on offshore operations\n- Regular monitoring of coastal areas\n\nCleanup methods vary but typically involve mechanical removal, chemical dispersants, and bioremediation techniques.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.2672811059907834
+    },
+    {
+      "dataset_idx": 13209,
+      "question": "What causes Medullary cystic kidney disease ?",
+      "gold": "What causes medullary cystic kidney disease? There are 2 types of MCKD, which are both inherited in an autosomal dominant manner but are caused by mutations in different genes. MCKD 1 is caused by mutations in the MCKD1 gene (which has not yet been identified) and MCKD 2 is caused by mutations in the UMOD gene. Exposure to seizure medication is not a known cause medullary cystic kidney disease.",
+      "pred": "assistant\nMedullary Cystic Kidney Disease (MCKD) is primarily caused by mutations in the gene encoding the protein polycystin-1 (PC1). This genetic mutation leads to the formation of multiple cysts within the kidneys over time, which can cause progressive damage to the kidneys and lead to end-stage renal failure if left untreated. The condition affects both men and women equally but is more common in individuals with certain ethnic backgrounds such as African Americans and people of Ashkenazi Jewish descent.",
+      "qtype": "causes",
+      "exact_match": false,
+      "token_f1": 0.29729729729729726
+    },
+    {
+      "dataset_idx": 9500,
+      "question": "What are the genetic changes related to familial HDL deficiency ?",
+      "gold": "Mutations in the ABCA1 gene or the APOA1 gene cause familial HDL deficiency. The proteins produced from these genes work together to remove cholesterol and phospholipids from cells.  The ABCA1 gene provides instructions for making a protein that removes cholesterol and phospholipids from cells by moving them across the cell membrane. The movement of these substances across the membrane is enhanced by another protein called apolipoprotein A-I (apoA-I), which is produced by the APOA1 gene. Once outside the cell, the cholesterol and phospholipids combine with apoA-I to form HDL. ApoA-I also triggers a reaction that converts cholesterol to a form that can be fully integrated into HDL and transported through the bloodstream.  ABCA1 gene mutations and some APOA1 gene mutations prevent the release of cholesterol and phospholipids from cells. Other mutations in the APOA1 gene reduce the protein's ability to stimulate the conversion of cholesterol. These ABCA1 and APOA1 gene mutations decrease the amount of cholesterol or phospholipids available to form HDL, resulting in low levels of HDL in the blood. A shortage (deficiency) of HDL is believed to increase the risk of cardiovascular disease.",
+      "pred": "Heterozygous familial hypercholesterolemia (HeFH) is an inherited condition characterized by high levels of low-density lipoprotein cholesterol (LDL-C), also known as \"bad\" cholesterol. The primary genetic change associated with HeFH is a mutation in the LDL receptor gene on chromosome 19.\n\nThis mutation leads to a reduced function of the LDL receptor protein, which normally helps cells remove excess cholesterol from the bloodstream. As a result, there is an accumulation of cholesterol in the blood vessels, leading to early onset of cardiovascular disease.\n\nThe specific mutation involves a frameshift mutation that results in premature stop codons, causing the production of a truncated form of the LDL receptor protein. This truncated protein cannot properly bind to and clear cholesterol from the bloodstream, leading to elevated LDL levels and the characteristic symptoms of HeFH.\n\nUnderstanding this genetic basis is crucial for diagnosing and managing individuals at risk for HeFH, as well as for developing targeted therapies to lower cholesterol levels and reduce the risk of heart disease.",
+      "qtype": "genetic changes",
+      "exact_match": false,
+      "token_f1": 0.37249283667621774
+    },
+    {
+      "dataset_idx": 13348,
+      "question": "What are the symptoms of Hirschsprung's disease ?",
+      "gold": "What are the signs and symptoms of Hirschsprung's disease? The Human Phenotype Ontology provides the following list of signs and symptoms for Hirschsprung's disease. If the information is available, the table below includes how often the symptom is seen in people with this condition. You can use the MedlinePlus Medical Dictionary to look up the definitions for these medical terms. Signs and Symptoms Approximate number of patients (when available) Abdominal pain 90% Aganglionic megacolon 90% Constipation 90% Intestinal obstruction 90% Nausea and vomiting 90% Weight loss 50% Adducted thumb 7.5% Cognitive impairment 7.5% Diarrhea 7.5% Intestinal polyposis 7.5% Neoplasm of the thyroid gland 7.5% Sensorineural hearing impairment 7.5% Sepsis 7.5% Short stature 7.5% Abdominal distention - Abnormality of the enteric ganglia - Autosomal dominant inheritance - Enterocolitis - Vomiting - The Human Phenotype Ontology (HPO) has collected information on how often a sign or symptom occurs in a condition. Much of this information comes from Orphanet, a European rare disease database. The frequency of a sign or symptom is usually listed as a rough estimate of the percentage of patients who have that feature. The frequency may also be listed as a fraction. The first number of the fraction is how many people had the symptom, and the second number is the total number of people who were examined in one study. For example, a frequency of 25/25 means that in a study of 25 people all patients were found to have that symptom. Because these frequencies are based on a specific study, the fractions may be different if another group of patients are examined. Sometimes, no information on frequency is available. In these cases, the sign or symptom may be rare or common.",
+      "pred": "Hirschsprung's disease is a congenital condition where there is an absence of nerve cells in the large intestine (colon) below the level of the spleen. This results in the inability to move stool through the colon properly. The main symptoms include:\n\n1. Abdominal pain: Often begins around 3-6 months of age.\n2. Vomiting: May occur with abdominal pain.\n3. Constipation: Stools may be hard and difficult to pass.\n4. Foul-smelling stools: Due to incomplete digestion.\n5. Failure to thrive: In infants, this can lead to weight loss despite good feeding.\n6. Distention of the abdomen: Visible swelling due to retained stool.\n\nDiagnosis typically involves imaging studies such as X-rays or barium enema, and sometimes a biopsy of tissue from the affected area for histopathological examination. Treatment usually requires surgery to remove the diseased portion of the bowel. Early diagnosis and treatment are crucial for preventing complications like intussusception and malabsorption.",
+      "qtype": "symptoms",
+      "exact_match": false,
+      "token_f1": 0.2703962703962704
+    },
+    {
+      "dataset_idx": 8978,
+      "question": "What is (are) congenital fiber-type disproportion ?",
+      "gold": "Congenital fiber-type disproportion is a condition that primarily affects skeletal muscles, which are muscles used for movement. People with this condition typically experience muscle weakness (myopathy), particularly in the muscles of the shoulders, upper arms, hips, and thighs. Weakness can also affect the muscles of the face and muscles that control eye movement (ophthalmoplegia), sometimes causing droopy eyelids (ptosis). Individuals with congenital fiber-type disproportion generally have a long face, a high arch in the roof of the mouth (high-arched palate), and crowded teeth. Affected individuals may have joint deformities (contractures) and an abnormally curved lower back (lordosis) or a spine that curves to the side (scoliosis). Approximately 30 percent of people with this disorder experience mild to severe breathing problems related to weakness of muscles needed for breathing. Some people who experience these breathing problems require use of a machine to help regulate their breathing at night (noninvasive mechanical ventilation), and occasionally during the day as well. About 30 percent of affected individuals have difficulty swallowing due to muscle weakness in the throat. Rarely, people with this condition have a weakened and enlarged heart muscle (dilated cardiomyopathy).  The severity of congenital fiber-type disproportion varies widely. It is estimated that up to 25 percent of affected individuals experience severe muscle weakness at birth and die in infancy or childhood. Others have only mild muscle weakness that becomes apparent in adulthood. Most often, the signs and symptoms of this condition appear by age 1. The first signs of this condition are usually decreased muscle tone (hypotonia) and muscle weakness. In most cases, muscle weakness does not worsen over time, and in some instances it may improve. Although motor skills such as standing and walking may be delayed, many affected children eventually learn to walk. These individuals often have less stamina than their peers, but they remain active. Rarely, people with this condition have a progressive decline in muscle strength over time. These individuals may lose the ability to walk and require wheelchair assistance.",
+      "pred": "-type disproportion ?\nassistant\nCongenital fiber-type disproportion refers to an abnormality in muscle fibers that can be present at birth. It involves an imbalance between fast-twitch and slow-twitch muscle fibers. Fast-twitch fibers are responsible for explosive strength and short bursts of activity, while slow-twitch fibers are better suited for endurance activities.\n\nThis condition can lead to various symptoms depending on which type of muscle fibers are affected:\n\n1. Inability to perform certain physical tasks due to weakness in one type of muscle fiber.\n2. Increased risk of injury during high-intensity exercises because of imbalanced muscle function.\n3. Potential for fatigue more quickly than expected after exercise.\n4. Possible changes in muscle tone or appearance.\n\nThe exact cause of congenital fiber-type disproportion is not fully understood, but it may involve genetic factors or environmental influences. Treatment typically focuses on improving overall fitness and addressing any specific weaknesses identified through physical therapy or other interventions aimed at enhancing muscle balance and function.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.26122448979591834
+    },
+    {
+      "dataset_idx": 5219,
+      "question": "What is (are) Genital Warts ?",
+      "gold": "Genital warts are a sexually transmitted disease (STD) caused by the human papillomavirus (HPV). The warts are soft, moist, pink, or flesh-colored bumps. You can have one or many of these bumps. In women, the warts usually occur in or around the vagina, on the cervix or around the anus. In men, genital warts are less common but might occur on the tip of the penis.     You can get genital warts during oral, vaginal, or anal sex with an infected partner. Correct usage of latex condoms greatly reduces, but does not completely eliminate, the risk of catching or spreading HPV. HPV vaccines may help prevent some of the HPV infections that cause genital warts.    Your health care provider usually diagnoses genital warts by seeing them. The warts might disappear on their own. If not, your health care provider can treat or remove them. The virus stays in your body even after treatment, so warts can come back.    NIH: National Institute of Allergy and Infectious Diseases",
+      "pred": "ital Warts ?\nassistant\nGenital warts are growths on the skin of the genitals that can be caused by certain types of human papillomavirus (HPV). They appear as small, flesh-colored bumps or cauliflower-like growths. These warts are typically painless but may cause discomfort during sexual contact. HPV is highly contagious and transmitted through direct skin-to-skin contact with an infected area. The condition is treatable with medication or surgical removal, though it often recurs if left untreated. Regular screening for sexually transmitted infections, including HPV testing, is recommended to detect and manage genital warts early.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.31007751937984496
+    },
+    {
+      "dataset_idx": 3118,
+      "question": "What is (are) Plasma Cell Neoplasms (Including Multiple Myeloma) ?",
+      "gold": "Key Points\n                    - Plasma cell neoplasms are diseases in which the body makes too many plasma cells.    - Plasma cell neoplasms can be benign (not cancer) or malignant (cancer).    - There are several types of plasma cell neoplasms.          - Monoclonal gammopathy of undetermined significance (MGUS)     - Plasmacytoma     - Multiple myeloma        - Multiple myeloma and other plasma cell neoplasms may cause a condition called amyloidosis.    - Age can affect the risk of plasma cell neoplasms.    - Tests that examine the blood, bone marrow, and urine are used to detect (find) and diagnose multiple myeloma and other plasma cell neoplasms.    - Certain factors affect prognosis (chance of recovery) and treatment options.\n                \n                \n                    Plasma cell neoplasms are diseases in which the body makes too many plasma cells.\n                    Plasma cells develop from B lymphocytes (B cells), a type of white blood cell that is made in the bone marrow. Normally, when bacteria or viruses enter the body, some of the B cells will change into plasma cells. The plasma cells make antibodies to fight bacteria and viruses, to stop infection and disease.     Plasma cell neoplasms are diseases in which abnormal plasma cells or myeloma cells form tumors in the bones or soft tissues of the body. The plasma cells also make an antibody protein, called M protein, that is not needed by the body and does not help fight infection. These antibody proteins build up in the bone marrow and can cause the blood to thicken or can damage the kidneys.\n                \n                \n                    Plasma cell neoplasms can be benign (not cancer) or malignant (cancer).\n                    Monoclonal gammopathy of undetermined significance (MGUS) is not cancer but can become cancer. The following types of plasma cell neoplasms are cancer:         -  Lymphoplasmacytic lymphoma. (See Adult Non-Hodgkin Lymphoma Treatment for more information.)    -  Plasmacytoma.    -  Multiple myeloma.\n                \n                \n                    There are several types of plasma cell neoplasms.\n                    Plasma cell neoplasms include the following:     Monoclonal gammopathy of undetermined significance (MGUS)    In this type of plasma cell neoplasm, less than 10% of the bone marrow is made up of abnormal plasma cells and there is no cancer. The abnormal plasma cells make M protein, which is sometimes found during a routine blood or urine test. In most patients, the amount of M protein stays the same and there are no signs, symptoms, or health problems.     In some patients, MGUS may later become a more serious condition, such as amyloidosis, or cause problems with the kidneys, heart, or nerves. MGUS can also become cancer, such as multiple myeloma, lymphoplasmacytic lymphoma, or chronic lymphocytic leukemia.       Plasmacytoma    In this type of plasma cell neoplasm, the abnormal plasma cells (myeloma cells) are in one place and form one tumor, called a plasmacytoma. Sometimes plasmacytoma can be cured. There are two types of plasmacytoma.            - In isolated plasmacytoma of bone, one plasma cell tumor is found in the bone, less than 10% of the bone marrow is made up of plasma cells, and there are no other signs of cancer. Plasmacytoma of the bone often becomes multiple myeloma.     - In extramedullary plasmacytoma, one plasma cell tumor is found in soft tissue but not in the bone or the bone marrow. Extramedullary plasmacytomas commonly form in tissues of the throat, tonsil, and paranasal sinuses.            Signs and symptoms depend on where the tumor is.            - In bone, the plasmacytoma may cause pain or broken bones.      - In soft tissue, the tumor may press on nearby areas and cause pain or other problems. For example, a plasmacytoma in the throat can make it hard to swallow.               Multiple myeloma    In multiple myeloma, abnormal plasma cells (myeloma cells) build up in the bone marrow and form tumors in many bones of the body. These tumors may keep the bone marrow from making enough healthy blood cells. Normally, the bone marrow makes stem cells (immature cells) that become three types of mature blood cells:            -  Red blood cells that carry oxygen and other substances to all tissues of the body.      -  White blood cells that fight infection and disease.      -  Platelets that form blood clots to help prevent bleeding.            As the number of myeloma cells increases, fewer red blood cells, white blood cells, and platelets are made. The myeloma cells also damage and weaken the bone.     Sometimes multiple myeloma does not cause any signs or symptoms. This is called smoldering multiple myeloma. It may be found when a blood or urine test is done for another condition. Signs and symptoms may be caused by multiple myeloma or other conditions. Check with your doctor if you have any of the following:            - Bone pain, especially in the back or ribs.     - Bones that break easily.     -  Fever for no known reason or frequent infections.     - Easy bruising or bleeding.     - Trouble breathing.     - Weakness of the arms or legs.     - Feeling very tired.           A tumor can damage the bone and cause hypercalcemia (too much calcium in the blood). This can affect many organs in the body, including the kidneys, nerves, heart, muscles, and digestive tract, and cause serious health problems.    Hypercalcemia may cause the following signs and symptoms:             - Loss of appetite.     -  Nausea or vomiting.     - Feeling thirsty.     - Frequent urination.     -  Constipation.     - Feeling very tired.     - Muscle weakness.      - Restlessness.     -  Confusion or trouble thinking.\n                \n                \n                    Multiple myeloma and other plasma cell neoplasms may cause a condition called amyloidosis.\n                    In rare cases, multiple myeloma can cause peripheral nerves (nerves that are not in the brain or spinal cord) and organs to fail. This may be caused by a condition called amyloidosis. Antibody proteins build up and stick together in peripheral nerves and organs, such as the kidney and heart. This can cause the nerves and organs to become stiff and unable to work the way they should.    Amyloidosis may cause the following signs and symptoms:         - Feeling very tired.    - Purple spots on the skin.    - Enlarged tongue.    -  Diarrhea.    - Swelling caused by fluid in your body's tissues.    - Tingling or numbness in your legs and feet.",
+      "pred": "Plasma cell neoplasms include multiple myeloma, which is characterized by an overproduction of abnormal plasma cells in the bone marrow that can lead to various symptoms such as fatigue, bone pain, and kidney problems. Other types of plasma cell disorders may also be considered plasma cell neoplasms depending on their specific characteristics and treatment needs. These conditions require close monitoring and management by healthcare professionals.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.09261083743842363
+    },
+    {
+      "dataset_idx": 7919,
+      "question": "How many people are affected by benign recurrent intrahepatic cholestasis ?",
+      "gold": "BRIC is a rare disorder. Although the prevalence is unknown, this condition is less common than the related disorder PFIC, which affects approximately 1 in 50,000 to 100,000 people worldwide.",
+      "pred": "assistant\nBenign recurrent intrahepatic cholestasis (BRIC) is relatively rare, affecting approximately 1 in every 20,000 to 30,000 individuals worldwide. It primarily affects women of childbearing age, with females being about five times more likely than males to develop this condition. The exact number of cases can vary depending on geographic location and population studies.",
+      "qtype": "frequency",
+      "exact_match": false,
+      "token_f1": 0.30952380952380953
+    },
+    {
+      "dataset_idx": 14976,
+      "question": "What are the symptoms of Deafness and myopia syndrome ?",
+      "gold": "What are the signs and symptoms of Deafness and myopia syndrome? The Human Phenotype Ontology provides the following list of signs and symptoms for Deafness and myopia syndrome. If the information is available, the table below includes how often the symptom is seen in people with this condition. You can use the MedlinePlus Medical Dictionary to look up the definitions for these medical terms. Signs and Symptoms Approximate number of patients (when available) Autosomal recessive inheritance - Conductive hearing impairment - Hematuria - Intellectual disability - Myopia - Proteinuria - Severe Myopia - The Human Phenotype Ontology (HPO) has collected information on how often a sign or symptom occurs in a condition. Much of this information comes from Orphanet, a European rare disease database. The frequency of a sign or symptom is usually listed as a rough estimate of the percentage of patients who have that feature. The frequency may also be listed as a fraction. The first number of the fraction is how many people had the symptom, and the second number is the total number of people who were examined in one study. For example, a frequency of 25/25 means that in a study of 25 people all patients were found to have that symptom. Because these frequencies are based on a specific study, the fractions may be different if another group of patients are examined. Sometimes, no information on frequency is available. In these cases, the sign or symptom may be rare or common.",
+      "pred": "Deafness and Myopia Syndrome is a rare condition characterized by both hearing loss (deafness) and nearsightedness (myopia). The exact prevalence of this syndrome is unknown, but it has been reported in some cases.\n\nSymptoms typically include:\n1. Hearing impairment: This can range from mild to severe.\n2. Nearsightedness: Difficulty seeing distant objects clearly.\n3. Other vision problems: Some individuals may also experience farsightedness (hyperopia).\n4. Eye strain: Frequent eye fatigue due to prolonged use of close-up work.\n5. Headaches: Commonly associated with visual stress.\n6. Blurred vision: Especially when reading or doing detailed tasks.\n7. Double vision: In some cases, particularly if there is significant brain involvement.\n\nThe combination of these symptoms often leads to difficulty performing daily activities that require clear vision and hearing. Treatment options vary depending on the severity and specific causes of each individual case. It's important for patients with suspected Deafness and Myopia Syndrome to consult an ophthalmologist and audiologist for proper evaluation and management.",
+      "qtype": "symptoms",
+      "exact_match": false,
+      "token_f1": 0.28
+    },
+    {
+      "dataset_idx": 11041,
+      "question": "Is Danon disease inherited ?",
+      "gold": "How is Danon disease inherited? Dannon disease is inherited in an X-linked fashion. Click here to visit the Centre for Genetics Education Web site to learn more about X linked inheritance.",
+      "pred": "disease inherited ?\nassistant\nYes, Danon disease is an autosomal recessive genetic disorder. It is caused by mutations in the DMD gene on chromosome 4, which leads to the production of dysfunctional dystrophin protein. This results in muscle weakness and heart problems, among other symptoms. The inheritance pattern for this condition is typically X-linked recessive, but it can also be inherited in an autosomal recessive manner if both parents carry the mutated gene.",
+      "qtype": "inheritance",
+      "exact_match": false,
+      "token_f1": 0.27184466019417475
+    },
+    {
+      "dataset_idx": 15722,
+      "question": "What are the symptoms of Schwartz Jampel syndrome type 1 ?",
+      "gold": "What are the signs and symptoms of Schwartz Jampel syndrome type 1? Individuals with Schwartz-Jampel syndrome type 1 (SJS1) have characteristic facial features, muscle weakness (hypotonia), and muscle stiffness (myotonia). Facial features of individuals with SJS1 can seem \"fixed\" in the same expression with puckered lips due to weakening and stiffening of the facial muscles. Additional facial features may include:   Blepharophimosis (narrowing of the eye opening) Epicanthal folds (skin fold of the upper eyelid covering the inner corner of the eye) Blepharospasm (involuntary blinking or spasm of the eyelids) Hypertrichosis (excessive hair) of the eye lashes         Micrognathia (small lower jaw) Individuals with SJS1 usually have short stature. Other skeletal and joint findings may include: Shortened neck Pectus carinatum (outward bowing of the chest) Kyphosis (curving of the spine that causes a bowing or rounding of the back) Coxa valga (hip deformity involving an increased neck-shaft angle of the femur) Joint contractures  Osteoporosis Widening of the metaphysis (portion of the bone containing the growth plate) Delayed bone age Other less common symptoms include: a high pitched voice, bilateral carpel tunnel syndrome, and malignant hyperthermia. One study suggested that as many as 20% of individuals with SJS1 have an intellectual disability; however, most individuals with SJS1 have normal intelligence. The Human Phenotype Ontology provides the following list of signs and symptoms for Schwartz Jampel syndrome type 1. If the information is available, the table below includes how often the symptom is seen in people with this condition. You can use the MedlinePlus Medical Dictionary to look up the definitions for these medical terms. Signs and Symptoms Approximate number of patients (when available) Abnormality of epiphysis morphology 90% Abnormality of the metaphyses 90% Cognitive impairment 90% EMG abnormality 90% Full cheeks 90% Gait disturbance 90% Genu valgum 90% Hypertonia 90% Limitation of joint mobility 90% Low-set, posteriorly rotated ears 90% Micromelia 90% Myotonia 90% Narrow mouth 90% Pes planus 90% Short stature 90% Skeletal dysplasia 90% Talipes 90% Trismus 90% Visual impairment 90% Abnormal vertebral ossification 50% Abnormality of the eyebrow 50% Abnormality of the pharynx 50% Blepharophimosis 50% Cataract 50% Hyperlordosis 50% Kyphosis 50% Malar flattening 50% Mask-like facies 50% Myopathy 50% Myopia 50% Overfolded helix 50% Pectus carinatum 50% Platyspondyly 50% Prominent nasal bridge 50% Ptosis 50% Reduced bone mineral density 50% Scoliosis 50% Short neck 50% Skeletal muscle hypertrophy 50% Spinal rigidity 50% Strabismus 50% Abnormality of immune system physiology 7.5% Abnormality of the ribs 7.5% Abnormality of the ureter 7.5% Abnormally straight spine 7.5% Aplasia/Hypoplasia affecting the eye 7.5% Apnea 7.5% Arrhythmia 7.5% Attention deficit hyperactivity disorder 7.5% Cleft palate 7.5% Decreased body weight 7.5% Delayed skeletal maturation 7.5% Distichiasis 7.5% Ectopia lentis 7.5% Elbow dislocation 7.5% Feeding difficulties in infancy 7.5% Hypertelorism 7.5% Hypertrichosis 7.5% Increased bone mineral density 7.5% Laryngomalacia 7.5% Long philtrum 7.5% Low anterior hairline 7.5% Malignant hyperthermia 7.5% Microcephaly 7.5% Microcornea 7.5% Muscle weakness 7.5% Myalgia 7.5% Nephrolithiasis 7.5% Neurological speech impairment 7.5% Odontogenic neoplasm 7.5% Pectus excavatum 7.5% Polyhydramnios 7.5% Prenatal movement abnormality 7.5% Protrusio acetabuli 7.5% Pulmonary hypertension 7.5% Respiratory insufficiency 7.5% Skeletal muscle atrophy 7.5% Sprengel anomaly 7.5% Testicular torsion 7.5% Umbilical hernia 7.5% Wormian bones 7.5% Abnormality of femoral epiphysis - Anterior bowing of long bones - Autosomal recessive inheritance - Congenital hip dislocation - Coronal cleft vertebrae - Coxa valga - Coxa vara - Decreased testicular size - Flat face - Flexion contracture of toe - Generalized hirsutism - High pitched voice - Hip contracture - Hyporeflexia - Inguinal hernia - Intellectual disability - Joint contracture of the hand - Kyphoscoliosis - Long eyelashes in irregular rows - Low-set ears - Lumbar hyperlordosis - Metaphyseal widening - Osteoporosis - Pursed lips - Shoulder flexion contracture - Talipes equinovarus - Weak voice - Wrist flexion contracture - The Human Phenotype Ontology (HPO) has collected information on how often a sign or symptom occurs in a condition. Much of this information comes from Orphanet, a European rare disease database. The frequency of a sign or symptom is usually listed as a rough estimate of the percentage of patients who have that feature. The frequency may also be listed as a fraction. The first number of the fraction is how many people had the symptom, and the second number is the total number of people who were examined in one study. For example, a frequency of 25/25 means that in a study of 25 people all patients were found to have that symptom. Because these frequencies are based on a specific study, the fractions may be different if another group of patients are examined. Sometimes, no information on frequency is available. In these cases, the sign or symptom may be rare or common.",
+      "pred": "Schwartz-Jampel Syndrome Type 1 is a rare genetic disorder characterized by:\n- Abnormalities in the heart valves (valvular abnormalities)\n- Heart defects that can lead to heart failure\n- Intellectual disability\n- Short stature\n- Delayed development\n- Skin pigmentation issues\n- Eye problems such as cataracts\n- Hearing loss\nSymptoms may vary widely among individuals with this condition, but these are common features. Early diagnosis and treatment are important for managing complications and improving quality of life.",
+      "qtype": "symptoms",
+      "exact_match": false,
+      "token_f1": 0.08748481166464156
+    },
+    {
+      "dataset_idx": 3940,
+      "question": "What causes Problems with Smell ?",
+      "gold": "Most people who have a problem with smell have recently had an illness or injury. The most common causes are upper respiratory infections, such as the common cold, and chronic sinus or nasal disease. Other common causes are -  aging   - smoking  - nasal polyps   - head injury   - allergens such as ragweed, grasses, and pet dander  - hormonal disturbances  - dental problems  - exposure to certain chemicals such as insecticides or solvents   - medications such as antibiotics or antihistamines   - radiation for treatment of head and neck cancers  - diseases of the nervous system such as Parkinsons disease or Alzheimers disease.  aging smoking nasal polyps head injury allergens such as ragweed, grasses, and pet dander hormonal disturbances dental problems exposure to certain chemicals such as insecticides or solvents medications such as antibiotics or antihistamines radiation for treatment of head and neck cancers diseases of the nervous system such as Parkinsons disease or Alzheimers disease.",
+      "pred": "ell ?\nassistant\nProblems with smell can be caused by various factors including:\n\n1. Sinus infections: Inflammation of sinuses can affect your sense of smell.\n\n2. Nasal polyps: These are growths in the nasal passages that can block airflow and reduce smell.\n\n3. Head injuries: Damage to the brain or surrounding structures can disrupt smell function.\n\n4. Medications: Certain drugs like antibiotics, antihistamines, and antidepressants can cause temporary loss of smell.\n\n5. Aging: The olfactory nerve may become less sensitive as you age.\n\n6. Chronic rhinosinusitis: Long-term inflammation of the nose and sinuses.\n\n7. Allergies: Reactions to allergens can irritate the lining of the nose and interfere with smell.\n\n8. Smoking: Prolonged exposure to smoke can damage the olfactory cells.\n\n9. Neurological conditions: Diseases affecting the brain or nervous system can impact smell.\n\n10. Exposure to certain chemicals or toxins.\n\nIf you experience persistent problems with your sense of smell, it is important to consult a healthcare provider for proper evaluation and treatment.",
+      "qtype": "causes",
+      "exact_match": false,
+      "token_f1": 0.3137254901960785
+    },
+    {
+      "dataset_idx": 12889,
+      "question": "How to diagnose Townes-Brocks syndrome ?",
+      "gold": "How is Townes-Brocks syndrome diagnosed? Townes-Brocks syndrome is diagnosed clinically based on the presence of the following: Imperforate anus Abnormally shaped ears Typical thumb malformations (preaxial polydactyly, triphalangeal thumbs which have three bones in them, much like the fingers, instead of the normal two, hypoplastic or underdeveloped thumbs) without shortening of the radius (the larger of the two bones in the forearm) SALL1 is the only gene known to be associated with Townes-Brocks syndrome. Detection of a SALL1 mutation confirms the diagnosis. Genetic testing is available on a clinical basis.",
+      "pred": "to diagnose Townes-Brocks syndrome ?\nassistant\nTownes-Brocks Syndrome is typically diagnosed through a combination of clinical evaluation and imaging studies. Here’s how it can be identified:\n\n1. **Clinical Evaluation**: The primary signs and symptoms that suggest Townes-Brocks Syndrome include:\n   - Bilateral cataracts (clouding of both eyes' lenses) in early childhood.\n   - Progressive visual impairment leading to blindness by adulthood.\n   - Often accompanied by other congenital anomalies such as heart defects.\n\n2. **Ophthalmologic Examination**: This involves detailed examination of the eye structures including the lens, cornea, retina, optic nerve, and macula. Specialized tests like slit-lamp biomicroscopy may be used to assess the clarity of the lens.\n\n3. **Imaging Studies**:\n   - **Ultrasound Biomicroscopy (UBM)**: Provides high-resolution images of the anterior segment of the eye, helping to visualize the lens and its condition.\n   - **Optical Coherence Tomography (OCT)**: Measures retinal thickness and structure, which can help in assessing the progression of cataract formation.\n   - **Electrophysiological Tests**: Such as ERG (electroretinogram), which measures electrical activity in the retina, can provide additional insights into the",
+      "qtype": "exams and tests",
+      "exact_match": false,
+      "token_f1": 0.25296442687747034
+    },
+    {
+      "dataset_idx": 8182,
+      "question": "What are the treatments for Lennox-Gastaut syndrome ?",
+      "gold": "These resources address the diagnosis or management of Lennox-Gastaut syndrome:  - Cleveland Clinic  - Genetic Testing Registry: Epileptic encephalopathy Lennox-Gastaut type  - National Institute of Neurological Disorders and Stroke: Diagnosis and Treatment of Epilepsy  - News Release: FDA Approves New Drug to Treat Severe Form of Epilepsy (U.S. Food and Drug Administration, November 20, 2008)   These resources from MedlinePlus offer information about the diagnosis and management of various health conditions:  - Diagnostic Tests  - Drug Therapy  - Surgery and Rehabilitation  - Genetic Counseling   - Palliative Care",
+      "pred": "Lennox-Gastaut syndrome ?\nassistant\nLennox-Gastaut Syndrome (LGS) is a severe form of epilepsy that typically begins in childhood and affects multiple brain regions. It is characterized by frequent seizures, cognitive impairment, and developmental delays. Treatment options for LGS include:\n\n1. Medications: The most common medications used to treat LGS are anticonvulsants such as valproic acid, lamotrigine, topiramate, and levetiracetam. These help control seizures but may have side effects.\n\n2. Surgery: In some cases where seizures originate from specific areas of the brain, surgery might be considered to remove the source of the seizures.\n\n3. Ketogenic Diet: This high-fat, low-carbohydrate diet can sometimes reduce seizure frequency in children with LGS.\n\n4. Vagus Nerve Stimulation (VNS): A device implanted under the skin sends electrical impulses to the vagus nerve, which helps regulate brain activity and potentially reduces seizures.\n\n5. Other therapies: Cognitive behavioral therapy, physical therapy, and speech therapy may also be beneficial in managing symptoms and improving quality of life.\n\nIt's important to note that each patient's case is unique, and treatment plans should be tailored to individual needs based on comprehensive evaluations by neurologists and other specialists. Regular",
+      "qtype": "treatment",
+      "exact_match": false,
+      "token_f1": 0.18181818181818182
+    },
+    {
+      "dataset_idx": 109,
+      "question": "Who is at risk for Parasites - American Trypanosomiasis (also known as Chagas Disease)? ?",
+      "gold": "Chagas disease, or American trypanosomiasis, is caused by the parasite Trypanosoma cruzi. Infection is most commonly acquired through contact with the feces of an infected triatomine bug (or \"kissing bug\"), a blood-sucking insect that feeds on humans and animals.\n    \nInfection can also occur from:\n    \n     - mother-to-baby (congenital),\n     - contaminated blood products (transfusions),\n     - an organ transplanted from an infected donor,\n     - laboratory accident, or\n     - contaminated food or drink (rare)\n    \n    \nChagas disease is endemic throughout much of Mexico, Central America, and South America where an estimated 8 million people are infected. The triatomine bug thrives under poor housing conditions (for example, mud walls, thatched roofs), so in endemic countries, people living in rural areas are at greatest risk for acquiring infection. Public health efforts aimed at preventing transmission have decreased the number of newly infected people and completely halted vectorborne transmission in some areas. Infection acquired from blood products, organ transplantation, or congenital transmission continues to pose a threat.\n    \nBy applying published seroprevalence figures to immigrant populations, CDC estimates that more than 300,000 persons with Trypanosoma cruzi infection live in the United States. Most people with Chagas disease in the United States acquired their infections in endemic countries. Although there are triatomine bugs in the U.S. , only rare vectorborne cases of Chagas disease have been documented.\n    \nMore on: Triatomine Bugs",
+      "pred": "American trypanosomiasis, also known as Chagas disease, primarily affects people in Central and South America, particularly those living in poverty with poor sanitation conditions. It can be transmitted through contact with soil contaminated by feces from an infected animal or person, or through blood transfusions if the donor has the infection. The risk increases in areas where there is high population density, inadequate healthcare facilities, and limited access to clean water and sanitation. However, it is important to note that while these factors increase the likelihood of exposure, anyone can potentially contract this disease under certain circumstances.",
+      "qtype": "susceptibility",
+      "exact_match": false,
+      "token_f1": 0.326923076923077
+    },
+    {
+      "dataset_idx": 10601,
+      "question": "Is Klinefelter syndrome inherited ?",
+      "gold": "Klinefelter syndrome and its variants are not inherited; these chromosomal changes usually occur as random events during the formation of reproductive cells (eggs and sperm) in a parent. An error in cell division called nondisjunction results in a reproductive cell with an abnormal number of chromosomes. For example, an egg or sperm cell may gain one or more extra copies of the X chromosome as a result of nondisjunction. If one of these atypical reproductive cells contributes to the genetic makeup of a child, the child will have one or more extra X chromosomes in each of the body's cells.  Mosaic 46,XY/47,XXY is also not inherited. It occurs as a random event during cell division early in fetal development. As a result, some of the body's cells have one X chromosome and one Y chromosome (46,XY), and other cells have an extra copy of the X chromosome (47,XXY).",
+      "pred": "user\nIs Klinefelter syndrome inherited ?\nassistant\nYes, Klinefelter Syndrome is an inherited condition. It occurs when males have an extra X chromosome (XXY instead of XY), which can be passed down from parents to their children through genetic inheritance. This extra X chromosome affects the development of male reproductive organs and other aspects of physical and mental health in males.",
+      "qtype": "inheritance",
+      "exact_match": false,
+      "token_f1": 0.2692307692307693
+    },
+    {
+      "dataset_idx": 3379,
+      "question": "Who is at risk for Lung Cancer? ?",
+      "gold": "Another substance that can contribute to lung cancer is asbestos. Asbestos is used in shipbuilding, asbestos mining and manufacturing, insulation work, and brake repair, but many products that contain asbestos have been phased out over the past several decades. If inhaled, asbestos particles can lodge in the lungs, damaging cells and increasing the risk for lung cancer.",
+      "pred": "assistant\nLung cancer can affect anyone regardless of age, gender, race, ethnicity, or lifestyle. However, certain factors increase the risk:\n\n1. Smoking: The most significant risk factor for lung cancer. Cigarette smoking is responsible for about 80-90% of all lung cancers.\n\n2. Secondhand smoke exposure: Exposure to secondhand smoke increases the risk of lung cancer in nonsmokers.\n\n3. Family history: A family history of lung cancer may slightly increase an individual's risk.\n\n4. Long-term exposure to asbestos, radon, or other carcinogens.\n\n5. Certain occupations that expose workers to dust, chemicals, or radioactive materials.\n\n6. Genetic mutations (e.g., BRCA1/BRCA2 gene mutations).\n\n7. Chronic obstructive pulmonary disease (COPD) or asthma.\n\n8. Previous lung infections like tuberculosis.\n\n9. Older age (risk increases with age).\n\n10. Gender; men have higher rates than women.\n\nIt's important to note that while these factors increase risk, they do not guarantee development of lung cancer. Regular screening tests, such as low-dose CT scans, are recommended for high-risk groups including current or former smokers over 50 years old. Early detection significantly improves outcomes.",
+      "qtype": "susceptibility",
+      "exact_match": false,
+      "token_f1": 0.15584415584415584
+    },
+    {
+      "dataset_idx": 5271,
+      "question": "What is (are) Impetigo ?",
+      "gold": "Impetigo is a skin infection caused by bacteria. It is usually caused by staphylococcal (staph) bacteria, but it can also be caused by streptococcal (strep) bacteria. It is most common in children between the ages of two and six. It usually starts when bacteria get into a break in the skin, such as a cut, scratch, or insect bite.     Symptoms start with red or pimple-like sores surrounded by red skin. These sores can be anywhere, but usually they occur on your face, arms and legs. The sores fill with pus, then break open after a few days and form a thick crust. They are often itchy, but scratching them can spread the sores.     Impetigo can spread by contact with sores or nasal discharge from an infected person. You can treat impetigo with antibiotics.     NIH: National Institute of Allergy and Infectious Diseases",
+      "pred": "assistant\nImpetigo is a skin infection caused by bacteria that can affect children. It typically appears as red sores covered with a honey-colored crust. The condition usually occurs on the face but can also appear elsewhere on the body. Treatment often involves applying antibiotic ointment to the affected area. If left untreated, impetigo may spread to other parts of the body.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.3069306930693069
+    },
+    {
+      "dataset_idx": 1058,
+      "question": "What is (are) Paraneoplastic Syndromes ?",
+      "gold": "Paraneoplastic syndromes are a group of rare disorders that are triggered by an abnormal immune system response to a cancerous tumor known as a \"neoplasm.\" Paraneoplastic syndromes are thought to happen when cancer-fighting antibodies or white blood cells (known as T cells) mistakenly attack normal cells in the nervous system. These disorders typically affect middle-aged to older people and are most common in individuals with lung, ovarian, lymphatic, or breast cancer. Neurologic symptoms generally develop over a period of days to weeks and usually occur prior to the tumor being discovered. These symptoms may include difficulty in walking or swallowing, loss of muscle tone, loss of fine motor coordination, slurred speech, memory loss, vision problems, sleep disturbances, dementia, seizures, sensory loss in the limbs, and vertigo or dizziness. Paraneoplastic syndromes include Lambert-Eaton myasthenic syndrome, stiff-person syndrome, encephalomyelitis, myasthenia gravis, cerebellar degeneration, limbic or brainstem encephalitis, neuromyotonia, opsoclonus, and sensory neuropathy.",
+      "pred": "Paraneoplastic syndromes are rare conditions that occur when cancer spreads to other parts of the body and causes symptoms in organs that are not directly affected by the tumor itself. These syndromes involve immune system abnormalities that lead to specific clinical manifestations outside the primary site of the cancer. Some common paraneoplastic syndromes include:\n\n1. Anti-Müllerian hormone syndrome: Caused by antibodies against AMH receptors on ovarian cells.\n2. Myasthenic crisis: Associated with anti-acetylcholine receptor antibodies.\n3. Lambert-Eaton myasthenic syndrome: Linked to antibodies against voltage-gated calcium channels.\n4. Neuroendocrine tumors: Can cause various endocrine-related syndromes due to their location.\n\nThese syndromes often present as neurological, neuropsychiatric, or autoimmune disorders without an obvious link to the primary cancer. Diagnosis typically involves laboratory tests for autoantibodies and imaging studies to identify the presence of the underlying malignancy. Treatment may include immunotherapy, surgery, or targeted therapies depending on the specific syndrome and the stage of the cancer.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.3498349834983498
+    },
+    {
+      "dataset_idx": 164,
+      "question": "How to diagnose Parasites - Zoonotic Hookworm ?",
+      "gold": "Cutaneous larva migrans (CLM) is a clinical diagnosis based on the presence of the characteristic signs and symptoms, and exposure history to zoonotic hookworm. For example, the diagnosis can be made based on finding red, raised tracks in the skin that are very itchy. This is usually found on the feet or lower part of the legs on persons who have recently traveled to tropical areas and spent time at the beach. There is no blood test for zoonotic hookworm infection. Persons who think they have CLM should consult their health care provider for accurate diagnosis.",
+      "pred": "Diagnosing zoonotic hookworms typically involves several steps:\n\n1. **Physical Examination**: The first step is a physical examination of the patient, looking for signs of anemia (e.g., pale skin, fatigue), which can be caused by hookworm infection.\n\n2. **Blood Tests**:\n   - **Complete Blood Count (CBC)**: This test checks for anemia, which is common in hookworm infections.\n   - **Fecal Examination**: A stool sample is collected and examined under a microscope for eggs or larvae of hookworms. These organisms are often microscopic and require specialized equipment like a light microscope with oil immersion lens.\n\n3. **Imaging Studies**: In some cases, imaging studies such as X-rays or ultrasounds may be used to look for evidence of worm infestation, especially if there are complications like intestinal blockage.\n\n4. **Histopathology**: If the diagnosis is still unclear after these tests, a biopsy might be taken from an affected area (like the stomach) to examine tissue samples under a microscope for signs of hookworm activity.\n\n5. **Consultation with a Specialist**: Sometimes, a referral to a parasitologist or gastroenterologist who specializes in gastrointestinal parasites would be necessary to confirm the diagnosis and determine appropriate",
+      "qtype": "exams and tests",
+      "exact_match": false,
+      "token_f1": 0.2652329749103942
+    },
+    {
+      "dataset_idx": 7338,
+      "question": "What is (are) task-specific focal dystonia ?",
+      "gold": "Task-specific focal dystonia is a movement disorder that interferes with the performance of particular tasks, such as writing, playing a musical instrument, or participating in a sport. Dystonias are a group of movement problems characterized by involuntary, sustained muscle contractions, tremors, and other uncontrolled movements. The term \"focal\" refers to a type of dystonia that affects a single part of the body, such as the hand or jaw.  Researchers have described several forms of task-specific focal dystonia. The most common is writer's cramp, in which muscle cramps or spasms in the hand, wrist, or forearm interfere with holding a pen or pencil. Writer's cramp begins in the hand used for writing (the dominant hand) and is usually limited to that task, but with time it can spread to the other hand and affect other fine-motor activities such as shaving or typing.  Musician's dystonia is a form of task-specific focal dystonia characterized by muscle cramps and spasms that occur while playing a musical instrument. This condition can affect amateur or professional musicians, and the location of the dystonia depends on the instrument. Some musicians (such as piano, guitar, and violin players) develop focal hand dystonia, which causes loss of fine-motor control in the hand and wrist muscles. This condition reduces finger coordination, speed, and endurance while playing. Musicians who play woodwind or brass instruments can develop what is known as embouchure dystonia. This condition causes muscle cramps or spasms involving the lips, tongue, or jaw, which prevents normal positioning of the mouth around the instrument's mouthpiece. Musician's dystonia often occurs only when playing a particular instrument. However, over time focal hand dystonia may impair other activities, and embouchure dystonia can worsen to affect eating and speech.  Task-specific focal dystonia can affect people who play sports and engage in other occupations involving repetitive, highly practiced movements. For example, some golfers experience involuntary jerking of the wrists during putting, a condition known informally as \"the yips.\" Cramps and spasms of the hand and arm muscles can also affect tennis players, billiards players, dart throwers, and other athletes. Additionally, task-specific dystonia has been reported in tailors, shoemakers, hair stylists, and people who frequently type or use a computer mouse.  The abnormal movements associated with task-specific focal dystonia are usually painless, although they can cause anxiety when they interfere with musical performance and other activities. Severe cases can cause professional disability.",
+      "pred": "Task-specific focal dystonia refers to a type of dystonia that affects specific muscles in certain tasks. The most common example is writer's cramp, which involves involuntary muscle contractions in the hands that can cause painful spasms while writing. Other examples include:\n1. Writer's cramp: Involuntary hand movements during writing.\n2. Finger twitching: Uncontrollable twitching of fingers when playing musical instruments like piano or guitar.\n3. Arm twisting: Muscle spasms causing twisting motions in the arm when using tools like scissors or knives.\n4. Foot tapping: Uncontrolled foot movement while walking or standing.\nThese conditions typically occur due to abnormal electrical activity in the brain affecting specific areas responsible for controlling fine motor skills in those particular body parts. Treatment often includes physical therapy, occupational therapy, and sometimes medication to manage symptoms.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.27703984819734345
+    },
+    {
+      "dataset_idx": 2152,
+      "question": "What causes Peyronie's Disease ?",
+      "gold": "Medical experts do not know the exact cause of Peyronies disease. Many believe that Peyronies disease may be the result of\n                \n- acute injury to the penis  - chronic, or repeated, injury to the penis  - autoimmune diseasea disorder in which the bodys immune system attacks the bodys own cells and organs\n                \nInjury to the Penis\n                \nMedical experts believe that hitting or bending the penis may injure the tissues inside. A man may injure the penis during sex, athletic activity, or an accident. Injury ruptures blood vessels, which leads to bleeding and swelling inside the layers of the tunica albuginea. Swelling inside the penis will block blood flow through the layers of tissue inside the penis. When the blood cant flow normally, clots can form and trap immune system cells. As the injury heals, the immune system cells may release substances that lead to the formation of too much scar tissue. The scar tissue builds up and forms a plaque inside the penis. The plaque reduces the elasticity of tissues and flexibility of the penis during erection, leading to curvature. The plaque may further harden because of calcificationthe process in which calcium builds up in body tissue.\n                \nAutoimmune Disease\n                \nSome medical experts believe that Peyronies disease may be part of an autoimmune disease. Normally, the immune system is the bodys way of protecting itself from infection by identifying and destroying bacteria, viruses, and other potentially harmful foreign substances. Men who have autoimmune diseases may develop Peyronies disease when the immune system attacks cells in the penis. This can lead to inflammation in the penis and can cause scarring. Medical experts do not know what causes autoimmune diseases. Some of the autoimmune diseases associated with Peyronies disease affect connective tissues. Connective tissue is specialized tissue that supports, joins, or separates different types of tissues and organs of the body.",
+      "pred": "assistant\nPeyronie's disease is caused by abnormal scar tissue formation within the penis that can cause curvature of the penis. The exact cause is unknown, but it may be related to an injury to the scrotum or penis, infection, inflammation, or hormonal changes. It typically affects men between 30-50 years old. Treatment options include medications, injections, surgery, and penile prostheses.",
+      "qtype": "causes",
+      "exact_match": false,
+      "token_f1": 0.1863013698630137
+    },
+    {
+      "dataset_idx": 11390,
+      "question": "What are the symptoms of Duane syndrome type 3 ?",
+      "gold": "What are the signs and symptoms of Duane syndrome type 3? The Human Phenotype Ontology provides the following list of signs and symptoms for Duane syndrome type 3. If the information is available, the table below includes how often the symptom is seen in people with this condition. You can use the MedlinePlus Medical Dictionary to look up the definitions for these medical terms. Signs and Symptoms Approximate number of patients (when available) Ophthalmoparesis 90% Strabismus 90% Anteverted nares 50% Blepharophimosis 50% Deeply set eye 50% Abnormal form of the vertebral bodies 7.5% Abnormal localization of kidney 7.5% Abnormality of the pupil 7.5% Aplasia/Hypoplasia of the iris 7.5% Aplasia/Hypoplasia of the radius 7.5% Aplasia/Hypoplasia of the thumb 7.5% Brachydactyly syndrome 7.5% Chorioretinal coloboma 7.5% Cleft palate 7.5% Cognitive impairment 7.5% External ear malformation 7.5% Hearing impairment 7.5% Heterochromia iridis 7.5% Microcephaly 7.5% Nystagmus 7.5% Optic atrophy 7.5% Ptosis 7.5% Seizures 7.5% Short neck 7.5% Talipes 7.5% Visual impairment 7.5% Wide nasal bridge 7.5% Autosomal dominant inheritance - Congenital strabismus - Duane anomaly - Impaired convergence - Impaired ocular abduction - Impaired ocular adduction - Palpebral fissure narrowing on adduction - The Human Phenotype Ontology (HPO) has collected information on how often a sign or symptom occurs in a condition. Much of this information comes from Orphanet, a European rare disease database. The frequency of a sign or symptom is usually listed as a rough estimate of the percentage of patients who have that feature. The frequency may also be listed as a fraction. The first number of the fraction is how many people had the symptom, and the second number is the total number of people who were examined in one study. For example, a frequency of 25/25 means that in a study of 25 people all patients were found to have that symptom. Because these frequencies are based on a specific study, the fractions may be different if another group of patients are examined. Sometimes, no information on frequency is available. In these cases, the sign or symptom may be rare or common.",
+      "pred": "Duane Syndrome Type 3 is a rare condition that affects eye movement. The main symptom is an inability to move one eye inward (esotropia). This can lead to double vision when looking straight ahead. Other possible symptoms include:\n\n1. Difficulty moving the eye outward (exotropia)\n2. Inability to rotate the eye laterally (eye turning inwards or outwards)\n3. Abnormal positioning of the eyes during certain head positions\n\nTreatment typically involves orthoptic exercises to improve eye movements and may also include prism glasses to help with visual balance. Early diagnosis and treatment are important for preventing complications such as amblyopia (lazy eye) and strabismus (crossed eyes).",
+      "qtype": "symptoms",
+      "exact_match": false,
+      "token_f1": 0.17194570135746604
+    },
+    {
+      "dataset_idx": 6729,
+      "question": "How many people are affected by 3MC syndrome ?",
+      "gold": "3MC syndrome is a rare disorder; its exact prevalence is unknown.",
+      "pred": "I'm sorry, but I don't have specific data on the exact number of people affected by 3MC (Mucopolysaccharidosis Type C) syndrome. This condition is relatively rare, with an estimated prevalence of about one in every 100,000 to 250,000 live births worldwide. The actual number can vary depending on factors such as population size and diagnostic accuracy. For precise figures, it would be best to consult recent medical literature or databases dedicated to genetic disorders.",
+      "qtype": "frequency",
+      "exact_match": false,
+      "token_f1": 0.1411764705882353
+    },
+    {
+      "dataset_idx": 112,
+      "question": "How to prevent Parasites - American Trypanosomiasis (also known as Chagas Disease) ?",
+      "gold": "In endemic areas of Mexico, Central America, and South America improved housing and spraying insecticide inside housing to eliminate triatomine bugs has significantly decreased the spread of Chagas disease. Further, screening of blood donations for Chagas is another important public health tool in helping to prevent transfusion-acquired disease. Early detection and treatment of new cases, including mother-to-baby (congenital) cases, will also help reduce the burden of disease.\n    \nIn the United States and in other regions where Chagas disease is now found but is not endemic, control strategies are focused on preventing transmission from blood transfusion, organ transplantation, and mother-to-baby.",
+      "pred": "To prevent American trypanosomiasis (Chagas disease), which is primarily transmitted by triatomine bugs in Latin America, you can take several precautions:\n\n1. **Use Insect Repellent**: Apply insect repellents containing DEET, picaridin, IR3535, or oil of lemon eucalyptus on exposed skin.\n\n2. **Wear Protective Clothing**: Wear long sleeves and pants when outdoors, especially during peak bug activity times (usually dusk and dawn).\n\n3. **Eliminate Bug Habitats**: Reduce areas where bugs like to live, such as trash cans, piles of wood, and other cluttered spaces around your home.\n\n4. **Screen Your Home**: Install screens on windows and doors to keep out insects.\n\n5. **Avoid Contact with Soil**: Keep soil away from your body, particularly in areas where bugs might be present.\n\n6. **Regularly Clean Up Garbage**: Remove garbage promptly and properly dispose of it to reduce bug breeding grounds.\n\n7. **Consult Healthcare Provider**: If you have traveled to an area where Chagas disease is endemic and develop symptoms like fever, swollen lymph nodes, or heart problems, seek medical attention immediately.\n\n8. **Inform Travelers**: Inform your healthcare provider about any",
+      "qtype": "prevention",
+      "exact_match": false,
+      "token_f1": 0.21739130434782608
+    },
+    {
+      "dataset_idx": 10499,
+      "question": "How many people are affected by heterotaxy syndrome ?",
+      "gold": "The prevalence of heterotaxy syndrome is estimated to be 1 in 10,000 people worldwide. However, researchers suspect that the condition is underdiagnosed, and so it may actually be more common than this. Heterotaxy syndrome accounts for approximately 3 percent of all congenital heart defects. For reasons that are unknown, the condition appears to be more common in Asian populations than in North America and Europe. Recent studies report that in the United States, the condition occurs more frequently in children born to black or Hispanic mothers than in children born to white mothers.",
+      "pred": "by heterotaxy syndrome ?\nassistant\nHeterotaxy syndrome is a rare congenital heart defect that affects about 1 in every 20,000 to 30,000 live births worldwide. It occurs when there is an abnormal development of the heart during fetal growth, leading to various structural abnormalities in the heart and associated organs. The condition can be complex and may require specialized care from multidisciplinary teams including cardiologists, surgeons, geneticists, and other specialists.",
+      "qtype": "frequency",
+      "exact_match": false,
+      "token_f1": 0.32098765432098764
+    },
+    {
+      "dataset_idx": 10158,
+      "question": "What is (are) inclusion body myopathy 2 ?",
+      "gold": "Inclusion body myopathy 2 is a condition that primarily affects skeletal muscles, which are muscles that the body uses for movement. This disorder causes muscle weakness that appears in late adolescence or early adulthood and worsens over time.  The first sign of inclusion body myopathy 2 is weakness of a muscle in the lower leg called the tibialis anterior. This muscle helps control up-and-down movement of the foot. Weakness in the tibialis anterior alters the way a person walks and makes it difficult to run and climb stairs. As the disorder progresses, weakness also develops in muscles of the upper legs, hips, shoulders, and hands. Unlike most forms of myopathy, inclusion body myopathy 2 usually does not affect the quadriceps, which are a group of large muscles at the front of the thigh. This condition also does not affect muscles of the eye or heart, and it does not cause neurological problems. Weakness in leg muscles makes walking increasingly difficult, and most people with inclusion body myopathy 2 require wheelchair assistance within 20 years after signs and symptoms appear.  People with the characteristic features of inclusion body myopathy 2 have been described in several different populations. When the condition was first reported in Japanese families, researchers called it distal myopathy with rimmed vacuoles (DMRV) or Nonaka myopathy. When a similar disorder was discovered in Iranian Jewish families, researchers called it rimmed vacuole myopathy or hereditary inclusion body myopathy (HIBM). It has since become clear that these conditions are variations of a single disorder caused by mutations in the same gene.",
+      "pred": "myopathy 2 ?\nassistant\nInclusion Body Myopathy Type 2 (IBM2) is a rare genetic disorder that primarily affects muscle strength and function. It is characterized by weakness in the muscles of the limbs, particularly those used for walking and balance. The condition can also affect respiratory muscles, leading to difficulty breathing.\n\nThe primary cause of IBM2 is mutations in the gene encoding titin, which is involved in muscle structure and function. These mutations lead to abnormal protein folding within muscle cells, resulting in the formation of inclusion bodies—small, spherical structures inside the muscle cells.\n\nSymptoms typically appear between ages 40 and 60 but may occur at any age. Diagnosis often involves muscle biopsy showing characteristic features of the disease. Treatment focuses on managing symptoms such as pain, stiffness, and weakness through physical therapy, medication, and sometimes surgery if necessary.\n\nIt's important to note that while IBM2 is a serious condition, it does not progress rapidly and many individuals with this diagnosis live relatively normal lives despite their limitations.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.3372365339578455
+    },
+    {
+      "dataset_idx": 4290,
+      "question": "What are the treatments for Pneumonia ?",
+      "gold": "Treatment for pneumonia depends on the type of pneumonia you have and how severe it is. Most people who have community-acquired pneumoniathe most common type of pneumoniaare treated at home.\n                \nThe goals of treatment are to cure the infection and prevent complications.\n                \nGeneral Treatment\n                \nIf you have pneumonia, follow your treatment plan, take all medicines as prescribed, and get ongoing medical care. Ask your doctor when you should schedule followup care. Your doctor may want you to have a chest x ray to make sure the pneumonia is gone.\n                \nAlthough you may start feeling better after a few days or weeks, fatigue (tiredness) can persist for up to a month or more. People who are treated in the hospital may need at least 3 weeks before they can go back to their normal routines.\n                \nBacterial Pneumonia\n                \nBacterial pneumonia is treated with medicines called antibiotics. You should take antibiotics as your doctor prescribes. You may start to feel better before you finish the medicine, but you should continue taking it as prescribed. If you stop too soon, the pneumonia may come back.\n                \nMost people begin to improve after 1 to 3 days of antibiotic treatment. This means that they should feel better and have fewer symptoms, such as cough and fever.\n                \nViral Pneumonia\n                \nAntibiotics don't work when the cause of pneumonia is a virus. If you have viral pneumonia, your doctor may prescribe an antiviral medicine to treat it.\n                \nViral pneumonia usually improves in 1 to 3 weeks.\n                \nTreating Severe Symptoms\n                \nYou may need to be treated in a hospital if:\n                \nYour symptoms are severe\n                \nYou're at risk for complications because of other health problems\n                \nIf the level of oxygen in your bloodstream is low, you may receive oxygen therapy. If you have bacterial pneumonia, your doctor may give you antibiotics through an intravenous (IV) line inserted into a vein.",
+      "pred": "treatments for Pneumonia ?\nassistant\nPneumonia is an infection of the lungs that can be caused by bacteria, viruses, fungi, or other microorganisms. The treatment for pneumonia depends on its cause and severity:\n\n1. Antibiotics: For bacterial pneumonia, antibiotics are typically prescribed to kill the bacteria causing the infection.\n\n2. Antiviral medications: If pneumonia is due to a virus (such as influenza), antiviral drugs may be used.\n\n3. Pain relief: Over-the-counter pain relievers like acetaminophen or ibuprofen can help manage symptoms such as fever and body aches.\n\n4. Oxygen therapy: In severe cases where oxygen levels in the blood are low, supplemental oxygen might be needed.\n\n5. Fluids and rest: Drinking plenty of fluids and getting adequate rest are important for recovery.\n\n6. Chest physiotherapy: This involves techniques to clear mucus from the lungs, which helps with breathing and reduces coughing.\n\n7. Bronchodilators: These medications relax the muscles around the airways, making it easier to breathe.\n\n8. Hospitalization: Severe cases often require hospitalization for more intensive care, including intravenous antibiotics if oral medication isn't effective.\n\n9. Supportive care: This includes monitoring vital signs, managing complications, and providing emotional",
+      "qtype": "treatment",
+      "exact_match": false,
+      "token_f1": 0.3225806451612903
+    },
+    {
+      "dataset_idx": 7885,
+      "question": "What are the genetic changes related to Northern epilepsy ?",
+      "gold": "Mutations in the CLN8 gene cause Northern epilepsy. The CLN8 gene provides instructions for making a protein whose function is not well understood. The CLN8 protein is thought to play a role in transporting materials in and out of a cell structure called the endoplasmic reticulum. The endoplasmic reticulum is involved in protein production, processing, and transport. Based on the structure of the CLN8 protein, it may also help regulate the levels of fats (lipids) in cells.  A single CLN8 gene mutation has been identified to cause Northern epilepsy. Nearly all affected individuals have this mutation in both copies of the CLN8 gene in each cell. The effects of this mutation on protein function are unclear. Unlike other forms of NCL that result in the accumulation of large amounts of fatty substances called lipopigments in cells, contributing to cell death, Northern epilepsy is associated with very little lipopigment buildup. People with Northern epilepsy do have mild brain abnormalities resulting from cell death, but the cause of this brain cell death is unknown. It is also unclear how changes in the CLN8 protein and a loss of brain cells cause the neurological problems associated with Northern epilepsy.",
+      "pred": "assistant\nNorthern epilepsy is a rare form of childhood-onset epilepsy that has been associated with specific genetic mutations in certain genes. The most well-known gene involved is SCN1A, which encodes for voltage-gated sodium channels. Mutations in this gene can lead to seizures due to abnormal electrical activity in the brain.\n\nOther less common genes implicated in Northern epilepsy include:\n- KCNQ2/3: This gene codes for potassium channels and plays a role in regulating neuronal excitability.\n- SCN8A: Another sodium channel gene that can cause epilepsy when mutated.\n- CACNA1F: A calcium channel gene that also contributes to seizure susceptibility.\n\nThe exact mechanism by which these mutations lead to epilepsy remains unclear but likely involves disruptions in normal neural function leading to excessive neuronal firing and subsequent seizures. Treatment typically includes antiepileptic drugs (AEDs) and sometimes surgery if there is an identifiable cause.",
+      "qtype": "genetic changes",
+      "exact_match": false,
+      "token_f1": 0.3104477611940299
+    },
+    {
+      "dataset_idx": 7983,
+      "question": "What is (are) fish-eye disease ?",
+      "gold": "Fish-eye disease, also called partial LCAT deficiency, is a disorder that causes the clear front surface of the eyes (the corneas) to gradually become cloudy. The cloudiness, which generally first appears in adolescence or early adulthood, consists of small grayish dots of cholesterol (opacities) distributed across the corneas. Cholesterol is a waxy, fat-like substance that is produced in the body and obtained from foods that come from animals; it aids in many functions of the body but can become harmful in excessive amounts. As fish-eye disease progresses, the corneal cloudiness worsens and can lead to severely impaired vision.",
+      "pred": "assistant\nFish-eye disease refers to a condition where there is an abnormal accumulation of fluid in the eye, typically causing swelling and vision problems. This can be caused by various factors including trauma, inflammation, or underlying systemic conditions such as diabetes. The term \"fish-eye\" comes from the appearance of the swollen area on the cornea that resembles a fish's eye when viewed under magnification. Treatment depends on the cause but may include medications, surgery, or other interventions based on the specific circumstances.",
+      "qtype": "information",
+      "exact_match": false,
+      "token_f1": 0.2777777777777778
+    }
+  ]
+}
