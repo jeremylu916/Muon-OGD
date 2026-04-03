@@ -655,7 +655,17 @@ def main():
             warm_start=args.muon_warm_start,
         )
         for name, module in muon_targets.items():
-            muon_opt.state[module.weight]["Cs"] = muon_C_map.get(name, [])
+            Cs = muon_C_map.get(name, [])
+            muon_opt.state[module.weight]["Cs"] = Cs
+            if len(Cs) > 0:
+                U = torch.stack([c.u for c in Cs], dim=1).to(device=module.weight.device, dtype=torch.float32)
+                V = torch.stack([c.v for c in Cs], dim=1).to(device=module.weight.device, dtype=torch.float32)
+                muon_opt.state[module.weight]["muon_uv"] = {"U": U, "V": V}
+                if args.muon_warm_start:
+                    k_uv = min(U.shape[1], V.shape[1])
+                    muon_opt.state[module.weight]["lam_uv"] = torch.zeros(
+                        k_uv, k_uv, dtype=torch.float32, device=module.weight.device
+                    )
             if args.muon_warm_start and name in muon_lambda_map:
                 muon_opt.state[module.weight]["lam"] = muon_lambda_map[name].detach().clone()
         muon_scheduler = get_linear_schedule_with_warmup(

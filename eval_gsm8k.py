@@ -4,15 +4,16 @@ import os
 import re
 import random
 from datetime import datetime, timezone
+
 from datasets import load_dataset
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_SPLIT = "test"
 DEFAULT_NUM_EXAMPLES = 100
 DEFAULT_SEED = 42
-DEFAULT_MAX_NEW_TOKENS = 128
+DEFAULT_MAX_NEW_TOKENS = 256
 DEFAULT_OUT_FILE = ""
 
 
@@ -22,18 +23,11 @@ def get_hf_cache_dir():
 
 
 def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
-    """Load tokenizer with best-effort compatibility flags.
-
-    Some Transformers versions emit a warning about an incorrect regex pattern
-    for certain tokenizers. Newer versions support fix_mistral_regex=True.
-    """
     try:
-        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
     except TypeError:
-        return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
     except Exception:
-        # Compatibility fix for some locally saved Qwen tokenizers where
-        # tokenizer_config.json stores extra_special_tokens as a list.
         if os.path.isdir(model_id):
             cfg_path = os.path.join(model_id, "tokenizer_config.json")
             if os.path.exists(cfg_path):
@@ -47,33 +41,58 @@ def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
                         print("Patched tokenizer_config.json: removed incompatible extra_special_tokens list.")
                 except Exception:
                     pass
-
         try:
-            return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
+            tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir, fix_mistral_regex=True)
         except TypeError:
-            return AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
+            tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 
-
-def extract_last_number(text: str):
-    numbers = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?", text)
-    if not numbers:
-        return None
-    last = numbers[-1]
-    return last.replace(",", "")
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    return tokenizer
 
 
 def extract_gsm8k_answer(answer_text: str):
-    # GSM8K gold format: "#### 42"
-    match = re.search(r"####\s*(-?\d+(?:\.\d+)?)", answer_text)
+    match = re.search(r"####\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)", answer_text)
     if not match:
         return None
-    return match.group(1)
+    return match.group(1).replace(",", "")
+
+
+def extract_pred_answer(text: str):
+    text = text.strip()
+
+    patterns = [
+        r"####\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+        r"[Tt]he answer is\s*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+        r"[Ff]inal answer[:\s]*(-?\d+(?:,\d{3})*(?:\.\d+)?)",
+    ]
+    for p in patterns:
+        m = re.search(p, text)
+        if m:
+            return m.group(1).replace(",", "")
+
+    numbers = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?", text)
+    if not numbers:
+        return None
+    return numbers[-1].replace(",", "")
+
+
+def normalize_num(x):
+    if x is None:
+        return None
+    try:
+        v = float(x.replace(",", ""))
+        if v.is_integer():
+            return str(int(v))
+        return str(v)
+    except Exception:
+        return x.strip()
 
 
 def build_prompt(tokenizer, question: str):
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Answer with a final numeric result."},
-        {"role": "user", "content": f"Solve the problem and give only the final number.\n\n{question}"},
+        {"role": "system", "content": "You are a helpful math assistant."},
+        {"role": "user", "content": f"Solve the following math word problem. End your response with the final numeric answer.\n\n{question}"},
     ]
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
@@ -85,28 +104,27 @@ def parse_args():
     parser.add_argument("--num_examples", type=int, default=DEFAULT_NUM_EXAMPLES)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--max_new_tokens", type=int, default=DEFAULT_MAX_NEW_TOKENS)
-    parser.add_argument(
-        "--out_file",
-        type=str,
-        default=DEFAULT_OUT_FILE,
-        help="Optional path to write a JSON result (e.g., results/gsm8k/run.json).",
-    )
+    parser.add_argument("--out_file", type=str, default=DEFAULT_OUT_FILE)
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     cache_dir = get_hf_cache_dir()
+
     dataset = load_dataset("gsm8k", "main", split=args.split, cache_dir=cache_dir)
     indices = list(range(len(dataset)))
     random.Random(args.seed).shuffle(indices)
     indices = indices[: args.num_examples]
 
     tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
+
+    dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
+
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
         cache_dir=cache_dir,
-        dtype=torch.float16,
+        torch_dtype=dtype,
         device_map="auto",
     )
 
@@ -122,12 +140,19 @@ def main():
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
         with torch.no_grad():
-            output = model.generate(**inputs, max_new_tokens=args.max_new_tokens, do_sample=False)
-        decoded = tokenizer.decode(output[0], skip_special_tokens=True)
-        pred = extract_last_number(decoded)
+            output = model.generate(
+                **inputs,
+                max_new_tokens=args.max_new_tokens,
+                do_sample=False,
+                pad_token_id=tokenizer.eos_token_id,
+            )
+
+        prompt_len = inputs["input_ids"].shape[1]
+        decoded = tokenizer.decode(output[0][prompt_len:], skip_special_tokens=True)
+        pred = extract_pred_answer(decoded)
 
         total += 1
-        if gold is not None and pred is not None and pred == gold:
+        if gold is not None and pred is not None and normalize_num(pred) == normalize_num(gold):
             correct += 1
 
         if total % 10 == 0:

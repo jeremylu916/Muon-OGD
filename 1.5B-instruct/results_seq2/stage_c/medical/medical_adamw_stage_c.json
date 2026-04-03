@@ -1,0 +1,296 @@
+{
+  "task": "medical_verifiable",
+  "model_id": "1.5B-instruct/outputs/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math",
+  "verifier_model_id": "FreedomIntelligence/medical_o1_verifier_3B",
+  "dataset_id": "FreedomIntelligence/medical-o1-verifiable-problem",
+  "split": "train",
+  "question_field": "Open-ended Verifiable Question",
+  "answer_field": "Ground-True Answer",
+  "language_field": "language",
+  "verifiable_field": "verifiable",
+  "english_only": true,
+  "require_verifiable": true,
+  "num_examples": 500,
+  "seed": 42,
+  "max_new_tokens": 348,
+  "judge_final_answer_only": true,
+  "final_trimmed_pred": 0,
+  "final_trimmed_gold": 0,
+  "judge_accuracy": 0.212,
+  "judge_correct": 106,
+  "judge_total": 500,
+  "judge_errors": 0,
+  "timestamp_utc": "2026-03-29T06:10:50.840507+00:00",
+  "sample_predictions": [
+    {
+      "idx": 36037,
+      "question": "Which pulmonary manifestation is not associated with asbestosis?",
+      "gold": "Diffuse alveolar damage",
+      "pred": "The pulmonary manifestation that is not typically associated with asbestosis is pleural effusion. Asbestosis primarily affects the lungs, causing scarring in the alveoli and interstitium, leading to reduced lung function and difficulty breathing. However, it does not commonly result in significant fluid buildup around the lungs (pleural effusion), which is more characteristic of conditions like congestive heart failure or certain types of pneumonia. Therefore, pleural effusion is generally not considered a hallmark symptom of asbestosis.",
+      "gold_for_judge": "Diffuse alveolar damage",
+      "pred_for_judge": "The pulmonary manifestation that is not typically associated with asbestosis is pleural effusion. Asbestosis primarily affects the lungs, causing scarring in the alveoli and interstitium, leading to reduced lung function and difficulty breathing. However, it does not commonly result in significant fluid buildup around the lungs (pleural effusion), which is more characteristic of conditions like congestive heart failure or certain types of pneumonia. Therefore, pleural effusion is generally not considered a hallmark symptom of asbestosis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 38518,
+      "question": "What is the incorrect statement about mechanisms of Penicillin resistance regarding the alteration in target PBPs?",
+      "gold": "Alteration in target PBPs is an important resistance mechanism in gram negative bacteria.",
+      "pred": "The incorrect statement about mechanisms of penicillin resistance regarding alterations in target PBPs (Penicillin Binding Proteins) is that it's solely due to changes in the structure of PBPs themselves, without affecting their function or activity. This misconception often leads people to believe that altering PBPs' structures alone can confer resistance, which isn't entirely accurate because while structural changes do occur, they also impact how these proteins interact with antibiotics like penicillins. Therefore, understanding both the structural and functional aspects of PBPs is crucial for comprehending antibiotic resistance effectively.",
+      "gold_for_judge": "Alteration in target PBPs is an important resistance mechanism in gram negative bacteria.",
+      "pred_for_judge": "The incorrect statement about mechanisms of penicillin resistance regarding alterations in target PBPs (Penicillin Binding Proteins) is that it's solely due to changes in the structure of PBPs themselves, without affecting their function or activity. This misconception often leads people to believe that altering PBPs' structures alone can confer resistance, which isn't entirely accurate because while structural changes do occur, they also impact how these proteins interact with antibiotics like penicillins. Therefore, understanding both the structural and functional aspects of PBPs is crucial for comprehending antibiotic resistance effectively.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 24584,
+      "question": "A 50-year-old man presents with an 8-month history of intermittent watery diarrhea, abdominal pain, and significant weight loss. He reports episodic joint pain over the past 5 years. An endoscopy with small bowel biopsy reveals foamy macrophages in the lamina propria with periodic acid-Schiff (PAS)-positive inclusions. What specific pathogen is most likely to be identified in a further evaluation of the tissue specimen?",
+      "gold": "Intracellular, gram-positive bacilli",
+      "pred": "The specific pathogen most likely to be identified in this case is Cryptosporidium parvum. This parasite is known for causing cryptosporidiosis, which can lead to symptoms such as watery diarrhea, abdominal pain, and weight loss. The presence of foamy macrophages and PAS-positive inclusions aligns well with these characteristics, making Cryptosporidium parvum the most probable cause among the options provided.",
+      "gold_for_judge": "Intracellular, gram-positive bacilli",
+      "pred_for_judge": "The specific pathogen most likely to be identified in this case is Cryptosporidium parvum. This parasite is known for causing cryptosporidiosis, which can lead to symptoms such as watery diarrhea, abdominal pain, and weight loss. The presence of foamy macrophages and PAS-positive inclusions aligns well with these characteristics, making Cryptosporidium parvum the most probable cause among the options provided.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 8858,
+      "question": "A child presents with linear verrucous plaques on the trunk and histological findings show vacuolization of keratinocytes in the stratum spinosum and stratum granulosum. What is the diagnosis?",
+      "gold": "Verrucous epidermal nevus",
+      "pred": "The diagnosis for this presentation is lichen planus, which is characterized by linear or patchy lesions that can appear on various parts of the body. The presence of vacuolar changes in the stratum spinosum and stratum granulosum aligns well with the histological features observed in lichen planus. This condition typically affects the skin and mucous membranes, often presenting as flat, velvety patches or lines.",
+      "gold_for_judge": "Verrucous epidermal nevus",
+      "pred_for_judge": "The diagnosis for this presentation is lichen planus, which is characterized by linear or patchy lesions that can appear on various parts of the body. The presence of vacuolar changes in the stratum spinosum and stratum granulosum aligns well with the histological features observed in lichen planus. This condition typically affects the skin and mucous membranes, often presenting as flat, velvety patches or lines.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 20109,
+      "question": "A 2-year-old child presents with symptoms including discharge, seborrheic dermatitis, polyuria, and hepatosplenomegaly. Based on these clinical features, what is the most likely diagnosis?",
+      "gold": "Langerhan's cell histiocytosis",
+      "pred": "Based on the clinical features you've described\u2014discharge, seborrheic dermatitis, polyuria (increased urine output), and hepatosplenomegaly (enlarged liver and spleen)\u2014the most likely diagnosis for this 2-year-old child is cystinosis. Cystinosis is an inherited disorder that affects amino acid metabolism, leading to various complications such as kidney stones, growth retardation, and neurological issues. The combination of skin problems like seborrheic dermatitis and increased urination suggests renal involvement, which aligns well with cystinosis's characteristic nephrocalcinosis. Additionally, the enlarged organs point towards potential organ damage from metabolic disorders, further supporting the diagnosis.",
+      "gold_for_judge": "Langerhan's cell histiocytosis",
+      "pred_for_judge": "Based on the clinical features you've described\u2014discharge, seborrheic dermatitis, polyuria (increased urine output), and hepatosplenomegaly (enlarged liver and spleen)\u2014the most likely diagnosis for this 2-year-old child is cystinosis. Cystinosis is an inherited disorder that affects amino acid metabolism, leading to various complications such as kidney stones, growth retardation, and neurological issues. The combination of skin problems like seborrheic dermatitis and increased urination suggests renal involvement, which aligns well with cystinosis's characteristic nephrocalcinosis. Additionally, the enlarged organs point towards potential organ damage from metabolic disorders, further supporting the diagnosis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 20650,
+      "question": "A 16-year-old girl presents with a 3-week history of nausea, increased urinary frequency, and breast tenderness. She has never had a menstrual period despite being in Tanner stage 5 for breast and pubic hair development, actively participates in track and field, and has a BMI of 18 kg/m2. What serum assay should be performed next to diagnose her condition?",
+      "gold": "Human chorionic gonadotropin",
+      "pred": "The symptoms described\u2014nausea, increased urinary frequency, and breast tenderness\u2014are characteristic of early pregnancy. Given that she is experiencing these symptoms without having reached puberty or menstruation, it's likely that she is pregnant. To confirm this diagnosis, the most appropriate initial test would be a urine pregnancy test. This will allow you to determine if there is indeed an intrauterine pregnancy, which aligns with the clinical presentation of early pregnancy symptoms.",
+      "gold_for_judge": "Human chorionic gonadotropin",
+      "pred_for_judge": "The symptoms described\u2014nausea, increased urinary frequency, and breast tenderness\u2014are characteristic of early pregnancy. Given that she is experiencing these symptoms without having reached puberty or menstruation, it's likely that she is pregnant. To confirm this diagnosis, the most appropriate initial test would be a urine pregnancy test. This will allow you to determine if there is indeed an intrauterine pregnancy, which aligns with the clinical presentation of early pregnancy symptoms.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 33235,
+      "question": "Which specific enzyme's absence in humans results in the inability to synthesize ascorbic acid?",
+      "gold": "L-Gulonolactone oxidase",
+      "pred": "The specific enzyme that is absent in humans, which prevents them from synthesizing ascorbic acid (vitamin C), is glucose-6-phosphate dehydrogenase (G6PD). This enzyme plays a crucial role in the pentose phosphate pathway, where it converts 6-phosphogluconate into ribulose-5-phosphate. Without G6PD, the body cannot produce NADPH, an essential cofactor for the synthesis of ascorbic acid. Therefore, individuals lacking this enzyme have difficulty producing vitamin C, leading to conditions such as favism or favus, characterized by severe hemolytic anemia due to red blood cell destruction.",
+      "gold_for_judge": "L-Gulonolactone oxidase",
+      "pred_for_judge": "The specific enzyme that is absent in humans, which prevents them from synthesizing ascorbic acid (vitamin C), is glucose-6-phosphate dehydrogenase (G6PD). This enzyme plays a crucial role in the pentose phosphate pathway, where it converts 6-phosphogluconate into ribulose-5-phosphate. Without G6PD, the body cannot produce NADPH, an essential cofactor for the synthesis of ascorbic acid. Therefore, individuals lacking this enzyme have difficulty producing vitamin C, leading to conditions such as favism or favus, characterized by severe hemolytic anemia due to red blood cell destruction.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 38879,
+      "question": "Which organism's capsule does not function as a virulence factor among common pathogens?",
+      "gold": "Bordetella pertussis",
+      "pred": "The organism whose capsule does not serve as a virulence factor is Neisseria gonorrhoeae, which causes gonorrhea. In contrast to other common pathogens like Streptococcus pneumoniae or Haemophilus influenzae, Neisseria gonorrhoeae lacks an outer membrane protein that can be targeted by antibodies, making its capsule less effective in contributing to its pathogenicity compared to these bacteria.",
+      "gold_for_judge": "Bordetella pertussis",
+      "pred_for_judge": "The organism whose capsule does not serve as a virulence factor is Neisseria gonorrhoeae, which causes gonorrhea. In contrast to other common pathogens like Streptococcus pneumoniae or Haemophilus influenzae, Neisseria gonorrhoeae lacks an outer membrane protein that can be targeted by antibodies, making its capsule less effective in contributing to its pathogenicity compared to these bacteria.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 37263,
+      "question": "Two months after a renal transplantation, a 40-year-old patient develops a fever and symptoms indicative of bilateral diffuse interstitial pneumonitis. What is the most likely etiological agent responsible for this condition?",
+      "gold": "CMV",
+      "pred": "The most likely etiological agent responsible for the bilateral diffuse interstitial pneumonitis in this scenario is Mycoplasma pneumoniae. This bacterium is known to cause respiratory infections that can lead to interstitial lung disease, particularly in transplant recipients due to its ability to evade immune responses. The combination of the fever and symptoms suggestive of pulmonary involvement following kidney transplantation makes Mycoplasma pneumoniae a strong candidate for investigation.",
+      "gold_for_judge": "CMV",
+      "pred_for_judge": "The most likely etiological agent responsible for the bilateral diffuse interstitial pneumonitis in this scenario is Mycoplasma pneumoniae. This bacterium is known to cause respiratory infections that can lead to interstitial lung disease, particularly in transplant recipients due to its ability to evade immune responses. The combination of the fever and symptoms suggestive of pulmonary involvement following kidney transplantation makes Mycoplasma pneumoniae a strong candidate for investigation.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 13499,
+      "question": "What is the minimum distance that should be maintained between the finish line and the alveolar crest to ensure the preservation of the periodontium?",
+      "gold": "5mm away.",
+      "pred": "The minimum distance that should be maintained between the finish line and the alveolar crest to ensure the preservation of the periodontium is 10 mm (millimeters). This distance helps in maintaining adequate space for the roots, which is crucial for preserving the health of the periodontal tissues.",
+      "gold_for_judge": "5mm away.",
+      "pred_for_judge": "The minimum distance that should be maintained between the finish line and the alveolar crest to ensure the preservation of the periodontium is 10 mm (millimeters). This distance helps in maintaining adequate space for the roots, which is crucial for preserving the health of the periodontal tissues.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 27322,
+      "question": "In cluster sampling for coverage of the national immunization programme, how many children are surveyed in each of the 30 clusters?",
+      "gold": "7 children in each cluster",
+      "pred": "In cluster sampling for the national immunization program, it is common to survey approximately 15-20 children per cluster. This approach helps ensure that the sample size is manageable while still providing sufficient data on vaccination coverage across different areas. The exact number can vary depending on factors such as logistical constraints and the specific requirements of the study, but typically, around 15-20 children per cluster would be considered appropriate.",
+      "gold_for_judge": "7 children in each cluster",
+      "pred_for_judge": "In cluster sampling for the national immunization program, it is common to survey approximately 15-20 children per cluster. This approach helps ensure that the sample size is manageable while still providing sufficient data on vaccination coverage across different areas. The exact number can vary depending on factors such as logistical constraints and the specific requirements of the study, but typically, around 15-20 children per cluster would be considered appropriate.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 31506,
+      "question": "What is the most likely cause of intermittent stridor in a 3-month-old child?",
+      "gold": "Laryngomalacia",
+      "pred": "The most likely cause of intermittent stridor in a 3-month-old child is laryngomalacia, which is a common condition that affects infants' airways. This condition involves softening or underdevelopment of the cartilage at the back of the throat, leading to partial obstruction during breathing. The symptoms can vary from mild to severe, but they often resolve on their own as the infant grows older.",
+      "gold_for_judge": "Laryngomalacia",
+      "pred_for_judge": "The most likely cause of intermittent stridor in a 3-month-old child is laryngomalacia, which is a common condition that affects infants' airways. This condition involves softening or underdevelopment of the cartilage at the back of the throat, leading to partial obstruction during breathing. The symptoms can vary from mild to severe, but they often resolve on their own as the infant grows older.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 21533,
+      "question": "A 5-month-old baby, who is exclusively fed cow's milk, presents to the pediatric outpatient department with a history of crying when touched. What is the likely cause of this condition?",
+      "gold": "Scurvy",
+      "pred": "The symptoms described in your patient\u2014crying when touched\u2014are most consistent with a condition known as reflex anhidrosis or \"cold sweat syndrome.\" This occurs due to a lack of sweating caused by underdeveloped eccrine glands, which are responsible for regulating body temperature through perspiration.\n\nIn infants, particularly those who are exclusively breastfed or receive only formula without additional water, there can be insufficient fluid intake leading to dehydration. Dehydration impairs the ability of the skin to regulate its temperature effectively, resulting in reduced sweating and increased sensitivity to cold temperatures.\n\nGiven that the child is exclusively fed cow's milk, it\u2019s important to note that cow's milk does not contain adequate amounts of electrolytes like sodium and potassium, which are crucial for maintaining proper hydration levels. These deficiencies can lead to dehydration, further exacerbating the problem of poor sweating response.\n\nTherefore, the likely cause of the baby's crying when touched is likely due to dehydration from consuming only cow's milk, rather than any other underlying conditions such as hypothyroidism or congenital adrenal hyperplasia. Ensuring adequate hydration and possibly supplementing with electrolyte solutions may help alleviate these symptoms.",
+      "gold_for_judge": "Scurvy",
+      "pred_for_judge": "The symptoms described in your patient\u2014crying when touched\u2014are most consistent with a condition known as reflex anhidrosis or \"cold sweat syndrome.\" This occurs due to a lack of sweating caused by underdeveloped eccrine glands, which are responsible for regulating body temperature through perspiration.\n\nIn infants, particularly those who are exclusively breastfed or receive only formula without additional water, there can be insufficient fluid intake leading to dehydration. Dehydration impairs the ability of the skin to regulate its temperature effectively, resulting in reduced sweating and increased sensitivity to cold temperatures.\n\nGiven that the child is exclusively fed cow's milk, it\u2019s important to note that cow's milk does not contain adequate amounts of electrolytes like sodium and potassium, which are crucial for maintaining proper hydration levels. These deficiencies can lead to dehydration, further exacerbating the problem of poor sweating response.\n\nTherefore, the likely cause of the baby's crying when touched is likely due to dehydration from consuming only cow's milk, rather than any other underlying conditions such as hypothyroidism or congenital adrenal hyperplasia. Ensuring adequate hydration and possibly supplementing with electrolyte solutions may help alleviate these symptoms.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 15109,
+      "question": "A 56-year-old man presents with a 2-month history of worsening deep, dull ache in his left buttock, particularly at night, without recent trauma. He has a history of smoking and hyperlipidemia, only takes simvastatin, and shows tenderness over the left gluteal region but no neurological focal findings. An X-ray of the pelvis reveals a 4-cm osteolytic lesion in the left ilium with a moth-eaten pattern, sclerotic lesions, and an aggressive periosteal reaction. Considering these clinical and radiographic features, what is the most likely diagnosis?",
+      "gold": "Chondrosarcoma",
+      "pred": "The most likely diagnosis for this patient's symptoms and imaging findings is metastatic bone disease from prostate cancer. The combination of a 4-cm osteolytic lesion in the left ilium with a moth-eaten pattern, sclerotic lesions, and aggressive periosteal reaction strongly suggests that the primary tumor is located elsewhere in the body, such as the prostate gland. Given the patient's age (56), history of smoking, and elevated cholesterol levels, it aligns well with prostate cancer being the source of metastasis to the bones.",
+      "gold_for_judge": "Chondrosarcoma",
+      "pred_for_judge": "The most likely diagnosis for this patient's symptoms and imaging findings is metastatic bone disease from prostate cancer. The combination of a 4-cm osteolytic lesion in the left ilium with a moth-eaten pattern, sclerotic lesions, and aggressive periosteal reaction strongly suggests that the primary tumor is located elsewhere in the body, such as the prostate gland. Given the patient's age (56), history of smoking, and elevated cholesterol levels, it aligns well with prostate cancer being the source of metastasis to the bones.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 11600,
+      "question": "What clinical sign would one expect to note during the assessment of a patient diagnosed with paronychia?",
+      "gold": "Red shiny skin around the nail bed",
+      "pred": "During the assessment of a patient diagnosed with paronychia, you would expect to note redness and swelling at the base of the fingernail or toenail, which is characteristic of this condition. Paronychia involves inflammation around the nail fold due to infection, leading to these typical signs.",
+      "gold_for_judge": "Red shiny skin around the nail bed",
+      "pred_for_judge": "During the assessment of a patient diagnosed with paronychia, you would expect to note redness and swelling at the base of the fingernail or toenail, which is characteristic of this condition. Paronychia involves inflammation around the nail fold due to infection, leading to these typical signs.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 7975,
+      "question": "An elderly woman who had a radical mastectomy with radiation to the axilla 20 years ago has had a non-healing open wound for 25 years, which is not a recurrence of breast cancer. What is the most likely diagnosis for this wound?",
+      "gold": "Squamous cell carcinoma",
+      "pred": "The most likely diagnosis for this wound in an elderly woman who underwent a radical mastectomy with radiation therapy 20 years ago is chronic osteomyelitis. This condition occurs when there's ongoing infection or inflammation in the bone due to bacteria that have spread from nearby tissues. Given her history of surgery and radiation, it aligns well with the development of chronic osteomyelitis as opposed to other possibilities like infections caused by direct trauma or systemic issues.",
+      "gold_for_judge": "Squamous cell carcinoma",
+      "pred_for_judge": "The most likely diagnosis for this wound in an elderly woman who underwent a radical mastectomy with radiation therapy 20 years ago is chronic osteomyelitis. This condition occurs when there's ongoing infection or inflammation in the bone due to bacteria that have spread from nearby tissues. Given her history of surgery and radiation, it aligns well with the development of chronic osteomyelitis as opposed to other possibilities like infections caused by direct trauma or systemic issues.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 8682,
+      "question": "Given that mammography has a sensitivity of 90%, what is the probability that a woman with breast carcinoma will not be diagnosed correctly by mammography over two consecutive years?",
+      "gold": "0.20",
+      "pred": "The probability that a woman with breast cancer will not be diagnosed correctly by mammography over two consecutive years, given a sensitivity of 90% for each year, can be calculated using Bayes' theorem or simply understanding the concept of false negatives.\n\nIf we assume there's no change in the accuracy of mammography between the two years (which is often the case), then the probability remains constant at 10%. This means that even if the test results were negative both times, it would still have a 10% chance of being incorrect due to the inherent limitations of mammography in detecting early-stage cancers.",
+      "gold_for_judge": "0.20",
+      "pred_for_judge": "The probability that a woman with breast cancer will not be diagnosed correctly by mammography over two consecutive years, given a sensitivity of 90% for each year, can be calculated using Bayes' theorem or simply understanding the concept of false negatives.\n\nIf we assume there's no change in the accuracy of mammography between the two years (which is often the case), then the probability remains constant at 10%. This means that even if the test results were negative both times, it would still have a 10% chance of being incorrect due to the inherent limitations of mammography in detecting early-stage cancers.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 2045,
+      "question": "An 18-year-old male presents with massive hematemesis and has a history of fever treated with medication for the past 14 days. Examination reveals moderate splenomegaly. What is the most likely diagnosis?",
+      "gold": "Esophageal varices",
+      "pred": "The most likely diagnosis in this scenario is acute idiopathic thrombocytopenic purpura (ITP). This condition can present with symptoms such as bleeding, including hematemesis, due to platelet dysfunction or destruction. The patient's recent history of fever and treatment with medications suggests an immune-mediated disorder that could be ITP. Additionally, the presence of moderate splenomegaly aligns with the typical presentation of ITP, where the spleen may become enlarged due to increased platelet destruction.",
+      "gold_for_judge": "Esophageal varices",
+      "pred_for_judge": "The most likely diagnosis in this scenario is acute idiopathic thrombocytopenic purpura (ITP). This condition can present with symptoms such as bleeding, including hematemesis, due to platelet dysfunction or destruction. The patient's recent history of fever and treatment with medications suggests an immune-mediated disorder that could be ITP. Additionally, the presence of moderate splenomegaly aligns with the typical presentation of ITP, where the spleen may become enlarged due to increased platelet destruction.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 12169,
+      "question": "Which disease of the bone is characterized by a single lesion in a single bone, unlike other conditions that typically present with multiple lesions or affect multiple bones?",
+      "gold": "Central giant cell granuloma",
+      "pred": "The disease you're referring to is osteomyelitis. Osteomyelitis is characterized by a single lesion within a single bone, which contrasts with conditions like osteosarcoma, where there can be multiple tumors affecting different bones, or metastatic cancers, where cancer cells spread from another part of the body to the bone.",
+      "gold_for_judge": "Central giant cell granuloma",
+      "pred_for_judge": "The disease you're referring to is osteomyelitis. Osteomyelitis is characterized by a single lesion within a single bone, which contrasts with conditions like osteosarcoma, where there can be multiple tumors affecting different bones, or metastatic cancers, where cancer cells spread from another part of the body to the bone.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 16201,
+      "question": "A 30-year-old woman presents with a 6-month history of a sun-sensitive rash on her face and oral ulcers, alongside lab findings of leukopenia, thrombocytopenia, elevated erythrocyte sedimentation rate, high titers of antinuclear antibodies, positive anti-Smith antibodies, and significant proteinuria with sterile pyuria. Given these clinical and laboratory findings, what is the most appropriate next step in her management?",
+      "gold": "Renal biopsy",
+      "pred": "Given the patient's presentation, which includes a sun-sensitive rash on the face and oral ulcers, along with laboratory findings indicative of autoimmune disease such as leukopenia, thrombocytopenia, elevated erythrocyte sedimentation rate (ESR), high titers of antinuclear antibodies (ANA), positive anti-Smith antibodies, and significant proteinuria with sterile pyuria, it is highly likely that she has systemic lupus erythematosus (SLE). The combination of skin rashes, joint pain, and kidney involvement strongly suggests an active SLE flare.\n\nThe next steps in managing this patient should be:\n\n1. **Initiate Immunosuppressive Therapy**: Since the patient has both renal involvement and potential organ damage from SLE, initiating immunosuppressive therapy is crucial to prevent further complications. Commonly used medications for this purpose include corticosteroids like prednisone or cyclophosphamide, depending on the severity and specific needs of the patient.\n\n2. **Monitor Kidney Function**: Regular monitoring of kidney function through tests such as serum creatinine levels and urinalysis will help assess any changes in kidney health and guide treatment adjustments if necessary.\n\n3. **Consider Antimalarial Medications**: For patients with SLE who have nephritis, adding hydroxychloroquine can be beneficial because it helps reduce inflammation and may slow down the progression of kidney damage.\n\n4. **Supportive Care**: Managing symptoms related to the rash, joint pain, and fatigue is also important. This might involve topical treatments for the rash, analgesics for joint pain, and rest when needed.\n\n5. **Follow-Up**: Regular follow-up appointments are essential to monitor the effectiveness of the treatment plan",
+      "gold_for_judge": "Renal biopsy",
+      "pred_for_judge": "Given the patient's presentation, which includes a sun-sensitive rash on the face and oral ulcers, along with laboratory findings indicative of autoimmune disease such as leukopenia, thrombocytopenia, elevated erythrocyte sedimentation rate (ESR), high titers of antinuclear antibodies (ANA), positive anti-Smith antibodies, and significant proteinuria with sterile pyuria, it is highly likely that she has systemic lupus erythematosus (SLE). The combination of skin rashes, joint pain, and kidney involvement strongly suggests an active SLE flare.\n\nThe next steps in managing this patient should be:\n\n1. **Initiate Immunosuppressive Therapy**: Since the patient has both renal involvement and potential organ damage from SLE, initiating immunosuppressive therapy is crucial to prevent further complications. Commonly used medications for this purpose include corticosteroids like prednisone or cyclophosphamide, depending on the severity and specific needs of the patient.\n\n2. **Monitor Kidney Function**: Regular monitoring of kidney function through tests such as serum creatinine levels and urinalysis will help assess any changes in kidney health and guide treatment adjustments if necessary.\n\n3. **Consider Antimalarial Medications**: For patients with SLE who have nephritis, adding hydroxychloroquine can be beneficial because it helps reduce inflammation and may slow down the progression of kidney damage.\n\n4. **Supportive Care**: Managing symptoms related to the rash, joint pain, and fatigue is also important. This might involve topical treatments for the rash, analgesics for joint pain, and rest when needed.\n\n5. **Follow-Up**: Regular follow-up appointments are essential to monitor the effectiveness of the treatment plan",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 990,
+      "question": "A female newborn delivered at 38 weeks' gestation presents with clitoromegaly, posterior labial fusion, and blood pressure of 53/35 mm Hg. One day after delivery, her serum levels show hyponatremia and hyperkalemia. Ultrasound reveals normal uterus and ovaries. Based on these findings, what abnormal serum hormone level is most likely to be observed in this newborn?",
+      "gold": "Increased 17-hydroxyprogesterone",
+      "pred": "Based on the clinical presentation and laboratory findings described for this newborn, the most likely abnormal serum hormone level is aldosterone deficiency. The combination of clitoromegaly, posterior labial fusion, low blood pressure (hypotension), and elevated potassium levels (hyperkalemia) suggests an adrenal crisis or adrenal insufficiency. Aldosterone plays a crucial role in maintaining sodium and potassium balance by promoting sodium reabsorption in the kidneys. In cases of adrenal insufficiency, particularly due to congenital adrenal hyperplasia, aldosterone production is often impaired, leading to hypokalemia and hypertension. Given that the ultrasound results were normal, it's less likely to be due to other causes like congenital adrenal hyperplasia. Therefore, aldosterone deficiency is the most probable cause of the observed symptoms.",
+      "gold_for_judge": "Increased 17-hydroxyprogesterone",
+      "pred_for_judge": "Based on the clinical presentation and laboratory findings described for this newborn, the most likely abnormal serum hormone level is aldosterone deficiency. The combination of clitoromegaly, posterior labial fusion, low blood pressure (hypotension), and elevated potassium levels (hyperkalemia) suggests an adrenal crisis or adrenal insufficiency. Aldosterone plays a crucial role in maintaining sodium and potassium balance by promoting sodium reabsorption in the kidneys. In cases of adrenal insufficiency, particularly due to congenital adrenal hyperplasia, aldosterone production is often impaired, leading to hypokalemia and hypertension. Given that the ultrasound results were normal, it's less likely to be due to other causes like congenital adrenal hyperplasia. Therefore, aldosterone deficiency is the most probable cause of the observed symptoms.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 23718,
+      "question": "In the epidemiology of leprosy, what are two true statements regarding disease transmission and treatment efficacy?",
+      "gold": "Insects can transmit the disease, and the relapse rate is an indicator of the efficacy of the drug regimen.",
+      "pred": "Two true statements about the epidemiology of leprosy in terms of disease transmission and treatment efficacy are:\n\n1. **Disease Transmission**: Leprosy is primarily transmitted through prolonged skin-to-skin contact with an active case of leprosy. This means that close personal interactions can increase the risk of infection.\n\n2. **Treatment Efficacy**: The effectiveness of multidrug therapy (MDT) for treating leprosy has been highly successful. MDT involves using three antibiotics: rifampicin, dapsone, and clofazimine. When administered correctly, these drugs effectively eliminate Mycobacterium leprae from the body, leading to significant improvements in patients' health outcomes.",
+      "gold_for_judge": "Insects can transmit the disease, and the relapse rate is an indicator of the efficacy of the drug regimen.",
+      "pred_for_judge": "Two true statements about the epidemiology of leprosy in terms of disease transmission and treatment efficacy are:\n\n1. **Disease Transmission**: Leprosy is primarily transmitted through prolonged skin-to-skin contact with an active case of leprosy. This means that close personal interactions can increase the risk of infection.\n\n2. **Treatment Efficacy**: The effectiveness of multidrug therapy (MDT) for treating leprosy has been highly successful. MDT involves using three antibiotics: rifampicin, dapsone, and clofazimine. When administered correctly, these drugs effectively eliminate Mycobacterium leprae from the body, leading to significant improvements in patients' health outcomes.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 29501,
+      "question": "What is the condition characterized by the triad of multifocal bony defects, diabetes insipidus, and exophthalmos known as?",
+      "gold": "Hand-Sch\u00fcller-Christian disease.",
+      "pred": "The condition characterized by the triad of multifocal bony defects, diabetes insipidus, and exophthalmos is known as Sj\u00f6gren-Larsson syndrome. This rare genetic disorder affects children and is associated with neurological symptoms such as seizures, developmental delays, and intellectual disability. It's important to note that while this information is accurate, it doesn't address the specific query about the condition itself but rather provides context for understanding its characteristics.",
+      "gold_for_judge": "Hand-Sch\u00fcller-Christian disease.",
+      "pred_for_judge": "The condition characterized by the triad of multifocal bony defects, diabetes insipidus, and exophthalmos is known as Sj\u00f6gren-Larsson syndrome. This rare genetic disorder affects children and is associated with neurological symptoms such as seizures, developmental delays, and intellectual disability. It's important to note that while this information is accurate, it doesn't address the specific query about the condition itself but rather provides context for understanding its characteristics.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 19790,
+      "question": "A 30-year-old woman has developed increased facial hair, acne, deepening of voice, and clitoral enlargement over the last 5 months, and on examination, she has abdominal obesity with no evidence of striae or bruising. What would not be considered an important step in the clinical assessment of this patient\u2019s condition?",
+      "gold": "USG abdomen",
+      "pred": "The symptoms described\u2014increased facial hair (hirsutism), acne, deepening of voice, clitoral enlargement, and abdominal obesity\u2014are characteristic of Cushing's syndrome. However, these symptoms alone do not definitively diagnose Cushing's syndrome because they can also occur in conditions like polycystic ovary syndrome (PCOS) or other hormonal imbalances.\n\nAn important step in the clinical assessment of this patient's condition is to rule out PCOS by performing a pelvic ultrasound. This test helps differentiate between hirsutism due to excess male hormones from those caused by ovarian cysts, which could explain some of her symptoms without implicating Cushing's syndrome as the primary cause.\n\nTherefore, ruling out PCOS through a pelvic ultrasound would not be considered an important step in the clinical assessment of this patient's condition.",
+      "gold_for_judge": "USG abdomen",
+      "pred_for_judge": "The symptoms described\u2014increased facial hair (hirsutism), acne, deepening of voice, clitoral enlargement, and abdominal obesity\u2014are characteristic of Cushing's syndrome. However, these symptoms alone do not definitively diagnose Cushing's syndrome because they can also occur in conditions like polycystic ovary syndrome (PCOS) or other hormonal imbalances.\n\nAn important step in the clinical assessment of this patient's condition is to rule out PCOS by performing a pelvic ultrasound. This test helps differentiate between hirsutism due to excess male hormones from those caused by ovarian cysts, which could explain some of her symptoms without implicating Cushing's syndrome as the primary cause.\n\nTherefore, ruling out PCOS through a pelvic ultrasound would not be considered an important step in the clinical assessment of this patient's condition.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 24256,
+      "question": "What laboratory test is most likely to be of the greatest diagnostic value in assessing a 15-year-old girl with a history of menorrhagia, prolonged bleeding after tooth extraction, and no significant past medical history?",
+      "gold": "Partial thromboplastin time (PTT)",
+      "pred": "The laboratory test that would be most likely to provide valuable information for diagnosing a 15-year-old girl with menorrhagia, prolonged bleeding after tooth extraction, and no significant past medical history is a complete blood count (CBC). This test can help identify any anemia or other abnormalities that might indicate underlying conditions such as iron deficiency, which could contribute to her symptoms. Additionally, it can rule out other potential causes like infections or autoimmune disorders by checking for signs of inflammation or infection. While thyroid function tests may also be relevant due to hormonal influences on menstrual cycles, a CBC remains a foundational tool in this scenario.",
+      "gold_for_judge": "Partial thromboplastin time (PTT)",
+      "pred_for_judge": "The laboratory test that would be most likely to provide valuable information for diagnosing a 15-year-old girl with menorrhagia, prolonged bleeding after tooth extraction, and no significant past medical history is a complete blood count (CBC). This test can help identify any anemia or other abnormalities that might indicate underlying conditions such as iron deficiency, which could contribute to her symptoms. Additionally, it can rule out other potential causes like infections or autoimmune disorders by checking for signs of inflammation or infection. While thyroid function tests may also be relevant due to hormonal influences on menstrual cycles, a CBC remains a foundational tool in this scenario.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 6029,
+      "question": "What type of pulse is typically observed in a 65-year-old man with a history of syncopal attacks on exertion and angina undergoing heart valve surgery, as indicated by the intra-operative findings?",
+      "gold": "Anacrotic pulse",
+      "pred": "In a 65-year-old man who has experienced syncopal episodes during physical activity and has been diagnosed with angina due to heart valve surgery, the most likely finding for an abnormal pulse would be a bradycardia. This condition can occur post-surgery due to various factors such as anesthesia effects or changes in blood volume and pressure. Bradycardia, characterized by a slow heart rate, could explain the symptoms of dizziness or fainting that he experiences when exerting himself. Therefore, observing a bradycardic rhythm in this patient aligns well with his clinical presentation and surgical context.",
+      "gold_for_judge": "Anacrotic pulse",
+      "pred_for_judge": "In a 65-year-old man who has experienced syncopal episodes during physical activity and has been diagnosed with angina due to heart valve surgery, the most likely finding for an abnormal pulse would be a bradycardia. This condition can occur post-surgery due to various factors such as anesthesia effects or changes in blood volume and pressure. Bradycardia, characterized by a slow heart rate, could explain the symptoms of dizziness or fainting that he experiences when exerting himself. Therefore, observing a bradycardic rhythm in this patient aligns well with his clinical presentation and surgical context.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 38436,
+      "question": "What characteristic of Plasmodium falciparum infection leads to the most severe hemolysis compared to infections by other malarial parasites?",
+      "gold": "Ability of the parasite to infect RBCs of all ages",
+      "pred": "The characteristic that contributes to the most severe hemolysis in Plasmodium falciparum malaria is its ability to produce high levels of oxidative stress within red blood cells (RBCs). This occurs due to the parasite's unique mechanism, which involves the production of reactive oxygen species (ROS) through the action of enzymes like nicotinamide adenine dinucleotide phosphate oxidase (NADPH oxidase). These ROS can lead to significant damage to RBC membranes and internal structures, causing rapid destruction and leading to severe anemia and complications such as cerebral malaria. While other malarial parasites may also cause hemolytic anemia, P. falciparum's enhanced capacity for ROS generation makes it particularly adept at inducing this type of severe hemolysis.",
+      "gold_for_judge": "Ability of the parasite to infect RBCs of all ages",
+      "pred_for_judge": "The characteristic that contributes to the most severe hemolysis in Plasmodium falciparum malaria is its ability to produce high levels of oxidative stress within red blood cells (RBCs). This occurs due to the parasite's unique mechanism, which involves the production of reactive oxygen species (ROS) through the action of enzymes like nicotinamide adenine dinucleotide phosphate oxidase (NADPH oxidase). These ROS can lead to significant damage to RBC membranes and internal structures, causing rapid destruction and leading to severe anemia and complications such as cerebral malaria. While other malarial parasites may also cause hemolytic anemia, P. falciparum's enhanced capacity for ROS generation makes it particularly adept at inducing this type of severe hemolysis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 31850,
+      "question": "What is the approved dose of misoprostol for the emergent management of postpartum hemorrhage?",
+      "gold": "600 mcg",
+      "pred": "The recommended dose of misoprostol for the emergency treatment of postpartum hemorrhage is 200 micrograms (mcg) intramuscularly or subcutaneously, followed by another 100 mcg if needed within an hour. This approach aims to achieve hemostasis quickly in cases where there's significant blood loss after childbirth.",
+      "gold_for_judge": "600 mcg",
+      "pred_for_judge": "The recommended dose of misoprostol for the emergency treatment of postpartum hemorrhage is 200 micrograms (mcg) intramuscularly or subcutaneously, followed by another 100 mcg if needed within an hour. This approach aims to achieve hemostasis quickly in cases where there's significant blood loss after childbirth.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 10374,
+      "question": "A researcher conducted an experiment to evaluate the toxicity of a new chemotherapeutic agent in mice. She divided the mice into two groups: 52 were exposed to daily injections of the drug for 1 week, and 50 were not exposed to any treatment, with all other conditions being the same. One month later, dilated cardiomyopathy was found in 13 mice from the exposed group and 1 mouse from the unexposed group. What is the relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group?",
+      "gold": "12.5",
+      "pred": "The relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group can be calculated by dividing the number of cases in the exposed group by the number of cases in the unexposed group. In this case, it would be:\n\nRelative Risk = (Number of cases in exposed group) / (Number of cases in unexposed group)\nRelative Risk = 13 / 1 = 13\n\nTherefore, the relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group is 13. This indicates that the exposure to the chemotherapeutic agent significantly increases the likelihood of developing cardiomyopathy, as the risk ratio is much higher than one.",
+      "gold_for_judge": "12.5",
+      "pred_for_judge": "The relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group can be calculated by dividing the number of cases in the exposed group by the number of cases in the unexposed group. In this case, it would be:\n\nRelative Risk = (Number of cases in exposed group) / (Number of cases in unexposed group)\nRelative Risk = 13 / 1 = 13\n\nTherefore, the relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group is 13. This indicates that the exposure to the chemotherapeutic agent significantly increases the likelihood of developing cardiomyopathy, as the risk ratio is much higher than one.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 32277,
+      "question": "What drug is used to irreversibly inhibit the H+/K+ ATPase in gastric parietal cells, and is effective in treating a patient with Zollinger-Ellison syndrome who presents with bleeding ulcers and diarrhea?",
+      "gold": "Omeprazole",
+      "pred": "The drug used to irreversibly inhibit the H+/K+ ATPase in gastric parietal cells for treating patients with Zollinger-Ellison syndrome is omeprazole. Omeprazole effectively treats symptoms such as bleeding ulcers and diarrhea by blocking proton pumps, thereby reducing acid production in the stomach.",
+      "gold_for_judge": "Omeprazole",
+      "pred_for_judge": "The drug used to irreversibly inhibit the H+/K+ ATPase in gastric parietal cells for treating patients with Zollinger-Ellison syndrome is omeprazole. Omeprazole effectively treats symptoms such as bleeding ulcers and diarrhea by blocking proton pumps, thereby reducing acid production in the stomach.",
+      "judge_verdict": "CORRECT"
+    }
+  ]
+}

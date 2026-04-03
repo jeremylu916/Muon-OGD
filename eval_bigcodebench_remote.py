@@ -17,9 +17,9 @@ from gradio_client import Client, handle_file
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # --- Configuration ---
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
-DEFAULT_BCB_SPLIT = "instruct"   # bigcodebench split: instruct|complete
-DEFAULT_BCB_SUBSET = "hard"      # bigcodebench subset: hard|full
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B"
+DEFAULT_BCB_SPLIT = "complete"   # bigcodebench split: instruct|complete
+DEFAULT_BCB_SUBSET = "full"      # bigcodebench subset: hard|full
 DEFAULT_BCB_VERSION = "v0.1.4"   # dataset version on HF hub
 DEFAULT_NUM_TASKS = 0
 DEFAULT_SEED = 42
@@ -32,6 +32,8 @@ DEFAULT_TRAIN_SIZE = 800
 DEFAULT_USE_REST_SPLIT = True
 DEFAULT_SUBMIT_RETRIES = 3
 DEFAULT_SUBMIT_RETRY_DELAY_SEC = 20
+DEFAULT_DEBUG_FIRST_SAMPLE = False
+DEFAULT_DEBUG_TEXT_LIMIT = 1200
 
 # Regex for markdown code blocks
 _CODEBLOCK_RE = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL | re.IGNORECASE)
@@ -184,7 +186,17 @@ def parse_args():
     p.add_argument("--submit_only", action="store_true", help="Skip generation and submit existing samples")
     p.add_argument("--submit_retries", type=int, default=DEFAULT_SUBMIT_RETRIES, help="Number of retry attempts for remote submission")
     p.add_argument("--submit_retry_delay_sec", type=int, default=DEFAULT_SUBMIT_RETRY_DELAY_SEC, help="Delay in seconds between submission retries")
+    p.add_argument("--debug_first_sample", action=argparse.BooleanOptionalAction, default=DEFAULT_DEBUG_FIRST_SAMPLE,
+                   help="If true, print prompt/raw/extracted text for the first task")
+    p.add_argument("--debug_text_limit", type=int, default=DEFAULT_DEBUG_TEXT_LIMIT,
+                   help="Max chars to print for first-sample debug sections")
     return p.parse_args()
+
+
+def _clip_text(text: str, limit: int) -> str:
+    if limit <= 0 or len(text) <= limit:
+        return text
+    return text[:limit] + f"\n... [truncated {len(text) - limit} chars]"
 
 def select_tasks(ds, split: str, num_tasks: int, seed: int, task_ids_csv: str) -> List[Task]:
     if task_ids_csv.strip():
@@ -276,12 +288,20 @@ def main():
         
         use_cuda = torch.cuda.is_available()
         dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
-        model = AutoModelForCausalLM.from_pretrained(
-            args.model_id,
-            cache_dir=cache_dir,
-            torch_dtype=dtype,
-            device_map="auto",
-        )
+        try:
+            model = AutoModelForCausalLM.from_pretrained(
+                args.model_id,
+                cache_dir=cache_dir,
+                dtype=dtype,
+                device_map="auto",
+            )
+        except TypeError:
+            model = AutoModelForCausalLM.from_pretrained(
+                args.model_id,
+                cache_dir=cache_dir,
+                torch_dtype=dtype,
+                device_map="auto",
+            )
         model.eval()
 
         # Generate
@@ -317,19 +337,18 @@ def main():
                 prompt_len = inputs["input_ids"].shape[1]
                 raw_output = tokenizer.decode(out[0][prompt_len:], skip_special_tokens=True)
                 
-                # --- DEBUG: Print first sample to check format ---
-                if n == 1:
+                # Optional first-sample debug print to avoid massive log spam.
+                if args.debug_first_sample and n == 1:
                     print("\n" + "="*40)
                     print(f"DEBUG SAMPLE (Task: {task.task_id})")
                     print("-" * 20)
-                    print(f"PROMPT:\n{full_prompt}")
+                    print(f"PROMPT:\n{_clip_text(full_prompt, args.debug_text_limit)}")
                     print("-" * 20)
-                    print(f"RAW OUTPUT:\n{raw_output}")
+                    print(f"RAW OUTPUT:\n{_clip_text(raw_output, args.debug_text_limit)}")
                     print("-" * 20)
                     extracted = extract_code(raw_output)
-                    print(f"EXTRACTED CODE:\n{extracted}")
+                    print(f"EXTRACTED CODE:\n{_clip_text(extracted, args.debug_text_limit)}")
                     print("="*40 + "\n")
-                # -----------------------------------------------
 
                 extracted = extract_code(raw_output)
                 normalized = normalize_solution(task.prompt, extracted)
@@ -352,10 +371,12 @@ def main():
 
     # Evaluate
     print("Submitting to Remote Evaluator...")
-    client = Client(args.gradio_endpoint)
     max_attempts = max(1, int(args.submit_retries))
     for attempt in range(1, max_attempts + 1):
         try:
+            # Client config fetch is also network-bound and can timeout, so keep
+            # client initialization inside the retry block.
+            client = Client(args.gradio_endpoint)
             results, pass_at_k = client.predict(
                 split=args.split,
                 subset=args.subset,

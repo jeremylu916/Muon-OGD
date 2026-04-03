@@ -15,10 +15,10 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 
 # --- Default Configuration ---
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B"
 DEFAULT_OUTPUT_DIR = "outputs/sft_bigcodebench"
 DEFAULT_BCB_VERSION = "v0.1.4"
-DEFAULT_SPLIT = "instruct"  # instruct|complete
+DEFAULT_SPLIT = "complete"  # instruct|complete
 DEFAULT_MAX_LENGTH = 1024
 DEFAULT_BATCH_SIZE = 4  # Increased from 1 for efficiency
 DEFAULT_GRAD_ACCUM = 4  # Adjusted to keep effective batch size similar (4*4=16)
@@ -96,9 +96,8 @@ def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
     return tokenizer
 
 
-def build_prompt_text(args, prompt: str) -> str:
-    """Builds the prompt string using the chat template format."""
-    # We construct the list of messages for the prompt ONLY.
+def build_prompt_text(args, tokenizer, prompt: str) -> str:
+    """Build a model input prompt that matches the downstream eval format."""
     if args.split == "instruct":
         user_content = (
             "Write Python code that solves the task. "
@@ -108,13 +107,10 @@ def build_prompt_text(args, prompt: str) -> str:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": user_content}
         ]
+        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     else:
-        # Complete/Docstring style
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt.strip()}
-        ]
-    return messages
+        # Keep complete-mode prompts as raw text to mirror eval_bigcodebench_remote.py.
+        return prompt.strip()
 
 
 def _extract_task_func_signature(task_prompt: str) -> str:
@@ -215,10 +211,7 @@ def main():
             solution = normalized_solution
 
         # 1. Build Prompt (using chat template, NO tokenization yet)
-        messages = build_prompt_text(args, raw_prompt)
-        # apply_chat_template with tokenize=False gives us the raw formatted string
-        # add_generation_prompt=True ensures it ends with "<|im_start|>assistant\n" (or similar)
-        prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        prompt_text = build_prompt_text(args, tokenizer, raw_prompt)
 
         # 2. Build Solution (Add EOS manually to ensure model stops)
         # We add the eos_token explicitly.
@@ -290,8 +283,7 @@ def main():
         model.eval()
         print(f"\n[probe] step={step_idx} | sample questions from training set", flush=True)
         for ex in probe_examples:
-            messages = build_prompt_text(args, ex["prompt"])
-            prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            prompt_text = build_prompt_text(args, tokenizer, ex["prompt"])
             enc = tokenizer(prompt_text, return_tensors="pt", truncation=True, max_length=args.max_length)
             enc = {k: v.to(device) for k, v in enc.items()}
 

@@ -1,0 +1,296 @@
+{
+  "task": "medical_verifiable",
+  "model_id": "1.5B-instruct/outputs/sft_seq2_coding_qwen1.5b_instruct_adamw",
+  "verifier_model_id": "FreedomIntelligence/medical_o1_verifier_3B",
+  "dataset_id": "FreedomIntelligence/medical-o1-verifiable-problem",
+  "split": "train",
+  "question_field": "Open-ended Verifiable Question",
+  "answer_field": "Ground-True Answer",
+  "language_field": "language",
+  "verifiable_field": "verifiable",
+  "english_only": true,
+  "require_verifiable": true,
+  "num_examples": 500,
+  "seed": 42,
+  "max_new_tokens": 348,
+  "judge_final_answer_only": true,
+  "final_trimmed_pred": 0,
+  "final_trimmed_gold": 0,
+  "judge_accuracy": 0.236,
+  "judge_correct": 118,
+  "judge_total": 500,
+  "judge_errors": 0,
+  "timestamp_utc": "2026-03-29T03:15:49.910165+00:00",
+  "sample_predictions": [
+    {
+      "idx": 36037,
+      "question": "Which pulmonary manifestation is not associated with asbestosis?",
+      "gold": "Diffuse alveolar damage",
+      "pred": "Pulmonary manifestations of asbestosis are typically characterized by interstitial lung disease, which can lead to fibrosis and scarring in the lungs. However, one specific condition that is not commonly associated with asbestosis is chronic obstructive pulmonary disease (COPD). While COPD can be caused by asbestos exposure, it does not fit within the typical spectrum of pulmonary manifestations seen in asbestosis. Therefore, among the options provided, COPD would be the least likely pulmonary manifestation associated with asbestosis.",
+      "gold_for_judge": "Diffuse alveolar damage",
+      "pred_for_judge": "Pulmonary manifestations of asbestosis are typically characterized by interstitial lung disease, which can lead to fibrosis and scarring in the lungs. However, one specific condition that is not commonly associated with asbestosis is chronic obstructive pulmonary disease (COPD). While COPD can be caused by asbestos exposure, it does not fit within the typical spectrum of pulmonary manifestations seen in asbestosis. Therefore, among the options provided, COPD would be the least likely pulmonary manifestation associated with asbestosis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 38518,
+      "question": "What is the incorrect statement about mechanisms of Penicillin resistance regarding the alteration in target PBPs?",
+      "gold": "Alteration in target PBPs is an important resistance mechanism in gram negative bacteria.",
+      "pred": "The incorrect statement about mechanisms of penicillin resistance regarding alterations in target PBPs (Penicillin Binding Proteins) is that it involves changes to the binding site on PBPs, which allows for increased affinity or stability of the antibiotic. Instead, mutations typically lead to reduced activity by altering the enzyme's structure rather than changing its binding site. This results in lower susceptibility to antibiotics like penicillins.",
+      "gold_for_judge": "Alteration in target PBPs is an important resistance mechanism in gram negative bacteria.",
+      "pred_for_judge": "The incorrect statement about mechanisms of penicillin resistance regarding alterations in target PBPs (Penicillin Binding Proteins) is that it involves changes to the binding site on PBPs, which allows for increased affinity or stability of the antibiotic. Instead, mutations typically lead to reduced activity by altering the enzyme's structure rather than changing its binding site. This results in lower susceptibility to antibiotics like penicillins.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 24584,
+      "question": "A 50-year-old man presents with an 8-month history of intermittent watery diarrhea, abdominal pain, and significant weight loss. He reports episodic joint pain over the past 5 years. An endoscopy with small bowel biopsy reveals foamy macrophages in the lamina propria with periodic acid-Schiff (PAS)-positive inclusions. What specific pathogen is most likely to be identified in a further evaluation of the tissue specimen?",
+      "gold": "Intracellular, gram-positive bacilli",
+      "pred": "The specific pathogen most likely to be identified in this case is Cryptosporidium. The clinical presentation, symptoms, and histopathological findings align well with cryptosporidiosis. Cryptosporidium can cause similar symptoms including watery diarrhea, abdominal pain, and weight loss, especially if it affects the small intestine where PAS-positive inclusions may be observed. Further diagnostic tests such as PCR for Cryptosporidium DNA or immunohistochemistry would confirm the diagnosis.",
+      "gold_for_judge": "Intracellular, gram-positive bacilli",
+      "pred_for_judge": "The specific pathogen most likely to be identified in this case is Cryptosporidium. The clinical presentation, symptoms, and histopathological findings align well with cryptosporidiosis. Cryptosporidium can cause similar symptoms including watery diarrhea, abdominal pain, and weight loss, especially if it affects the small intestine where PAS-positive inclusions may be observed. Further diagnostic tests such as PCR for Cryptosporidium DNA or immunohistochemistry would confirm the diagnosis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 8858,
+      "question": "A child presents with linear verrucous plaques on the trunk and histological findings show vacuolization of keratinocytes in the stratum spinosum and stratum granulosum. What is the diagnosis?",
+      "gold": "Verrucous epidermal nevus",
+      "pred": "The diagnosis for these symptoms is lichen planus.",
+      "gold_for_judge": "Verrucous epidermal nevus",
+      "pred_for_judge": "The diagnosis for these symptoms is lichen planus.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 20109,
+      "question": "A 2-year-old child presents with symptoms including discharge, seborrheic dermatitis, polyuria, and hepatosplenomegaly. Based on these clinical features, what is the most likely diagnosis?",
+      "gold": "Langerhan's cell histiocytosis",
+      "pred": "Based on the clinical features of discharge, seborrheic dermatitis, polyuria (increased urine output), and hepatosplenomegaly in a 2-year-old child, the most likely diagnosis is cystic fibrosis. This condition often presents with respiratory problems, gastrointestinal issues, and electrolyte imbalances that can lead to increased urination and enlarged liver and spleen. However, it's important to confirm this diagnosis through genetic testing for CFTR gene mutations.",
+      "gold_for_judge": "Langerhan's cell histiocytosis",
+      "pred_for_judge": "Based on the clinical features of discharge, seborrheic dermatitis, polyuria (increased urine output), and hepatosplenomegaly in a 2-year-old child, the most likely diagnosis is cystic fibrosis. This condition often presents with respiratory problems, gastrointestinal issues, and electrolyte imbalances that can lead to increased urination and enlarged liver and spleen. However, it's important to confirm this diagnosis through genetic testing for CFTR gene mutations.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 20650,
+      "question": "A 16-year-old girl presents with a 3-week history of nausea, increased urinary frequency, and breast tenderness. She has never had a menstrual period despite being in Tanner stage 5 for breast and pubic hair development, actively participates in track and field, and has a BMI of 18 kg/m2. What serum assay should be performed next to diagnose her condition?",
+      "gold": "Human chorionic gonadotropin",
+      "pred": "Based on the symptoms described (nausea, increased urinary frequency, breast tenderness), the most likely diagnosis is primary ovarian hyperstimulation syndrome (OHSS). The appropriate serum assay to perform would be a complete blood count (CBC) to assess for anemia or infection, and a pregnancy test if she is sexually active. However, given the clinical presentation, further investigation into potential causes such as ovarian cysts or other endocrine disorders may also be necessary.",
+      "gold_for_judge": "Human chorionic gonadotropin",
+      "pred_for_judge": "Based on the symptoms described (nausea, increased urinary frequency, breast tenderness), the most likely diagnosis is primary ovarian hyperstimulation syndrome (OHSS). The appropriate serum assay to perform would be a complete blood count (CBC) to assess for anemia or infection, and a pregnancy test if she is sexually active. However, given the clinical presentation, further investigation into potential causes such as ovarian cysts or other endocrine disorders may also be necessary.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 33235,
+      "question": "Which specific enzyme's absence in humans results in the inability to synthesize ascorbic acid?",
+      "gold": "L-Gulonolactone oxidase",
+      "pred": "The specific enzyme that is absent in humans, resulting in the inability to synthesize ascorbic acid (vitamin C), is glucose-6-phosphate dehydrogenase (G6PD). This enzyme deficiency leads to G6PD deficiency, which can cause hemolytic anemia when exposed to certain drugs or foods containing nitrates or sulfites.",
+      "gold_for_judge": "L-Gulonolactone oxidase",
+      "pred_for_judge": "The specific enzyme that is absent in humans, resulting in the inability to synthesize ascorbic acid (vitamin C), is glucose-6-phosphate dehydrogenase (G6PD). This enzyme deficiency leads to G6PD deficiency, which can cause hemolytic anemia when exposed to certain drugs or foods containing nitrates or sulfites.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 38879,
+      "question": "Which organism's capsule does not function as a virulence factor among common pathogens?",
+      "gold": "Bordetella pertussis",
+      "pred": "Staphylococcus aureus",
+      "gold_for_judge": "Bordetella pertussis",
+      "pred_for_judge": "Staphylococcus aureus",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 37263,
+      "question": "Two months after a renal transplantation, a 40-year-old patient develops a fever and symptoms indicative of bilateral diffuse interstitial pneumonitis. What is the most likely etiological agent responsible for this condition?",
+      "gold": "CMV",
+      "pred": "The most likely etiological agent responsible for bilateral diffuse interstitial pneumonitis in a kidney transplant recipient two months post-transplant is BK virus (BKV).",
+      "gold_for_judge": "CMV",
+      "pred_for_judge": "The most likely etiological agent responsible for bilateral diffuse interstitial pneumonitis in a kidney transplant recipient two months post-transplant is BK virus (BKV).",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 13499,
+      "question": "What is the minimum distance that should be maintained between the finish line and the alveolar crest to ensure the preservation of the periodontium?",
+      "gold": "5mm away.",
+      "pred": "The minimum distance that should be maintained between the finish line (usually defined as 10 mm) and the alveolar crest to ensure the preservation of the periodontium is crucial in dental implantology. This distance helps prevent the implant from being too close to the bone, which could lead to complications such as osteonecrosis or peri-implantitis. Maintaining this distance ensures optimal healing and longevity of the implant.",
+      "gold_for_judge": "5mm away.",
+      "pred_for_judge": "The minimum distance that should be maintained between the finish line (usually defined as 10 mm) and the alveolar crest to ensure the preservation of the periodontium is crucial in dental implantology. This distance helps prevent the implant from being too close to the bone, which could lead to complications such as osteonecrosis or peri-implantitis. Maintaining this distance ensures optimal healing and longevity of the implant.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 27322,
+      "question": "In cluster sampling for coverage of the national immunization programme, how many children are surveyed in each of the 30 clusters?",
+      "gold": "7 children in each cluster",
+      "pred": "10 children are surveyed in each of the 30 clusters.",
+      "gold_for_judge": "7 children in each cluster",
+      "pred_for_judge": "10 children are surveyed in each of the 30 clusters.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 31506,
+      "question": "What is the most likely cause of intermittent stridor in a 3-month-old child?",
+      "gold": "Laryngomalacia",
+      "pred": "The most likely cause of intermittent stridor in a 3-month-old child is laryngomalacia.",
+      "gold_for_judge": "Laryngomalacia",
+      "pred_for_judge": "The most likely cause of intermittent stridor in a 3-month-old child is laryngomalacia.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 21533,
+      "question": "A 5-month-old baby, who is exclusively fed cow's milk, presents to the pediatric outpatient department with a history of crying when touched. What is the likely cause of this condition?",
+      "gold": "Scurvy",
+      "pred": "The likely cause of the baby's symptoms is that he or she may be experiencing colic, which is characterized by excessive crying in an otherwise healthy infant. Colic typically occurs between 2-4 months of age and can last for several weeks. It is often associated with abdominal pain or discomfort rather than any underlying disease. The baby is being fed exclusively on cow's milk, which might contribute to digestive issues if it does not match the baby's nutritional needs at this stage of development. However, without further examination, it would be premature to diagnose colic based solely on these symptoms.",
+      "gold_for_judge": "Scurvy",
+      "pred_for_judge": "The likely cause of the baby's symptoms is that he or she may be experiencing colic, which is characterized by excessive crying in an otherwise healthy infant. Colic typically occurs between 2-4 months of age and can last for several weeks. It is often associated with abdominal pain or discomfort rather than any underlying disease. The baby is being fed exclusively on cow's milk, which might contribute to digestive issues if it does not match the baby's nutritional needs at this stage of development. However, without further examination, it would be premature to diagnose colic based solely on these symptoms.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 15109,
+      "question": "A 56-year-old man presents with a 2-month history of worsening deep, dull ache in his left buttock, particularly at night, without recent trauma. He has a history of smoking and hyperlipidemia, only takes simvastatin, and shows tenderness over the left gluteal region but no neurological focal findings. An X-ray of the pelvis reveals a 4-cm osteolytic lesion in the left ilium with a moth-eaten pattern, sclerotic lesions, and an aggressive periosteal reaction. Considering these clinical and radiographic features, what is the most likely diagnosis?",
+      "gold": "Chondrosarcoma",
+      "pred": "The most likely diagnosis based on the provided information is metastatic bone disease (most commonly lung cancer). The presence of a 4-cm osteolytic lesion with a moth-eaten pattern, sclerotic lesions, and aggressive periosteal reaction strongly suggests this malignancy has spread to the bones. Given the patient's age, smoking history, and hyperlipidemia, lung cancer remains the primary consideration. Further diagnostic tests such as PET-CT or biopsy would be necessary for confirmation.",
+      "gold_for_judge": "Chondrosarcoma",
+      "pred_for_judge": "The most likely diagnosis based on the provided information is metastatic bone disease (most commonly lung cancer). The presence of a 4-cm osteolytic lesion with a moth-eaten pattern, sclerotic lesions, and aggressive periosteal reaction strongly suggests this malignancy has spread to the bones. Given the patient's age, smoking history, and hyperlipidemia, lung cancer remains the primary consideration. Further diagnostic tests such as PET-CT or biopsy would be necessary for confirmation.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 11600,
+      "question": "What clinical sign would one expect to note during the assessment of a patient diagnosed with paronychia?",
+      "gold": "Red shiny skin around the nail bed",
+      "pred": "One would expect to note redness, swelling, tenderness, and possibly purulent discharge in the affected finger or nail bed during the assessment of a patient diagnosed with paronychia.",
+      "gold_for_judge": "Red shiny skin around the nail bed",
+      "pred_for_judge": "One would expect to note redness, swelling, tenderness, and possibly purulent discharge in the affected finger or nail bed during the assessment of a patient diagnosed with paronychia.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 7975,
+      "question": "An elderly woman who had a radical mastectomy with radiation to the axilla 20 years ago has had a non-healing open wound for 25 years, which is not a recurrence of breast cancer. What is the most likely diagnosis for this wound?",
+      "gold": "Squamous cell carcinoma",
+      "pred": "The most likely diagnosis for this wound in an elderly woman who underwent a radical mastectomy with radiation therapy 20 years ago and now has a non-healing open wound that persists despite no evidence of breast cancer recurrence is chronic osteomyelitis. This condition involves infection and inflammation of bone tissue, often due to residual bacteria or other pathogens from previous surgery sites. Treatment typically includes antibiotics, surgical debridement (removal of dead tissue), and possibly further radiation therapy if it's indicated. Early recognition and prompt treatment are crucial to prevent complications such as sepsis.",
+      "gold_for_judge": "Squamous cell carcinoma",
+      "pred_for_judge": "The most likely diagnosis for this wound in an elderly woman who underwent a radical mastectomy with radiation therapy 20 years ago and now has a non-healing open wound that persists despite no evidence of breast cancer recurrence is chronic osteomyelitis. This condition involves infection and inflammation of bone tissue, often due to residual bacteria or other pathogens from previous surgery sites. Treatment typically includes antibiotics, surgical debridement (removal of dead tissue), and possibly further radiation therapy if it's indicated. Early recognition and prompt treatment are crucial to prevent complications such as sepsis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 8682,
+      "question": "Given that mammography has a sensitivity of 90%, what is the probability that a woman with breast carcinoma will not be diagnosed correctly by mammography over two consecutive years?",
+      "gold": "0.20",
+      "pred": "The probability that a woman with breast carcinoma will not be diagnosed correctly by mammography over two consecutive years, given a sensitivity of 90%, can be calculated using Bayes' theorem or simply understanding the concept of false negatives.\n\nFalse negative rate = 1 - Sensitivity = 1 - 0.90 = 0.10 (or 10%)\n\nProbability of no diagnosis in one year = False Negative Rate = 0.10\n\nProbability of no diagnosis in two consecutive years = (False Negative Rate)^2 = 0.10 * 0.10 = 0.01 or 1%\n\nSo, there is approximately a 1% chance that a woman with breast carcinoma will not be diagnosed correctly by mammography over two consecutive years.",
+      "gold_for_judge": "0.20",
+      "pred_for_judge": "The probability that a woman with breast carcinoma will not be diagnosed correctly by mammography over two consecutive years, given a sensitivity of 90%, can be calculated using Bayes' theorem or simply understanding the concept of false negatives.\n\nFalse negative rate = 1 - Sensitivity = 1 - 0.90 = 0.10 (or 10%)\n\nProbability of no diagnosis in one year = False Negative Rate = 0.10\n\nProbability of no diagnosis in two consecutive years = (False Negative Rate)^2 = 0.10 * 0.10 = 0.01 or 1%\n\nSo, there is approximately a 1% chance that a woman with breast carcinoma will not be diagnosed correctly by mammography over two consecutive years.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 2045,
+      "question": "An 18-year-old male presents with massive hematemesis and has a history of fever treated with medication for the past 14 days. Examination reveals moderate splenomegaly. What is the most likely diagnosis?",
+      "gold": "Esophageal varices",
+      "pred": "The most likely diagnosis in this case is acute idiopathic thrombocytopenic purpura (ITP). The combination of massive hematemesis, fever, and recent onset of ITP suggests an underlying autoimmune disorder that could be causing both bleeding and infection.",
+      "gold_for_judge": "Esophageal varices",
+      "pred_for_judge": "The most likely diagnosis in this case is acute idiopathic thrombocytopenic purpura (ITP). The combination of massive hematemesis, fever, and recent onset of ITP suggests an underlying autoimmune disorder that could be causing both bleeding and infection.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 12169,
+      "question": "Which disease of the bone is characterized by a single lesion in a single bone, unlike other conditions that typically present with multiple lesions or affect multiple bones?",
+      "gold": "Central giant cell granuloma",
+      "pred": "Osteomyelitis is the disease of the bone characterized by a single lesion in a single bone, unlike other conditions that typically present with multiple lesions or affect multiple bones.",
+      "gold_for_judge": "Central giant cell granuloma",
+      "pred_for_judge": "Osteomyelitis is the disease of the bone characterized by a single lesion in a single bone, unlike other conditions that typically present with multiple lesions or affect multiple bones.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 16201,
+      "question": "A 30-year-old woman presents with a 6-month history of a sun-sensitive rash on her face and oral ulcers, alongside lab findings of leukopenia, thrombocytopenia, elevated erythrocyte sedimentation rate, high titers of antinuclear antibodies, positive anti-Smith antibodies, and significant proteinuria with sterile pyuria. Given these clinical and laboratory findings, what is the most appropriate next step in her management?",
+      "gold": "Renal biopsy",
+      "pred": "Given the clinical presentation and laboratory findings, the most appropriate next step in managing this patient would be to initiate treatment for systemic lupus erythematosus (SLE). This includes:\n1. Antimalarial drugs such as hydroxychloroquine.\n2. Non-steroidal anti-inflammatory drugs (NSAIDs) or corticosteroids if there's severe inflammation.\n3. Immunosuppressive agents like azathioprine or cyclophosphamide.\n4. Monitoring for complications such as nephritis and renal function.\n5. Regular follow-up with rheumatologists and nephrologists.",
+      "gold_for_judge": "Renal biopsy",
+      "pred_for_judge": "Given the clinical presentation and laboratory findings, the most appropriate next step in managing this patient would be to initiate treatment for systemic lupus erythematosus (SLE). This includes:\n1. Antimalarial drugs such as hydroxychloroquine.\n2. Non-steroidal anti-inflammatory drugs (NSAIDs) or corticosteroids if there's severe inflammation.\n3. Immunosuppressive agents like azathioprine or cyclophosphamide.\n4. Monitoring for complications such as nephritis and renal function.\n5. Regular follow-up with rheumatologists and nephrologists.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 990,
+      "question": "A female newborn delivered at 38 weeks' gestation presents with clitoromegaly, posterior labial fusion, and blood pressure of 53/35 mm Hg. One day after delivery, her serum levels show hyponatremia and hyperkalemia. Ultrasound reveals normal uterus and ovaries. Based on these findings, what abnormal serum hormone level is most likely to be observed in this newborn?",
+      "gold": "Increased 17-hydroxyprogesterone",
+      "pred": "Based on the clinical presentation and laboratory findings, the most likely abnormal serum hormone level observed in this newborn would be hypothyroidism. The combination of clitoromegaly (enlarged clitoris), posterior labial fusion, low blood pressure, and thyroid dysfunction suggests congenital hypothyroidism. The ultrasound showing normal uterus and ovaries further supports this diagnosis. Hypothyroidism can cause various physical abnormalities including those mentioned, as well as affect cardiovascular function leading to low blood pressure.",
+      "gold_for_judge": "Increased 17-hydroxyprogesterone",
+      "pred_for_judge": "Based on the clinical presentation and laboratory findings, the most likely abnormal serum hormone level observed in this newborn would be hypothyroidism. The combination of clitoromegaly (enlarged clitoris), posterior labial fusion, low blood pressure, and thyroid dysfunction suggests congenital hypothyroidism. The ultrasound showing normal uterus and ovaries further supports this diagnosis. Hypothyroidism can cause various physical abnormalities including those mentioned, as well as affect cardiovascular function leading to low blood pressure.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 23718,
+      "question": "In the epidemiology of leprosy, what are two true statements regarding disease transmission and treatment efficacy?",
+      "gold": "Insects can transmit the disease, and the relapse rate is an indicator of the efficacy of the drug regimen.",
+      "pred": "1. Leprosy is primarily transmitted through prolonged skin-to-skin contact with an active case.\n2. Rifampicin (R) and dapsone (D) combination therapy has been shown to be highly effective in curing leprosy when initiated early after diagnosis.",
+      "gold_for_judge": "Insects can transmit the disease, and the relapse rate is an indicator of the efficacy of the drug regimen.",
+      "pred_for_judge": "1. Leprosy is primarily transmitted through prolonged skin-to-skin contact with an active case.\n2. Rifampicin (R) and dapsone (D) combination therapy has been shown to be highly effective in curing leprosy when initiated early after diagnosis.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 29501,
+      "question": "What is the condition characterized by the triad of multifocal bony defects, diabetes insipidus, and exophthalmos known as?",
+      "gold": "Hand-Sch\u00fcller-Christian disease.",
+      "pred": "The condition characterized by the triad of multifocal bony defects, diabetes insipidus, and exophthalmos is known as Sj\u00f6gren-Larsson syndrome.",
+      "gold_for_judge": "Hand-Sch\u00fcller-Christian disease.",
+      "pred_for_judge": "The condition characterized by the triad of multifocal bony defects, diabetes insipidus, and exophthalmos is known as Sj\u00f6gren-Larsson syndrome.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 19790,
+      "question": "A 30-year-old woman has developed increased facial hair, acne, deepening of voice, and clitoral enlargement over the last 5 months, and on examination, she has abdominal obesity with no evidence of striae or bruising. What would not be considered an important step in the clinical assessment of this patient\u2019s condition?",
+      "gold": "USG abdomen",
+      "pred": "The option that would not be considered an important step in the clinical assessment of this patient's condition is ordering genetic testing for suspected Cushing's syndrome. The other options (physical exam, blood tests, imaging) are all essential components of diagnosing hormonal imbalances like Cushing's syndrome. Genetic testing is typically reserved for specific cases where there is suspicion of a rare genetic disorder causing hormone excess.",
+      "gold_for_judge": "USG abdomen",
+      "pred_for_judge": "The option that would not be considered an important step in the clinical assessment of this patient's condition is ordering genetic testing for suspected Cushing's syndrome. The other options (physical exam, blood tests, imaging) are all essential components of diagnosing hormonal imbalances like Cushing's syndrome. Genetic testing is typically reserved for specific cases where there is suspicion of a rare genetic disorder causing hormone excess.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 24256,
+      "question": "What laboratory test is most likely to be of the greatest diagnostic value in assessing a 15-year-old girl with a history of menorrhagia, prolonged bleeding after tooth extraction, and no significant past medical history?",
+      "gold": "Partial thromboplastin time (PTT)",
+      "pred": "The most likely laboratory test for diagnosing a 15-year-old girl with menorrhagia, prolonged bleeding after tooth extraction, and no significant past medical history would be a complete blood count (CBC) to assess hematocrit levels and platelet count. This can help determine if there's anemia or thrombocytopenia contributing to her symptoms. Additionally, coagulation studies might be considered to evaluate clotting function. However, without more specific clinical details, these tests remain the primary options.",
+      "gold_for_judge": "Partial thromboplastin time (PTT)",
+      "pred_for_judge": "The most likely laboratory test for diagnosing a 15-year-old girl with menorrhagia, prolonged bleeding after tooth extraction, and no significant past medical history would be a complete blood count (CBC) to assess hematocrit levels and platelet count. This can help determine if there's anemia or thrombocytopenia contributing to her symptoms. Additionally, coagulation studies might be considered to evaluate clotting function. However, without more specific clinical details, these tests remain the primary options.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 6029,
+      "question": "What type of pulse is typically observed in a 65-year-old man with a history of syncopal attacks on exertion and angina undergoing heart valve surgery, as indicated by the intra-operative findings?",
+      "gold": "Anacrotic pulse",
+      "pred": "The type of pulse that would be typically observed in this scenario is a bounding pulse (tachycardia). This indicates an increased heart rate due to stress or anxiety from the surgical procedure and potential underlying conditions like angina or arrhythmias. The patient's history of syncopal attacks suggests possible cardiac issues requiring further evaluation post-surgery.",
+      "gold_for_judge": "Anacrotic pulse",
+      "pred_for_judge": "The type of pulse that would be typically observed in this scenario is a bounding pulse (tachycardia). This indicates an increased heart rate due to stress or anxiety from the surgical procedure and potential underlying conditions like angina or arrhythmias. The patient's history of syncopal attacks suggests possible cardiac issues requiring further evaluation post-surgery.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 38436,
+      "question": "What characteristic of Plasmodium falciparum infection leads to the most severe hemolysis compared to infections by other malarial parasites?",
+      "gold": "Ability of the parasite to infect RBCs of all ages",
+      "pred": "The characteristic that leads to the most severe hemolysis in Plasmodium falciparum infection is its ability to invade red blood cells (RBCs) more effectively than other malaria parasites, particularly through the use of specialized invasion mechanisms such as the circumsporozoite protein and the Duffy antigen receptor for chemokines (DARC). This enhanced RBC entry allows P. falciparum to cause rapid destruction of host RBCs, leading to severe anemia and potentially life-threatening complications like cerebral malaria or severe placental disease during pregnancy.",
+      "gold_for_judge": "Ability of the parasite to infect RBCs of all ages",
+      "pred_for_judge": "The characteristic that leads to the most severe hemolysis in Plasmodium falciparum infection is its ability to invade red blood cells (RBCs) more effectively than other malaria parasites, particularly through the use of specialized invasion mechanisms such as the circumsporozoite protein and the Duffy antigen receptor for chemokines (DARC). This enhanced RBC entry allows P. falciparum to cause rapid destruction of host RBCs, leading to severe anemia and potentially life-threatening complications like cerebral malaria or severe placental disease during pregnancy.",
+      "judge_verdict": "CORRECT"
+    },
+    {
+      "idx": 31850,
+      "question": "What is the approved dose of misoprostol for the emergent management of postpartum hemorrhage?",
+      "gold": "600 mcg",
+      "pred": "The approved dose of misoprostol for the emergent management of postpartum hemorrhage is 200 micrograms (mcg) intramuscularly or subcutaneously every 4 hours until bleeding stops, with a maximum daily dose of 1 gram.",
+      "gold_for_judge": "600 mcg",
+      "pred_for_judge": "The approved dose of misoprostol for the emergent management of postpartum hemorrhage is 200 micrograms (mcg) intramuscularly or subcutaneously every 4 hours until bleeding stops, with a maximum daily dose of 1 gram.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 10374,
+      "question": "A researcher conducted an experiment to evaluate the toxicity of a new chemotherapeutic agent in mice. She divided the mice into two groups: 52 were exposed to daily injections of the drug for 1 week, and 50 were not exposed to any treatment, with all other conditions being the same. One month later, dilated cardiomyopathy was found in 13 mice from the exposed group and 1 mouse from the unexposed group. What is the relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group?",
+      "gold": "12.5",
+      "pred": "The relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group is calculated as follows:\n\n(13/52) / (1/50) = 13 * 50 / 52 \u2248 12.27\n\nTherefore, the relative risk is approximately 12.27. This means that the exposed group had about 12.27 times higher risk of developing cardiomyopathy compared to the unexposed group.",
+      "gold_for_judge": "12.5",
+      "pred_for_judge": "The relative risk of developing cardiomyopathy in the exposed group compared to the unexposed group is calculated as follows:\n\n(13/52) / (1/50) = 13 * 50 / 52 \u2248 12.27\n\nTherefore, the relative risk is approximately 12.27. This means that the exposed group had about 12.27 times higher risk of developing cardiomyopathy compared to the unexposed group.",
+      "judge_verdict": "INCORRECT"
+    },
+    {
+      "idx": 32277,
+      "question": "What drug is used to irreversibly inhibit the H+/K+ ATPase in gastric parietal cells, and is effective in treating a patient with Zollinger-Ellison syndrome who presents with bleeding ulcers and diarrhea?",
+      "gold": "Omeprazole",
+      "pred": "The drug used to irreversibly inhibit the H+/K+ ATPase in gastric parietal cells for treating patients with Zollinger-Ellison syndrome is omeprazole. It effectively treats both ulceration and diarrhea associated with this condition.",
+      "gold_for_judge": "Omeprazole",
+      "pred_for_judge": "The drug used to irreversibly inhibit the H+/K+ ATPase in gastric parietal cells for treating patients with Zollinger-Ellison syndrome is omeprazole. It effectively treats both ulceration and diarrhea associated with this condition.",
+      "judge_verdict": "CORRECT"
+    }
+  ]
+}

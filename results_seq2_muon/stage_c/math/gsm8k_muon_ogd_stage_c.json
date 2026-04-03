@@ -1,0 +1,12 @@
+{
+  "task": "gsm8k",
+  "model_id": "outputs/sft_seq2_medical_qwen1.5b_muon_ogd_from_coding_math",
+  "split": "test",
+  "num_examples": 500,
+  "seed": 42,
+  "max_new_tokens": 256,
+  "accuracy": 0.158,
+  "correct": 79,
+  "total": 500,
+  "timestamp_utc": "2026-03-28T14:55:56.329841+00:00"
+}

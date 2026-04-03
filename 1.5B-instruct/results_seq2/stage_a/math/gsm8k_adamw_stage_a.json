@@ -1,0 +1,12 @@
+{
+  "task": "gsm8k",
+  "model_id": "1.5B-instruct/outputs/sft_seq2_coding_qwen1.5b_instruct_adamw",
+  "split": "test",
+  "num_examples": 500,
+  "seed": 42,
+  "max_new_tokens": 256,
+  "accuracy": 0.454,
+  "correct": 227,
+  "total": 500,
+  "timestamp_utc": "2026-03-29T02:56:43.434144+00:00"
+}

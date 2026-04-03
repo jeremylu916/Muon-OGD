@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sequential AdamW SFT pipeline using Qwen2.5-1.5B-Instruct.
+# All artifacts are saved under: 1.5B-instruct/
+
+ROOT_DIR="1.5B-instruct"
+LOG_ROOT="${ROOT_DIR}/logs_seq2"
+OUT_ROOT="${ROOT_DIR}/outputs"
+
+mkdir -p \
+  "${LOG_ROOT}/stage_a/train" \
+  "${LOG_ROOT}/stage_b/train" \
+  "${LOG_ROOT}/stage_c/train" \
+  "${OUT_ROOT}"
+
+echo "[1/3] Stage A AdamW: coding SFT (BigCodeBench)"
+python -u train_coding_bigcodebench_sft.py \
+  --model_id Qwen/Qwen2.5-1.5B-Instruct \
+  --split complete \
+  --output_dir "${OUT_ROOT}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
+  --max_length 2048 \
+  --lr 5e-6 \
+  --batch_size 1 \
+  --grad_accum 8 \
+  --epochs 1 \
+  --max_steps 0 \
+  --save_strategy no \
+  --seed 42 \
+  2>&1 | tee "${LOG_ROOT}/stage_a/train/train_coding_adamw.log"
+
+echo "[2/3] Stage B AdamW: math SFT (GSM8K) from Stage A"
+python -u train_math_sft.py \
+  --model_id "${OUT_ROOT}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
+  --output_dir "${OUT_ROOT}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
+  --num_train_examples 2000 \
+  --max_length 512 \
+  --batch_size 1 \
+  --grad_accum 8 \
+  --epochs 4 \
+  --lr 2e-5 \
+  --max_steps 1000 \
+  --val_ratio 0.02 \
+  --val_every 100 \
+  --val_max_batches 32 \
+  --probe_every 100 \
+  --probe_max_new_tokens 64 \
+  --save_strategy no \
+  --seed 42 \
+  2>&1 | tee "${LOG_ROOT}/stage_b/train/train_math_adamw_from_coding.log"
+
+echo "[3/3] Stage C AdamW: medical SFT from Stage B"
+python -u train_medical_sft.py \
+  --model_id "${OUT_ROOT}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
+  --output_dir "${OUT_ROOT}/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math" \
+  --max_length 2048 \
+  --batch_size 1 \
+  --grad_accum 8 \
+  --epochs 1 \
+  --max_steps 0 \
+  --lr 5e-6 \
+  --no-answer_after_cot_only \
+  --seed 42 \
+  2>&1 | tee "${LOG_ROOT}/stage_c/train/train_medical_adamw_from_coding_math.log"
+
+echo "Instruct AdamW SFT pipeline completed successfully."

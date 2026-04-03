@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sequential evaluation pipeline for the 1.5B-Instruct AdamW stages.
+# All artifacts are saved under: 1.5B-instruct/
+
+ROOT_DIR="1.5B-instruct"
+LOG_ROOT="${ROOT_DIR}/logs_seq2"
+RES_ROOT="${ROOT_DIR}/results_seq2"
+OUT_ROOT="${ROOT_DIR}/outputs"
+
+# Optional quick mode: set NUM_TASKS to a positive integer for faster coding eval.
+# Example: NUM_TASKS=100 nohup ./eval_1b5p_instruct > 1.5B-instruct/eval_1b5p_instruct.log 2>&1 &
+NUM_TASKS="${NUM_TASKS:-0}"
+
+mkdir -p \
+  "${LOG_ROOT}/stage_a/coding" "${LOG_ROOT}/stage_a/math" "${LOG_ROOT}/stage_a/medical" \
+  "${LOG_ROOT}/stage_b/coding" "${LOG_ROOT}/stage_b/math" "${LOG_ROOT}/stage_b/medical" \
+  "${LOG_ROOT}/stage_c/coding" "${LOG_ROOT}/stage_c/math" "${LOG_ROOT}/stage_c/medical" \
+  "${RES_ROOT}/stage_a/coding" "${RES_ROOT}/stage_a/math" "${RES_ROOT}/stage_a/medical" \
+  "${RES_ROOT}/stage_b/coding" "${RES_ROOT}/stage_b/math" "${RES_ROOT}/stage_b/medical" \
+  "${RES_ROOT}/stage_c/coding" "${RES_ROOT}/stage_c/math" "${RES_ROOT}/stage_c/medical"
+
+eval_stage() {
+  local stage_tag="$1"
+  local model_id="$2"
+  local bcb_split="$3"
+  local bcb_subset="$4"
+  local bcb_out_tag="$5"
+  local use_rest_split="$6"
+
+  echo "[${stage_tag}] Coding eval (BigCodeBench)"
+  local -a bcb_cmd=(
+    python -u eval_bigcodebench_remote.py
+    --model_id "${model_id}"
+    --num_tasks "${NUM_TASKS}"
+    --split "${bcb_split}"
+    --subset "${bcb_subset}"
+    --seed 42
+    --out_dir "${RES_ROOT}/${stage_tag}/coding/${bcb_out_tag}"
+    --no-debug_first_sample
+  )
+
+  if [[ "${use_rest_split}" == "yes" ]]; then
+    bcb_cmd+=(--use_rest_split --train_size 800)
+  fi
+
+  "${bcb_cmd[@]}" \
+    2>&1 | tee "${LOG_ROOT}/${stage_tag}/coding/eval_bcb_adamw_${stage_tag}.log"
+
+  echo "[${stage_tag}] Math eval (GSM8K)"
+  python -u eval_gsm8k.py \
+    --model_id "${model_id}" \
+    --num_examples 500 \
+    --seed 42 \
+    --out_file "${RES_ROOT}/${stage_tag}/math/gsm8k_adamw_${stage_tag}.json" \
+    2>&1 | tee "${LOG_ROOT}/${stage_tag}/math/eval_gsm8k_adamw_${stage_tag}.log"
+
+  echo "[${stage_tag}] Medical eval"
+  python -u eval_medical.py \
+    --model_id "${model_id}" \
+    --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
+    --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
+    --dataset_config default \
+    --split train \
+    --num_examples 500 \
+    --seed 42 \
+    --progress_every 20 \
+    --judge_final_answer_only \
+    --out_file "${RES_ROOT}/${stage_tag}/medical/medical_adamw_${stage_tag}.json" \
+    2>&1 | tee "${LOG_ROOT}/${stage_tag}/medical/eval_medical_adamw_${stage_tag}.log"
+}
+
+echo "[1/3] Evaluate Stage A AdamW checkpoint"
+eval_stage \
+  "stage_a" \
+  "${OUT_ROOT}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
+  "instruct" \
+  "full" \
+  "bcb_hard_adamw" \
+  "yes"
+
+echo "[2/3] Evaluate Stage B AdamW checkpoint"
+eval_stage \
+  "stage_b" \
+  "${OUT_ROOT}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
+  "instruct" \
+  "full" \
+  "bcb_hard_adamw_from_coding_math" \
+  "yes"
+
+echo "[3/3] Evaluate Stage C AdamW checkpoint"
+eval_stage \
+  "stage_c" \
+  "${OUT_ROOT}/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math" \
+  "instruct" \
+  "full" \
+  "bcb_hard_adamw_final" \
+  "yes"
+
+echo "Instruct evaluation pipeline completed successfully."

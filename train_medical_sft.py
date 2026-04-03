@@ -11,13 +11,13 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 from tqdm.auto import tqdm
 
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 DEFAULT_OUTPUT_DIR = "outputs/sft_huatuo"
-DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-verifiable-problem"
-DEFAULT_DATASET_CONFIG = "default"
+DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-reasoning-SFT"
+DEFAULT_DATASET_CONFIG = "en"
 DEFAULT_TRAIN_SPLIT = "train"
-DEFAULT_QUESTION_FIELD = "Open-ended Verifiable Question"
-DEFAULT_ANSWER_FIELD = "Ground-True Answer"
+DEFAULT_QUESTION_FIELD = "Question"
+DEFAULT_ANSWER_FIELD = "Response"
 DEFAULT_LANGUAGE_FIELD = "language"
 DEFAULT_MAX_LENGTH = 1536
 DEFAULT_BATCH_SIZE = 1
@@ -68,7 +68,7 @@ def parse_args():
     p.add_argument("--answer_field", type=str, default=DEFAULT_ANSWER_FIELD)
     p.add_argument("--language_field", type=str, default=DEFAULT_LANGUAGE_FIELD)
     p.add_argument("--english_only", action=argparse.BooleanOptionalAction, default=True)
-    p.add_argument("--require_verifiable", action=argparse.BooleanOptionalAction, default=True)
+    p.add_argument("--require_verifiable", action=argparse.BooleanOptionalAction, default=False)
     p.add_argument("--max_length", type=int, default=DEFAULT_MAX_LENGTH)
     p.add_argument("--batch_size", type=int, default=DEFAULT_BATCH_SIZE)
     p.add_argument("--grad_accum", type=int, default=DEFAULT_GRAD_ACCUM)
@@ -128,7 +128,7 @@ def format_target_answer(answer: str, final_only: bool = True) -> str:
     a = (a or "").strip()
     if not a:
         a = "Unknown."
-    return f"Final answer: {a}"
+    return a
 
 
 
@@ -165,6 +165,22 @@ def is_trueish(v) -> bool:
     return str(v).lower() in {"true", "yes", "1", "verifiable"}
 
 
+def resolve_column_name(ds, preferred_name: str, candidates: List[str], role: str) -> str:
+    if preferred_name in ds.column_names:
+        return preferred_name
+    for name in candidates:
+        if name in ds.column_names:
+            print(
+                f"[info] Requested {role}_field='{preferred_name}' not found; using '{name}' instead.",
+                flush=True,
+            )
+            return name
+    available = ", ".join(ds.column_names)
+    raise ValueError(
+        f"Could not resolve {role} field. Requested '{preferred_name}'. Available columns: {available}"
+    )
+
+
 def main():
     args = parse_args()
     cache_dir = get_hf_cache_dir()
@@ -172,7 +188,32 @@ def main():
     random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    ds = load_dataset(args.dataset_id, args.dataset_config, split=args.train_split, cache_dir=cache_dir)
+    if args.dataset_config:
+        try:
+            ds = load_dataset(args.dataset_id, args.dataset_config, split=args.train_split, cache_dir=cache_dir)
+        except Exception as e:
+            print(
+                f"[warn] Failed to load dataset with config '{args.dataset_config}': {e}. Falling back to no config.",
+                flush=True,
+            )
+            ds = load_dataset(args.dataset_id, split=args.train_split, cache_dir=cache_dir)
+    else:
+        ds = load_dataset(args.dataset_id, split=args.train_split, cache_dir=cache_dir)
+    args.question_field = resolve_column_name(
+        ds,
+        args.question_field,
+        ["Question", "question", "prompt", "instruction", "Open-ended Verifiable Question"],
+        role="question",
+    )
+    args.answer_field = resolve_column_name(
+        ds,
+        args.answer_field,
+        ["Response", "response", "answer", "output", "Ground-True Answer"],
+        role="answer",
+    )
+    if args.answer_field == "Complex_CoT" and "Response" in ds.column_names:
+        print("[info] answer_field resolved to 'Complex_CoT'. Switching to 'Response' to train without CoT.", flush=True)
+        args.answer_field = "Response"
     print("*****************" + str(ds.column_names) + "*****************", flush=True)
     if args.english_only:
         ds_before_filter = ds
@@ -196,7 +237,7 @@ def main():
         if "verifiable" in ds.column_names:
             ds = ds.filter(lambda ex: is_trueish(ex.get("verifiable", False)))
         else:
-            print("[warn] require_verifiable enabled but 'verifiable' field not found. Skipping.", flush=True)
+            print("[info] require_verifiable enabled but 'verifiable' field not found. Skipping for this dataset.", flush=True)
 
     ds = ds.filter(
         lambda ex: to_text(ex.get(args.question_field, "")).strip() != ""
@@ -217,7 +258,7 @@ def main():
         nonlocal cot_trimmed_examples
         a_raw = to_text(example.get(args.answer_field, ""))
         a = format_target_answer(a_raw, final_only=args.answer_after_cot_only)
-        if args.answer_after_cot_only and a != a_raw:
+        if args.answer_after_cot_only and a.strip() != (a_raw or "").strip():
             cot_trimmed_examples += 1
 
         prompt_only = tokenizer.apply_chat_template(
@@ -295,7 +336,7 @@ def main():
                         "role": "system",
                         "content": "You are a careful medical assistant. Answer the medical question directly and concisely. Give the final answer first. Do not include unnecessary explanation.",
                     },
-                    {"role": "user", "content": probe_q.strip()},
+                    {"role": "user", "content": "Solve the following math word problem. End your response with the final numeric answer.\n\n{question}"},
                 ],
                 tokenize=False,
                 add_generation_prompt=True,

@@ -22,10 +22,11 @@ mkdir -p \
   results_seq2/stage_c/coding results_seq2/stage_c/math results_seq2/stage_c/medical
 ```
 
-For medical eval:
+For medical eval with `eval_medical.py`:
 
 ```bash
-export OPENAI_API_KEY="<your_key>"
+# No OpenAI key is needed. The script uses local verifier model:
+# FreedomIntelligence/medical_o1_verifier_3B
 ```
 
 ---
@@ -35,32 +36,33 @@ export OPENAI_API_KEY="<your_key>"
 ```bash
 # Coding (BigCodeBench hard)
 nohup python -u eval_bigcodebench_remote.py \
-  --model_id Qwen/Qwen2.5-1.5B-Instruct \
-  --num_tasks 0 --split instruct --subset full --seed 42 \
+  --model_id Qwen/Qwen2.5-1.5B \
+  --num_tasks 0 --split complete --subset full --seed 42 \
   --use_rest_split --train_size 800 \
-  --out_dir results_seq2/base_model/bcb_hard_qwen2.5_1p5b \
-  > logs_seq2/base_model/eval_bcb_qwen2.5_1p5b.log 2>&1 &
+  --out_dir results_seq2/base_model/bcb_hard_qwen2.5_1p5b_base \
+  --no-debug_first_sample \
+  > logs_seq2/base_model/eval_bcb_qwen2.5_1p5b_base.log 2>&1 &
 
 
 # Math (GSM8K)
 nohup python -u eval_gsm8k.py \
-  --model_id Qwen/Qwen2.5-1.5B-Instruct\
+  --model_id Qwen/Qwen2.5-1.5B\
   --num_examples 500 --seed 42 \
   --out_file results_seq2/base_model/gsm8k_qwen2.5_1p5b.json \
   > logs_seq2/base_model/eval_gsm8k_qwen2.5_1p5b.log 2>&1 &
 
 # Medical (Huatuo verifiable)
 
-nohup python -u eval_huatuo_verifiable_api.py \
-  --model_id Qwen/Qwen2.5-1.5B-Instruct \
+nohup python -u eval_medical.py \
+  --model_id Qwen/Qwen2.5-1.5B \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \
   --split train \
   --num_examples 500 \
   --seed 42 \
   --progress_every 20 \
-  --judge_api_url https://api.openai.com/v1/chat/completions \
-  --judge_model gpt-4o-mini \
+  --judge_final_answer_only \
   --out_file results_seq2/base_model/medical_qwen2.5_1p5b.json \
   > logs_seq2/base_model/eval_medical_qwen2.5_1p5b.log 2>&1 &
 ```
@@ -73,28 +75,30 @@ nohup python -u eval_huatuo_verifiable_api.py \
 
 ```bash
 nohup python -u train_coding_bigcodebench_sft.py \
-  --model_id Qwen/Qwen2.5-1.5B-Instruct \
-  --split instruct \
+  --model_id Qwen/Qwen2.5-1.5B \
+  --split complete \
   --output_dir outputs/sft_seq2_coding_qwen1.5b_adamw \
   --max_length 2048 \
-  --lr 5e-6\
+  --lr 2e-6\
   --batch_size 1 \
   --grad_accum 8 \
-  --epochs 1 \
+  --epochs 3 \
   --max_steps 0 \
   --save_strategy no \
   --seed 42 \
   > logs_seq2/stage_a/train/train_coding_adamw.log 2>&1 &
 ```
 
+
+
 ### Muon-OGD train
 
 ```bash
 nohup python -u train_coding_bigcodebench_muon_ogd_sft.py \
-  --model_id Qwen/Qwen2.5-1.5B-Instruct \
-  --ci_model_id Qwen/Qwen2.5-1.5B-Instruct \
+  --model_id Qwen/Qwen2.5-1.5B \
+  --ci_model_id Qwen/Qwen2.5-1.5B \
   --output_dir outputs/sft_seq2_coding_qwen1.5b_muon_ogd \
-  --split instruct \
+  --split complete \
   --max_length 2048 \
   --batch_size 1 \
   --grad_accum 8 \
@@ -115,14 +119,14 @@ nohup python -u train_coding_bigcodebench_muon_ogd_sft.py \
 # Coding (BigCodeBench hard)
 nohup python -u eval_bigcodebench_remote.py \
   --model_id outputs/sft_seq2_coding_qwen1.5b_adamw \
-  --num_tasks 0 --split instruct --subset full --seed 42 \
+  --num_tasks 0 --split complete --subset full --seed 42 \
   --use_rest_split --train_size 800 \
   --out_dir results_seq2/stage_a/coding/bcb_hard_adamw \
   > logs_seq2/stage_a/coding/eval_bcb_adamw.log 2>&1 &
 
 nohup python -u eval_bigcodebench_remote.py \
   --model_id outputs/sft_seq2_coding_qwen1.5b_muon_ogd \
-  --num_tasks 0 --split instruct --subset full --seed 42 \
+  --num_tasks 0 --split complete --subset full --seed 42 \
   --use_rest_split --train_size 800 \
   --out_dir results_seq2/stage_a/coding/bcb_hard_muon \
   > logs_seq2/stage_a/coding/eval_bcb_muon.log 2>&1 &
@@ -141,20 +145,22 @@ nohup python -u eval_gsm8k.py \
   > logs_seq2/stage_a/math/eval_gsm8k_muon_ogd.log 2>&1 &
 
 # Medical (Huatuo verifiable)
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_seq2_coding_qwen1.5b_adamw  \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
-  --dataset_config default --split train --num_examples 100 --seed 42 \
-  --progress_every 20 --judge_api_url https://api.openai.com/v1/chat/completions --judge_model gpt-4o-mini \
+  --dataset_config default --split train --num_examples 500 --seed 42 \
+  --progress_every 20 \
   --judge_final_answer_only \
   --out_file results_seq2/stage_a/medical/medical_adamw.json  \
   > logs_seq2/stage_a/medical/eval_medical_adamw.log 2>&1 &
 
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_seq2_coding_qwen1.5b_muon_ogd \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
-  --dataset_config default --split train --num_examples 100 --seed 42 \
-  --progress_every 20 --judge_api_url https://api.openai.com/v1/chat/completions --judge_model gpt-4o-mini \
+  --dataset_config default --split train --num_examples 500 --seed 42 \
+  --progress_every 20 \
   --judge_final_answer_only \
   --out_file results_seq2/stage_a/medical/medical_muon_ogd.json \
   > logs_seq2/stage_a/medical/eval_medical_muon_ogd.log 2>&1 &
@@ -228,20 +234,22 @@ nohup python -u eval_bigcodebench_remote.py \
   > logs_seq2/stage_b/coding/eval_bcb_muon_from_coding_math.log 2>&1 &
 
 # Medical (Huatuo verifiable)
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_seq2_math_qwen1.5b_adamw_from_coding \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default --split train --num_examples 100 --seed 42 \
-  --progress_every 20 --judge_api_url https://api.openai.com/v1/chat/completions --judge_model gpt-4o-mini \
+  --progress_every 20 \
   --judge_final_answer_only \
   --out_file results_seq2/stage_b/medical/medical_adamw_from_coding_math.json \
   > logs_seq2/stage_b/medical/eval_medical_adamw_from_coding_math.log 2>&1 &
 
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_seq2_math_qwen1.5b_muon_ogd_from_coding \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default --split train --num_examples 100 --seed 42 \
-  --progress_every 20 --judge_api_url https://api.openai.com/v1/chat/completions --judge_model gpt-4o-mini \
+  --progress_every 20 \
   --judge_final_answer_only \
   --out_file results_seq2/stage_b/medical/medical_muon_ogd_from_coding_math.json \
   > logs_seq2/stage_b/medical/eval_medical_muon_ogd_from_coding_math.log 2>&1 &
@@ -282,20 +290,22 @@ nohup python -u train_MedQuad_sft.py \
 
 ```bash
 # Medical (Huatuo verifiable)
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_seq2_medical_qwen1.5b_adamw_from_coding_math \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default --split train --num_examples 500 --seed 42 \
-  --progress_every 20 --judge_api_url https://api.openai.com/v1/chat/completions --judge_model gpt-4o-mini \
+  --progress_every 20 \
   --judge_final_answer_only \
   --out_file results_seq2/stage_c/medical/medical_adamw_final.json \
   > logs_seq2/stage_c/medical/eval_medical_adamw_final.log 2>&1 &
 
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_seq2_medical_qwen1.5b_muon_ogd_from_coding_math \
+  --verifier_model_id FreedomIntelligence/medical_o1_verifier_3B \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default --split train --num_examples 500 --seed 42 \
-  --progress_every 20 --judge_api_url https://api.openai.com/v1/chat/completions --judge_model gpt-4o-mini \
+  --progress_every 20 \
   --judge_final_answer_only \
   --out_file results_seq2/stage_c/medical/medical_muon_ogd_final.json \
   > logs_seq2/stage_c/medical/eval_medical_muon_ogd_final.log 2>&1 &

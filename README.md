@@ -87,7 +87,7 @@ nohup python -u train_medical_sft_svd.py \
 
 ```bash
 # Medical
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_medical_qwen1.5b_adamw_stage_a \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \
@@ -100,7 +100,7 @@ nohup python -u eval_huatuo_verifiable_api.py \
   --out_file results/stage_a/medical/medical_adamw.json \
   > logs/stage_a/medical/eval_medical_adamw.log 2>&1 &
 
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_medical_qwen1.5b_muon_ogd_stage_a \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \
@@ -222,7 +222,7 @@ nohup python -u eval_bigcodebench_remote.py \
   > logs/stage_b/coding/eval_bcb_muon_ogd.log 2>&1 &
 
 # Medical retention
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_bigcodebench_qwen1.5b_adamw_after_medical \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \
@@ -235,7 +235,7 @@ nohup python -u eval_huatuo_verifiable_api.py \
   --out_file results/stage_b/medical/medical_adamw.json \
   > logs/stage_b/medical/eval_medical_adamw.log 2>&1 &
 
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_bigcodebench_qwen1.5b_muon_ogd_after_medical \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \
@@ -327,7 +327,7 @@ nohup python -u eval_gsm8k.py \
   > logs/stage_c/math/eval_gsm8k_muon_ogd.log 2>&1 &
 
 # Medical retention
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_gsm8k_qwen1.5b_adamw_after_medical_coding \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \
@@ -340,7 +340,7 @@ nohup python -u eval_huatuo_verifiable_api.py \
   --out_file results/stage_c/medical/medical_adamw.json \
   > logs/stage_c/medical/eval_medical_adamw.log 2>&1 &
 
-nohup python -u eval_huatuo_verifiable_api.py \
+nohup python -u eval_medical.py \
   --model_id outputs/sft_gsm8k_qwen1.5b_muon_ogd_after_medical_coding \
   --dataset_id FreedomIntelligence/medical-o1-verifiable-problem \
   --dataset_config default \

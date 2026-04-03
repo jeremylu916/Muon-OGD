@@ -12,9 +12,9 @@ except Exception:
     def tqdm(x, **kwargs):
         return x
 
-DEFAULT_MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_OUTPUT_DIR = "outputs/sft_gsm8k"
-DEFAULT_MAX_LENGTH = 512
+DEFAULT_MAX_LENGTH = 1024
 DEFAULT_BATCH_SIZE = 1
 DEFAULT_GRAD_ACCUM = 8
 DEFAULT_EPOCHS = 1
@@ -97,9 +97,13 @@ def parse_args():
 
 
 def build_prompt(tokenizer, question: str, answer: str):
+    # Keep this consistent with `eval_gsm8k.py` to reduce prompt/extraction mismatch.
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": f"Solve the problem and give the final answer.\n\n{question}"},
+        {"role": "system", "content": "You are a helpful math assistant."},
+        {
+            "role": "user",
+            "content": f"Solve the following math word problem. End your response with the final numeric answer.\n\n{question}",
+        },
         {"role": "assistant", "content": answer},
     ]
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
@@ -120,15 +124,51 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
 
     def tokenize_fn(example):
-        text = build_prompt(tokenizer, example["question"], example["answer"])
-        out = tokenizer(
-            text,
-            max_length=args.max_length,
-            truncation=True,
-            padding="max_length",
+        # Build prompt/answer separately so we can mask prompt tokens from the loss
+        # (otherwise the model learns to "continue" the whole conversation including padding).
+        prompt_only_messages = [
+            {"role": "system", "content": "You are a helpful math assistant."},
+            {
+                "role": "user",
+                "content": f"Solve the following math word problem. End your response with the final numeric answer.\n\n{example['question']}",
+            },
+        ]
+        prompt_text = tokenizer.apply_chat_template(
+            prompt_only_messages, tokenize=False, add_generation_prompt=True
         )
-        out["labels"] = out["input_ids"].copy()
-        return out
+        prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
+
+        # Ensure the assistant content is appended directly after the generation prompt.
+        # This guarantees `prompt_ids` is a prefix of `full_ids`, matching our masking.
+        full_text = prompt_text + example["answer"]
+        full_ids = tokenizer(full_text, add_special_tokens=False)["input_ids"]
+
+        # Loss only on the assistant answer portion.
+        full_labels = [-100] * len(prompt_ids) + full_ids[len(prompt_ids) :]
+
+        if len(full_ids) > args.max_length:
+            # Preserve the *end* of the sequence (the final numeric answer is at the end)
+            # instead of truncating away the end.
+            input_ids = full_ids[-args.max_length :]
+            labels = full_labels[-args.max_length :]
+            attention_mask = [1] * args.max_length
+        else:
+            input_ids = full_ids
+            labels = full_labels
+            attention_mask = [1] * len(full_ids)
+
+            pad_len = args.max_length - len(input_ids)
+            if pad_len > 0:
+                input_ids = input_ids + [tokenizer.pad_token_id] * pad_len
+                labels = labels + [-100] * pad_len
+                attention_mask = attention_mask + [0] * pad_len
+
+        # Sanity: all sequences must be exactly `max_length` for batching.
+        assert len(input_ids) == args.max_length
+        assert len(attention_mask) == args.max_length
+        assert len(labels) == args.max_length
+
+        return {"input_ids": input_ids, "attention_mask": attention_mask, "labels": labels}
 
     tokenized = dataset.map(tokenize_fn, remove_columns=dataset.column_names)
 

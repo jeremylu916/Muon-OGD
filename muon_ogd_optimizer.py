@@ -68,6 +68,16 @@ def _add_rank1_shift_(H_fp32: torch.Tensor, Cs, lam_fp32: torch.Tensor) -> torch
     return H_fp32
 
 
+def _add_uv_shift(H_fp32: torch.Tensor, U_fp32: torch.Tensor, V_fp32: torch.Tensor, lam_uv_fp32: torch.Tensor) -> torch.Tensor:
+    # Bilinear constrained shift: H = G + U * Lambda * V^T
+    return H_fp32 + (U_fp32 @ lam_uv_fp32 @ V_fp32.transpose(0, 1))
+
+
+def _uv_dual_grad(U_fp32: torch.Tensor, S_fp32: torch.Tensor, V_fp32: torch.Tensor) -> torch.Tensor:
+    # Gradient wrt Lambda for f(Lambda)=||G+U Lambda V^T||_* is U^T * msgn(H) * V
+    return U_fp32.transpose(0, 1) @ S_fp32 @ V_fp32
+
+
 class MuonOGDOptimizer(Optimizer):
     def __init__(
         self,
@@ -143,30 +153,66 @@ class MuonOGDOptimizer(Optimizer):
                 Cs = state.get("Cs", [])
                 k = len(Cs)
 
-                if k > 0 and (state["lam"] is None or state["lam"].numel() != k):
-                    state["lam"] = torch.zeros(k, dtype=torch.float32, device=p.device)
+                uv = state.get("muon_uv", None)
+                has_uv = (
+                    isinstance(uv, dict)
+                    and isinstance(uv.get("U", None), torch.Tensor)
+                    and isinstance(uv.get("V", None), torch.Tensor)
+                    and uv["U"].ndim == 2
+                    and uv["V"].ndim == 2
+                )
 
-                if k == 0:
-                    S_final = _msgn(buf, method=msign_method, ns_iters=ns_iters).to(torch.float32)
-                else:
-                    if warm_start:
-                        lam = state["lam"]
-                    else:
-                        lam = torch.zeros(k, dtype=torch.float32, device=p.device)
+                if has_uv:
+                    U = uv["U"].to(device=p.device, dtype=torch.float32)
+                    V = uv["V"].to(device=p.device, dtype=torch.float32)
+                    k_uv = min(U.shape[1], V.shape[1])
+                    U = U[:, :k_uv]
+                    V = V[:, :k_uv]
+
+                    lam_uv = state.get("lam_uv", None)
+                    if lam_uv is None or lam_uv.shape != (k_uv, k_uv):
+                        lam_uv = torch.zeros(k_uv, k_uv, dtype=torch.float32, device=p.device)
+
+                    if not warm_start:
+                        lam_uv = torch.zeros_like(lam_uv)
 
                     for _ in range(muon_T):
-                        H = buf.clone()
-                        _add_rank1_shift_(H, Cs, lam)
+                        H = _add_uv_shift(buf, U, V, lam_uv)
                         S = _msgn(H, method=msign_method, ns_iters=ns_iters).to(torch.float32)
-                        inner = _rank1_inner_products(Cs, S)
-                        lam.sub_(muon_eta_dual * inner)
+                        grad_uv = _uv_dual_grad(U, S, V)
+                        lam_uv.sub_(muon_eta_dual * grad_uv)
 
-                    H_final = buf.clone()
-                    _add_rank1_shift_(H_final, Cs, lam)
+                    H_final = _add_uv_shift(buf, U, V, lam_uv)
                     S_final = _msgn(H_final, method=msign_method, ns_iters=ns_iters).to(torch.float32)
 
                     if warm_start:
-                        state["lam"] = lam
+                        state["lam_uv"] = lam_uv
+
+                else:
+                    if k > 0 and (state["lam"] is None or state["lam"].numel() != k):
+                        state["lam"] = torch.zeros(k, dtype=torch.float32, device=p.device)
+
+                    if k == 0:
+                        S_final = _msgn(buf, method=msign_method, ns_iters=ns_iters).to(torch.float32)
+                    else:
+                        if warm_start:
+                            lam = state["lam"]
+                        else:
+                            lam = torch.zeros(k, dtype=torch.float32, device=p.device)
+
+                        for _ in range(muon_T):
+                            H = buf.clone()
+                            _add_rank1_shift_(H, Cs, lam)
+                            S = _msgn(H, method=msign_method, ns_iters=ns_iters).to(torch.float32)
+                            inner = _rank1_inner_products(Cs, S)
+                            lam.sub_(muon_eta_dual * inner)
+
+                        H_final = buf.clone()
+                        _add_rank1_shift_(H_final, Cs, lam)
+                        S_final = _msgn(H_final, method=msign_method, ns_iters=ns_iters).to(torch.float32)
+
+                        if warm_start:
+                            state["lam"] = lam
 
                 if dynamic_scale:
                     scale = torch.clamp(torch.linalg.norm(p.detach().to(torch.float32)), min=1e-3)
