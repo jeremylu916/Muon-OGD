@@ -76,43 +76,54 @@ eval_stage() {
     2>&1 | tee "${log_root}/${stage_tag}/medical/eval_medical_${stage_tag}.log"
 }
 
-run_adamw() {
+
+run_muon() {
   local run_idx="$1"
   local seed="$2"
-  local run_tag="adamw_run${run_idx}"
+  local run_tag="muon_run${run_idx}"
   local out_root="${RUN_ROOT}/${run_tag}/outputs"
   local log_root="${RUN_ROOT}/${run_tag}/logs"
   local res_root="${RUN_ROOT}/${run_tag}/results"
 
   mkdir -p "${out_root}" "${log_root}/stage_a/train" "${log_root}/stage_b/train" "${log_root}/stage_c/train"
 
-  echo "[AdamW][Run ${run_idx}] Stage A train"
-  python -u train_coding_bigcodebench_sft.py \
+  echo "[Muon][Run ${run_idx}] Stage A train"
+  python -u train_coding_bigcodebench_muon_ogd.py \
     --model_id Qwen/Qwen2.5-7B-Instruct \
+    --ci_model_id Qwen/Qwen2.5-7B-Instruct \
     --split complete \
-    --output_dir "${out_root}/sft_seq2_coding_qwen7b_instruct_adamw" \
+    --output_dir "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
     --max_length 2048 \
-    --lr 5e-6 \
     --batch_size 1 \
     --grad_accum 8 \
     --epochs 1 \
     --max_steps 0 \
     --save_strategy no \
     --seed "${seed}" \
-    2>&1 | tee "${log_root}/stage_a/train/train_coding_adamw.log"
+    --muon_ogd \
+    --muon_use_optimizer_class \
+    --muon_layers gate_proj,up_proj,down_proj \
+    --muon_k 10 \
+    --muon_T 1 \
+    --muon_eta 1e-5 \
+    --muon_eta_dual 1e-5 \
+    --muon_warm_start \
+    --muon_momentum 0.95 \
+    2>&1 | tee "${log_root}/stage_a/train/train_coding_muon_ogd.log"
 
-  echo "[AdamW][Run ${run_idx}] Stage A eval"
+  echo "[Muon][Run ${run_idx}] Stage A eval"
   eval_stage \
-    "${out_root}/sft_seq2_coding_qwen7b_instruct_adamw" \
+    "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
     "${res_root}" \
     "${log_root}" \
     "stage_a" \
-    "bcb_hard_adamw"
+    "bcb_hard_muon"
 
-  echo "[AdamW][Run ${run_idx}] Stage B train"
-  python -u train_math_sft.py \
-    --model_id "${out_root}/sft_seq2_coding_qwen7b_instruct_adamw" \
-    --output_dir "${out_root}/sft_seq2_math_qwen7b_instruct_adamw_from_coding" \
+  echo "[Muon][Run ${run_idx}] Stage B train"
+  python -u train_math_sft_svd.py \
+    --model_id "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
+    --ci_model_id "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
+    --output_dir "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
     --num_train_examples 2000 \
     --max_length 512 \
     --batch_size 1 \
@@ -127,45 +138,68 @@ run_adamw() {
     --probe_max_new_tokens 64 \
     --save_strategy no \
     --seed "${seed}" \
-    2>&1 | tee "${log_root}/stage_b/train/train_math_adamw_from_coding.log"
+    --muon_ogd \
+    --muon_use_optimizer_class \
+    --muon_k 3 \
+    --muon_T 1 \
+    --muon_eta 1e-4 \
+    --muon_eta_dual 1e-4 \
+    --muon_warm_start \
+    --muon_layers gate_proj,up_proj,down_proj \
+    --muon_momentum 0.95 \
+    2>&1 | tee "${log_root}/stage_b/train/train_math_muon_ogd_from_coding.log"
 
-  echo "[AdamW][Run ${run_idx}] Stage B eval"
+  echo "[Muon][Run ${run_idx}] Stage B eval"
   eval_stage \
-    "${out_root}/sft_seq2_math_qwen7b_instruct_adamw_from_coding" \
+    "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
     "${res_root}" \
     "${log_root}" \
     "stage_b" \
-    "bcb_hard_adamw_from_coding_math"
+    "bcb_hard_muon_from_coding_math"
 
-  echo "[AdamW][Run ${run_idx}] Stage C train"
-  python -u train_medical_sft.py \
-    --model_id "${out_root}/sft_seq2_math_qwen7b_instruct_adamw_from_coding" \
-    --output_dir "${out_root}/sft_seq2_medical_qwen7b_instruct_adamw_from_coding_math" \
+  echo "[Muon][Run ${run_idx}] Stage C train"
+  python -u train_medical_muon_ogd.py \
+    --model_id "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
+    --ci_model_id "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
+    --output_dir "${out_root}/sft_seq2_medical_qwen7b_instruct_muon_ogd_from_coding_math" \
+    --dataset_id FreedomIntelligence/medical-o1-reasoning-SFT \
+    --dataset_config en \
+    --train_split train \
+    --question_field Question \
+    --answer_field Response \
     --max_length 2048 \
     --batch_size 1 \
     --grad_accum 8 \
     --epochs 1 \
-    --max_steps 0 \
     --lr 5e-6 \
-    --no-answer_after_cot_only \
+    --max_steps 0 \
+    --answer_after_cot_only \
     --seed "${seed}" \
-    2>&1 | tee "${log_root}/stage_c/train/train_medical_adamw_from_coding_math.log"
+    --muon_ogd \
+    --muon_use_optimizer_class \
+    --muon_k 3 \
+    --muon_T 1 \
+    --muon_eta 1e-5 \
+    --muon_eta_dual 1e-5 \
+    --muon_warm_start \
+    --muon_layers gate_proj,up_proj,down_proj \
+    --muon_momentum 0.95 \
+    2>&1 | tee "${log_root}/stage_c/train/train_medical_muon_ogd_from_coding_math.log"
 
-  echo "[AdamW][Run ${run_idx}] Stage C eval"
+  echo "[Muon][Run ${run_idx}] Stage C eval"
   eval_stage \
-    "${out_root}/sft_seq2_medical_qwen7b_instruct_adamw_from_coding_math" \
+    "${out_root}/sft_seq2_medical_qwen7b_instruct_muon_ogd_from_coding_math" \
     "${res_root}" \
     "${log_root}" \
     "stage_c" \
-    "bcb_hard_adamw_final"
+    "bcb_hard_muon_final"
 }
 
 
 for i in $(seq 1 "${NUM_REPEATS}"); do
   seed=$((BASE_SEED + i - 1))
-  run_adamw "${i}" "${seed}"
+  run_muon "${i}" "${seed}"
 done
-
 
 python - <<PY
 import json
@@ -197,7 +231,7 @@ def mean_std(vals):
     var = sum((v - m) ** 2 for v in vals) / (len(vals) - 1)
     return m, math.sqrt(var)
 
-optimizers = ["adamw"]
+optimizers = ["muon"]
 stages = ["stage_a", "stage_b", "stage_c"]
 
 summary = {}

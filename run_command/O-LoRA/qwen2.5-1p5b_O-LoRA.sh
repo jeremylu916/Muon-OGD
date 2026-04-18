@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Unified runner for Qwen2.5-1.5B-Instruct:
-# - AdamW: 2 runs
-# - Muon-OGD: 2 runs
-# - Eval after every stage in every run
-# - Final mean/std summary by stage and optimizer
+# Qwen2.5-1.5B-Instruct runner with O-LoRA (parameter-efficient) updates:
+# - O-LoRA runs: 2 repeats
+# - Same stage/task/eval process as qwen1p5b_run.sh (Stage A/B/C + eval after each stage)
+#
+# This script enforces O-LoRA training in every SFT stage.
 
-USER_NAME="blu7"
-PROJECT_ROOT="/work/nvme/bgeo/${USER_NAME}/muon_CL"
-ROOT_DIR="${PROJECT_ROOT}/1.5B-instruct"
+USER_NAME="${USER_NAME:-blu7}"
+PROJECT_ROOT="${PROJECT_ROOT:-/work/nvme/bgeo/${USER_NAME}/muon_CL}"
+ROOT_DIR="${ROOT_DIR:-${PROJECT_ROOT}/1.5B-instruct}"
 
 NUM_REPEATS="${NUM_REPEATS:-2}"
 BASE_SEED="${BASE_SEED:-42}"
@@ -18,10 +18,58 @@ MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-1024}"
 SUBMIT_RETRIES="${SUBMIT_RETRIES:-10}"
 SUBMIT_RETRY_DELAY_SEC="${SUBMIT_RETRY_DELAY_SEC:-60}"
 
-RUN_ROOT="${ROOT_DIR}/multi_runs"
+RUN_ROOT="${RUN_ROOT:-${ROOT_DIR}/O-LoRA}"
 mkdir -p "${RUN_ROOT}"
 mkdir -p "${PROJECT_ROOT}/logs"
 mkdir -p "${PROJECT_ROOT}/results"
+
+# O-LoRA hyperparameters (override via env vars if needed)
+OLORA_R="${OLORA_R:-16}"
+OLORA_ALPHA="${OLORA_ALPHA:-32}"
+OLORA_DROPOUT="${OLORA_DROPOUT:-0.05}"
+OLORA_TARGET_MODULES="${OLORA_TARGET_MODULES:-q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj}"
+
+# Shared O-LoRA args used in all three training stages.
+# Adjust these flags to match your training scripts if argument names differ.
+O_LORA_ARGS=(
+  --use_olora
+  --olora_r "${OLORA_R}"
+  --olora_alpha "${OLORA_ALPHA}"
+  --olora_dropout "${OLORA_DROPOUT}"
+  --olora_target_modules "${OLORA_TARGET_MODULES}"
+)
+
+preflight_olora_checks() {
+  local scripts=(
+    "train_coding_bigcodebench_sft.py"
+    "train_math_sft.py"
+    "train_medical_sft.py"
+  )
+
+  echo "[preflight] checking PEFT installation..."
+  if ! python -c 'import peft' >/dev/null 2>&1; then
+    echo "[ERROR] PEFT is not installed (or not importable). Install with: pip install peft" >&2
+    exit 1
+  fi
+  echo "[preflight] PEFT found"
+
+  for f in "${scripts[@]}"; do
+    if [[ ! -f "${f}" ]]; then
+      echo "[ERROR] missing training script: ${f}" >&2
+      exit 1
+    fi
+    if ! grep -q -- "--use_olora" "${f}"; then
+      echo "[ERROR] ${f} does not expose --use_olora" >&2
+      exit 1
+    fi
+    if ! grep -q -- 'init_lora_weights="olora"' "${f}"; then
+      echo "[ERROR] ${f} does not configure O-LoRA init_lora_weights=\"olora\"" >&2
+      exit 1
+    fi
+  done
+
+  echo "[preflight] O-LoRA support checks passed"
+}
 
 eval_stage() {
   local model_id="$1"
@@ -77,21 +125,21 @@ eval_stage() {
     2>&1 | tee "${log_root}/${stage_tag}/medical/eval_medical_${stage_tag}.log"
 }
 
-run_adamw() {
+run_olora() {
   local run_idx="$1"
   local seed="$2"
-  local run_tag="adamw_run${run_idx}"
+  local run_tag="olora_run${run_idx}"
   local out_root="${RUN_ROOT}/${run_tag}/outputs"
   local log_root="${RUN_ROOT}/${run_tag}/logs"
   local res_root="${RUN_ROOT}/${run_tag}/results"
 
   mkdir -p "${out_root}" "${log_root}/stage_a/train" "${log_root}/stage_b/train" "${log_root}/stage_c/train"
 
-  echo "[AdamW][Run ${run_idx}] Stage A train"
+  echo "[O-LoRA][Run ${run_idx}] Stage A train"
   python -u train_coding_bigcodebench_sft.py \
     --model_id Qwen/Qwen2.5-1.5B-Instruct \
     --split complete \
-    --output_dir "${out_root}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
+    --output_dir "${out_root}/sft_seq2_coding_qwen1.5b_instruct_olora" \
     --max_length 2048 \
     --lr 5e-6 \
     --batch_size 1 \
@@ -100,20 +148,21 @@ run_adamw() {
     --max_steps 0 \
     --save_strategy no \
     --seed "${seed}" \
-    2>&1 | tee "${log_root}/stage_a/train/train_coding_adamw.log"
+    "${O_LORA_ARGS[@]}" \
+    2>&1 | tee "${log_root}/stage_a/train/train_coding_olora.log"
 
-  echo "[AdamW][Run ${run_idx}] Stage A eval"
+  echo "[O-LoRA][Run ${run_idx}] Stage A eval"
   eval_stage \
-    "${out_root}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
+    "${out_root}/sft_seq2_coding_qwen1.5b_instruct_olora" \
     "${res_root}" \
     "${log_root}" \
     "stage_a" \
-    "bcb_hard_adamw"
+    "bcb_hard_olora"
 
-  echo "[AdamW][Run ${run_idx}] Stage B train"
+  echo "[O-LoRA][Run ${run_idx}] Stage B train"
   python -u train_math_sft.py \
-    --model_id "${out_root}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
-    --output_dir "${out_root}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
+    --model_id "${out_root}/sft_seq2_coding_qwen1.5b_instruct_olora" \
+    --output_dir "${out_root}/sft_seq2_math_qwen1.5b_instruct_olora_from_coding" \
     --num_train_examples 2000 \
     --max_length 512 \
     --batch_size 1 \
@@ -128,45 +177,51 @@ run_adamw() {
     --probe_max_new_tokens 64 \
     --save_strategy no \
     --seed "${seed}" \
-    2>&1 | tee "${log_root}/stage_b/train/train_math_adamw_from_coding.log"
+    "${O_LORA_ARGS[@]}" \
+    2>&1 | tee "${log_root}/stage_b/train/train_math_olora_from_coding.log"
 
-  echo "[AdamW][Run ${run_idx}] Stage B eval"
+  echo "[O-LoRA][Run ${run_idx}] Stage B eval"
   eval_stage \
-    "${out_root}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
+    "${out_root}/sft_seq2_math_qwen1.5b_instruct_olora_from_coding" \
     "${res_root}" \
     "${log_root}" \
     "stage_b" \
-    "bcb_hard_adamw_from_coding_math"
+    "bcb_hard_olora_from_coding_math"
 
-  echo "[AdamW][Run ${run_idx}] Stage C train"
+  echo "[O-LoRA][Run ${run_idx}] Stage C train"
   python -u train_medical_sft.py \
-    --model_id "${out_root}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
-    --output_dir "${out_root}/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math" \
+    --model_id "${out_root}/sft_seq2_math_qwen1.5b_instruct_olora_from_coding" \
+    --output_dir "${out_root}/sft_seq2_medical_qwen1.5b_instruct_olora_from_coding_math" \
+    --dataset_id FreedomIntelligence/medical-o1-reasoning-SFT \
+    --dataset_config en \
+    --train_split train \
+    --question_field Question \
+    --answer_field Response \
     --max_length 2048 \
     --batch_size 1 \
     --grad_accum 8 \
     --epochs 1 \
     --max_steps 0 \
     --lr 5e-6 \
-    --no-answer_after_cot_only \
+    --answer_after_cot_only \
     --seed "${seed}" \
-    2>&1 | tee "${log_root}/stage_c/train/train_medical_adamw_from_coding_math.log"
+    "${O_LORA_ARGS[@]}" \
+    2>&1 | tee "${log_root}/stage_c/train/train_medical_olora_from_coding_math.log"
 
-  echo "[AdamW][Run ${run_idx}] Stage C eval"
+  echo "[O-LoRA][Run ${run_idx}] Stage C eval"
   eval_stage \
-    "${out_root}/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math" \
+    "${out_root}/sft_seq2_medical_qwen1.5b_instruct_olora_from_coding_math" \
     "${res_root}" \
     "${log_root}" \
     "stage_c" \
-    "bcb_hard_adamw_final"
+    "bcb_hard_olora_final"
 }
 
-
+preflight_olora_checks
 for i in $(seq 1 "${NUM_REPEATS}"); do
   seed=$((BASE_SEED + i - 1))
-  run_adamw "${i}" "${seed}"
+  run_olora "${i}" "${seed}"
 done
-
 
 python - <<PY
 import json
@@ -198,7 +253,7 @@ def mean_std(vals):
     var = sum((v - m) ** 2 for v in vals) / (len(vals) - 1)
     return m, math.sqrt(var)
 
-optimizers = ["adamw"]
+optimizers = ["olora"]
 stages = ["stage_a", "stage_b", "stage_c"]
 
 summary = {}
@@ -209,18 +264,11 @@ for opt in optimizers:
         coding_vals, math_vals, med_vals, avg_vals = [], [], [], []
         for r in runs:
             rr = os.path.join(root, r, "results", s)
-            if opt == "adamw":
-                coding = load_metric(os.path.join(rr, "coding", {
-                    "stage_a": "bcb_hard_adamw",
-                    "stage_b": "bcb_hard_adamw_from_coding_math",
-                    "stage_c": "bcb_hard_adamw_final",
-                }[s], "pass_at_k.json"))
-            else:
-                coding = load_metric(os.path.join(rr, "coding", {
-                    "stage_a": "bcb_hard_muon",
-                    "stage_b": "bcb_hard_muon_from_coding_math",
-                    "stage_c": "bcb_hard_muon_final",
-                }[s], "pass_at_k.json"))
+            coding = load_metric(os.path.join(rr, "coding", {
+                "stage_a": "bcb_hard_olora",
+                "stage_b": "bcb_hard_olora_from_coding_math",
+                "stage_c": "bcb_hard_olora_final",
+            }[s], "pass_at_k.json"))
             mathv = load_metric(os.path.join(rr, "math", f"gsm8k_{s}.json"))
             med = load_metric(os.path.join(rr, "medical", f"medical_{s}.json"))
 
@@ -242,7 +290,7 @@ for opt in optimizers:
             "average": {"mean": am, "std": avs, "values": avg_vals},
         }
 
-out_path = os.path.join(root, "summary_mean_std.json")
+out_path = os.path.join(root, "summary_mean_std_olora.json")
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(summary, f, indent=2)
 
@@ -251,12 +299,14 @@ for opt in optimizers:
     print(f"\\n[{opt}] runs={summary[opt]['runs']}")
     for s in stages:
         row = summary[opt]["stages"][s]
+        c = row["coding"]
+        m = row["math"]
+        h = row["medical"]
+        a = row["average"]
         print(
-            f"{s}: coding={row['coding']['mean']:.3f}+-{row['coding']['std']:.3f}, "
-            f"math={row['math']['mean']:.3f}+-{row['math']['std']:.3f}, "
-            f"medical={row['medical']['mean']:.3f}+-{row['medical']['std']:.3f}, "
-            f"avg={row['average']['mean']:.3f}+-{row['average']['std']:.3f}"
+            f"{s}: coding={c['mean']:.3f}+-{c['std']:.3f}, "
+            f"math={m['mean']:.3f}+-{m['std']:.3f}, "
+            f"medical={h['mean']:.3f}+-{h['std']:.3f}, "
+            f"avg={a['mean']:.3f}+-{a['std']:.3f}"
         )
 PY
-
-echo "All runs complete. Results under ${RUN_ROOT}"

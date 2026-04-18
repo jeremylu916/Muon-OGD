@@ -29,7 +29,7 @@ from muon_ogd_optimizer import MuonOGDOptimizer
 # ---- Defaults ----
 DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_OUTPUT_DIR = "outputs/sft_huatuo_muon"
-DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-verifiable-problem"
+DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-reasoning-SFT"
 DEFAULT_DATASET_CONFIG = "default"
 DEFAULT_TRAIN_SPLIT = "train"
 DEFAULT_QUESTION_FIELD = "Open-ended Verifiable Question"
@@ -452,7 +452,7 @@ def main():
             cot_trimmed_examples += 1
 
         prompt_only = tokenizer.apply_chat_template(
-            [{"role": "system", "content": "You are a careful medical reasoning assistant. Provide concise, clinically grounded answers."},
+            [{"role": "system", "content": "You are a careful medical assistant. Answer the medical question directly and concisely. Give the final answer first. Do not include unnecessary explanation."},
              {"role": "user", "content": q.strip()}],
             tokenize=False,
             add_generation_prompt=True,
@@ -508,7 +508,7 @@ def main():
         for probe_id, probe_q, probe_t in FIXED_PROBES:
             prompt_only = tokenizer.apply_chat_template(
                 [
-                    {"role": "system", "content": "You are a careful medical reasoning assistant. Provide concise, clinically grounded answers."},
+                    {"role": "system", "content": "You are a careful medical assistant. Answer the medical question directly and concisely. Give the final answer first. Do not include unnecessary explanation."},
                     {"role": "user", "content": probe_q.strip()},
                 ],
                 tokenize=False,

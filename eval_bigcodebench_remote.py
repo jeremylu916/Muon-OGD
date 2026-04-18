@@ -186,6 +186,7 @@ def parse_args():
     p.add_argument("--submit_only", action="store_true", help="Skip generation and submit existing samples")
     p.add_argument("--submit_retries", type=int, default=DEFAULT_SUBMIT_RETRIES, help="Number of retry attempts for remote submission")
     p.add_argument("--submit_retry_delay_sec", type=int, default=DEFAULT_SUBMIT_RETRY_DELAY_SEC, help="Delay in seconds between submission retries")
+    p.add_argument("--no_submit", action="store_true", help="Skip remote submission and only write samples.jsonl")
     p.add_argument("--debug_first_sample", action=argparse.BooleanOptionalAction, default=DEFAULT_DEBUG_FIRST_SAMPLE,
                    help="If true, print prompt/raw/extracted text for the first task")
     p.add_argument("--debug_text_limit", type=int, default=DEFAULT_DEBUG_TEXT_LIMIT,
@@ -370,6 +371,10 @@ def main():
         )
 
     # Evaluate
+    if args.no_submit:
+        print("Skipping remote submission (--no_submit). samples.jsonl is ready for later submission.")
+        return
+
     print("Submitting to Remote Evaluator...")
     max_attempts = max(1, int(args.submit_retries))
     for attempt in range(1, max_attempts + 1):

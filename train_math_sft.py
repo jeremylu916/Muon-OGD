@@ -1,10 +1,17 @@
 import argparse
+import json
 import os
 import time
 from datasets import load_dataset
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
+try:
+    from peft import LoraConfig, PeftModel, get_peft_model
+except ImportError:
+    LoraConfig = None
+    PeftModel = None
+    get_peft_model = None
 
 try:
     from tqdm.auto import tqdm
@@ -31,6 +38,15 @@ DEFAULT_PROBE_MAX_NEW_TOKENS = 64
 DEFAULT_VAL_RATIO = 0.02
 DEFAULT_VAL_EVERY = 100
 DEFAULT_VAL_MAX_BATCHES = 32
+DEFAULT_USE_OLORA = False
+DEFAULT_OLORA_R = 16
+DEFAULT_OLORA_ALPHA = 32
+DEFAULT_OLORA_DROPOUT = 0.05
+DEFAULT_OLORA_TARGET_MODULES = "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+DEFAULT_USE_SCULPT_SUBSPACE = False
+DEFAULT_SUBSPACE_TOP_FRACTION = 0.5
+DEFAULT_SUBSPACE_TARGET_MODULES = "q_proj,k_proj,v_proj,o_proj"
+DEFAULT_BASE_MODEL_ID = ""
 
 FIXED_PROBES = [
     ("Q1", "Explain Machine Learning in 1 sentence.", "Machine learning is a method where models learn patterns from data to make predictions or decisions without explicit rules."),
@@ -63,6 +79,12 @@ def load_tokenizer(model_id: str, cache_dir=None) -> AutoTokenizer:
 def parse_args():
     parser = argparse.ArgumentParser(description="SFT on GSM8K train split.")
     parser.add_argument("--model_id", type=str, default=DEFAULT_MODEL_ID)
+    parser.add_argument(
+        "--base_model_id",
+        type=str,
+        default=DEFAULT_BASE_MODEL_ID,
+        help="Optional base model path/id when --model_id points to a PEFT adapter directory.",
+    )
     parser.add_argument("--output_dir", type=str, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--max_length", type=int, default=DEFAULT_MAX_LENGTH)
     parser.add_argument("--batch_size", type=int, default=DEFAULT_BATCH_SIZE)
@@ -93,7 +115,48 @@ def parse_args():
     parser.add_argument("--val_max_batches", type=int, default=DEFAULT_VAL_MAX_BATCHES, help="Max validation batches per validation run; <=0 uses full validation set")
     parser.add_argument("--save_strategy", type=str, default="no", choices=["no", "steps"], help="Checkpoint save strategy")
     parser.add_argument("--save_steps", type=int, default=500, help="Save checkpoint every X optimizer steps")
+    parser.add_argument("--use_olora", action=argparse.BooleanOptionalAction, default=DEFAULT_USE_OLORA)
+    parser.add_argument("--olora_r", type=int, default=DEFAULT_OLORA_R)
+    parser.add_argument("--olora_alpha", type=int, default=DEFAULT_OLORA_ALPHA)
+    parser.add_argument("--olora_dropout", type=float, default=DEFAULT_OLORA_DROPOUT)
+    parser.add_argument("--olora_target_modules", type=str, default=DEFAULT_OLORA_TARGET_MODULES)
+    parser.add_argument("--use_sculpt_subspace", action=argparse.BooleanOptionalAction, default=DEFAULT_USE_SCULPT_SUBSPACE)
+    parser.add_argument("--subspace_top_fraction", type=float, default=DEFAULT_SUBSPACE_TOP_FRACTION)
+    parser.add_argument("--subspace_target_modules", type=str, default=DEFAULT_SUBSPACE_TARGET_MODULES)
     return parser.parse_args()
+
+
+@torch.no_grad()
+def build_high_subspace_bases(model, target_modules, top_fraction):
+    subspaces = {}
+    frac = max(0.0, min(1.0, top_fraction))
+    for name, p in model.named_parameters():
+        if p.ndim != 2 or not name.endswith("weight"):
+            continue
+        if target_modules and not any(tok in name for tok in target_modules):
+            continue
+        rank = min(p.shape)
+        if rank <= 0:
+            continue
+        top_k = max(1, int(rank * frac))
+        if rank > 1:
+            top_k = min(top_k, rank - 1)
+        w = p.detach().to(torch.float32)
+        U, _, Vh = torch.linalg.svd(w, full_matrices=False)
+        subspaces[name] = (U[:, :top_k].contiguous(), Vh[:top_k, :].contiguous())
+    return subspaces
+
+
+@torch.no_grad()
+def project_grads_to_low_subspace(model, subspaces):
+    for name, p in model.named_parameters():
+        if p.grad is None or name not in subspaces:
+            continue
+        U_high, Vh_high = subspaces[name]
+        g = p.grad.detach().to(torch.float32)
+        g = g - U_high @ (U_high.transpose(0, 1) @ g)
+        g = g - (g @ Vh_high.transpose(0, 1)) @ Vh_high
+        p.grad.copy_(g.to(p.grad.dtype))
 
 
 def build_prompt(tokenizer, question: str, answer: str):
@@ -188,16 +251,79 @@ def main():
     else:
         model_dtype = torch.float16 if use_cuda else torch.float32
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=model_dtype)
-
+    print(f"[model] loading model from {args.model_id} ...", flush=True)
+    adapter_cfg_path = os.path.join(args.model_id, "adapter_config.json")
+    adapter_path_detected = os.path.isfile(adapter_cfg_path)
+    base_ref = ""
+    if os.path.isfile(adapter_cfg_path):
+        try:
+            with open(adapter_cfg_path, "r", encoding="utf-8") as f:
+                adapter_cfg = json.load(f)
+            base_ref = adapter_cfg.get("base_model_name_or_path", "")
+            print(
+                f"[model] detected PEFT adapter path; base model will be loaded from: {base_ref}",
+                flush=True,
+            )
+        except Exception as e:
+            print(f"[model] warning: failed to read adapter config ({e})", flush=True)
+    _load_t0 = time.perf_counter()
+    if adapter_path_detected:
+        if PeftModel is None:
+            raise ImportError("PEFT is required to load adapter checkpoints. Install with: pip install peft")
+        base_model_id = (
+            args.base_model_id.strip()
+            or os.environ.get("BASE_MODEL_ID", "").strip()
+            or base_ref.strip()
+        )
+        if not base_model_id:
+            raise ValueError("Could not resolve base model for adapter checkpoint. Set --base_model_id.")
+        print(f"[model] loading base model first: {base_model_id}", flush=True)
+        base_model = AutoModelForCausalLM.from_pretrained(base_model_id, cache_dir=cache_dir, dtype=model_dtype)
+        print(f"[model] base model loaded in {time.perf_counter() - _load_t0:.1f}s", flush=True)
+        _adapter_t0 = time.perf_counter()
+        print(f"[model] attaching adapter weights from: {args.model_id}", flush=True)
+        model = PeftModel.from_pretrained(base_model, args.model_id, is_trainable=True)
+        print(f"[model] adapter weights attached in {time.perf_counter() - _adapter_t0:.1f}s", flush=True)
+        model.print_trainable_parameters()
+    else:
+        model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=model_dtype)
+        print(f"[model] base model loaded in {time.perf_counter() - _load_t0:.1f}s", flush=True)
     device = torch.device("cuda" if use_cuda else "cpu")
+    print(f"[model] moving base model to device={device} before adapter init...", flush=True)
     model.to(device)
+    if args.use_olora and not adapter_path_detected:
+        if LoraConfig is None or get_peft_model is None:
+            raise ImportError("--use_olora requires PEFT. Install with: pip install peft")
+        target_modules = [m.strip() for m in args.olora_target_modules.split(",") if m.strip()]
+        print(f"[model] applying O-LoRA adapters on modules: {target_modules}", flush=True)
+        lora_cfg = LoraConfig(
+            task_type="CAUSAL_LM",
+            r=args.olora_r,
+            lora_alpha=args.olora_alpha,
+            lora_dropout=args.olora_dropout,
+            target_modules=target_modules,
+            bias="none",
+            init_lora_weights="olora",
+        )
+        _olora_t0 = time.perf_counter()
+        model = get_peft_model(model, lora_cfg)
+        print(f"[model] O-LoRA adapters applied in {time.perf_counter() - _olora_t0:.1f}s", flush=True)
+        model.print_trainable_parameters()
+
     if not use_cuda:
         model = model.float()
 
     print(f"Using device={device} dtype={next(model.parameters()).dtype}")
 
     model.train()
+
+    subspace_bases = {}
+    if args.use_sculpt_subspace:
+        target_modules = [m.strip() for m in args.subspace_target_modules.split(",") if m.strip()]
+        print(f"[subspace] building high-subspace SVD bases for modules: {target_modules}", flush=True)
+        _sub_t0 = time.perf_counter()
+        subspace_bases = build_high_subspace_bases(model, target_modules, args.subspace_top_fraction)
+        print(f"[subspace] prepared {len(subspace_bases)} matrices in {time.perf_counter() - _sub_t0:.1f}s", flush=True)
 
     def collate(batch):
         input_ids = torch.tensor([ex["input_ids"] for ex in batch], dtype=torch.long)
@@ -256,7 +382,8 @@ def main():
             pred = tokenizer.decode(pred_ids, skip_special_tokens=True).strip()
             print(f"[probe] step={step_idx} | {probe_id} | q={probe_q[:120]!r} | ****pred={pred[:160]!r} | ****target={probe_t[:160]!r}", flush=True)
         model.train()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    trainable_params = (p for p in model.parameters() if p.requires_grad)
+    optimizer = torch.optim.AdamW(trainable_params, lr=args.lr, weight_decay=args.weight_decay)
 
     num_update_steps_per_epoch = max(1, len(loader) // args.grad_accum)
     max_train_steps = args.max_steps if args.max_steps > 0 else args.epochs * num_update_steps_per_epoch
@@ -301,6 +428,9 @@ def main():
                     print(f"[skip] opt_step={opt_step}: NaN/Inf in gradients, skipping.", flush=True)
                     optimizer.zero_grad(set_to_none=True)
                     continue
+
+                if args.use_sculpt_subspace and subspace_bases:
+                    project_grads_to_low_subspace(model, subspace_bases)
 
                 if args.max_grad_norm > 0:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)

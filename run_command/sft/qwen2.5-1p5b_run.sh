@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Unified runner for Qwen2.5-7B-Instruct:
+# Unified runner for Qwen2.5-1.5B-Instruct:
 # - AdamW: 2 runs
 # - Muon-OGD: 2 runs
 # - Eval after every stage in every run
@@ -9,7 +9,8 @@ set -euo pipefail
 
 USER_NAME="blu7"
 PROJECT_ROOT="/work/nvme/bgeo/${USER_NAME}/muon_CL"
-ROOT_DIR="${PROJECT_ROOT}/7B-instruct"
+ROOT_DIR="${PROJECT_ROOT}/1.5B-instruct"
+
 NUM_REPEATS="${NUM_REPEATS:-2}"
 BASE_SEED="${BASE_SEED:-42}"
 NUM_TASKS="${NUM_TASKS:-0}"
@@ -76,54 +77,43 @@ eval_stage() {
     2>&1 | tee "${log_root}/${stage_tag}/medical/eval_medical_${stage_tag}.log"
 }
 
-
-run_muon() {
+run_adamw() {
   local run_idx="$1"
   local seed="$2"
-  local run_tag="muon_run${run_idx}"
+  local run_tag="adamw_run${run_idx}"
   local out_root="${RUN_ROOT}/${run_tag}/outputs"
   local log_root="${RUN_ROOT}/${run_tag}/logs"
   local res_root="${RUN_ROOT}/${run_tag}/results"
 
   mkdir -p "${out_root}" "${log_root}/stage_a/train" "${log_root}/stage_b/train" "${log_root}/stage_c/train"
 
-  echo "[Muon][Run ${run_idx}] Stage A train"
-  python -u train_coding_bigcodebench_muon_ogd.py \
-    --model_id Qwen/Qwen2.5-7B-Instruct \
-    --ci_model_id Qwen/Qwen2.5-7B-Instruct \
+  echo "[AdamW][Run ${run_idx}] Stage A train"
+  python -u train_coding_bigcodebench_sft.py \
+    --model_id Qwen/Qwen2.5-1.5B-Instruct \
     --split complete \
-    --output_dir "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
+    --output_dir "${out_root}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
     --max_length 2048 \
+    --lr 5e-6 \
     --batch_size 1 \
     --grad_accum 8 \
     --epochs 1 \
     --max_steps 0 \
     --save_strategy no \
     --seed "${seed}" \
-    --muon_ogd \
-    --muon_use_optimizer_class \
-    --muon_layers gate_proj,up_proj,down_proj \
-    --muon_k 10 \
-    --muon_T 1 \
-    --muon_eta 1e-5 \
-    --muon_eta_dual 1e-5 \
-    --muon_warm_start \
-    --muon_momentum 0.95 \
-    2>&1 | tee "${log_root}/stage_a/train/train_coding_muon_ogd.log"
+    2>&1 | tee "${log_root}/stage_a/train/train_coding_adamw.log"
 
-  echo "[Muon][Run ${run_idx}] Stage A eval"
+  echo "[AdamW][Run ${run_idx}] Stage A eval"
   eval_stage \
-    "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
+    "${out_root}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
     "${res_root}" \
     "${log_root}" \
     "stage_a" \
-    "bcb_hard_muon"
+    "bcb_hard_adamw"
 
-  echo "[Muon][Run ${run_idx}] Stage B train"
-  python -u train_math_sft_svd.py \
-    --model_id "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
-    --ci_model_id "${out_root}/sft_seq2_coding_qwen7b_instruct_muon_ogd" \
-    --output_dir "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
+  echo "[AdamW][Run ${run_idx}] Stage B train"
+  python -u train_math_sft.py \
+    --model_id "${out_root}/sft_seq2_coding_qwen1.5b_instruct_adamw" \
+    --output_dir "${out_root}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
     --num_train_examples 2000 \
     --max_length 512 \
     --batch_size 1 \
@@ -138,63 +128,50 @@ run_muon() {
     --probe_max_new_tokens 64 \
     --save_strategy no \
     --seed "${seed}" \
-    --muon_ogd \
-    --muon_use_optimizer_class \
-    --muon_k 3 \
-    --muon_T 1 \
-    --muon_eta 1e-4 \
-    --muon_eta_dual 1e-4 \
-    --muon_warm_start \
-    --muon_layers gate_proj,up_proj,down_proj \
-    --muon_momentum 0.95 \
-    2>&1 | tee "${log_root}/stage_b/train/train_math_muon_ogd_from_coding.log"
+    2>&1 | tee "${log_root}/stage_b/train/train_math_adamw_from_coding.log"
 
-  echo "[Muon][Run ${run_idx}] Stage B eval"
+  echo "[AdamW][Run ${run_idx}] Stage B eval"
   eval_stage \
-    "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
+    "${out_root}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
     "${res_root}" \
     "${log_root}" \
     "stage_b" \
-    "bcb_hard_muon_from_coding_math"
+    "bcb_hard_adamw_from_coding_math"
 
-  echo "[Muon][Run ${run_idx}] Stage C train"
-  python -u train_medical_muon_ogd.py \
-    --model_id "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
-    --ci_model_id "${out_root}/sft_seq2_math_qwen7b_instruct_muon_ogd_from_coding" \
-    --output_dir "${out_root}/sft_seq2_medical_qwen7b_instruct_muon_ogd_from_coding_math" \
+  echo "[AdamW][Run ${run_idx}] Stage C train"
+  python -u train_medical_sft.py \
+    --model_id "${out_root}/sft_seq2_math_qwen1.5b_instruct_adamw_from_coding" \
+    --output_dir "${out_root}/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math" \
+    --dataset_id FreedomIntelligence/medical-o1-reasoning-SFT \
+    --dataset_config en \
+    --train_split train \
+    --question_field Question \
+    --answer_field Response \
     --max_length 2048 \
     --batch_size 1 \
     --grad_accum 8 \
     --epochs 1 \
-    --lr 5e-6 \
     --max_steps 0 \
-    --no-answer_after_cot_only \
+    --lr 5e-6 \
+    --answer_after_cot_only \
     --seed "${seed}" \
-    --muon_ogd \
-    --muon_use_optimizer_class \
-    --muon_k 3 \
-    --muon_T 1 \
-    --muon_eta 1e-5 \
-    --muon_eta_dual 1e-5 \
-    --muon_warm_start \
-    --muon_layers gate_proj,up_proj,down_proj \
-    --muon_momentum 0.95 \
-    2>&1 | tee "${log_root}/stage_c/train/train_medical_muon_ogd_from_coding_math.log"
+    2>&1 | tee "${log_root}/stage_c/train/train_medical_adamw_from_coding_math.log"
 
-  echo "[Muon][Run ${run_idx}] Stage C eval"
+  echo "[AdamW][Run ${run_idx}] Stage C eval"
   eval_stage \
-    "${out_root}/sft_seq2_medical_qwen7b_instruct_muon_ogd_from_coding_math" \
+    "${out_root}/sft_seq2_medical_qwen1.5b_instruct_adamw_from_coding_math" \
     "${res_root}" \
     "${log_root}" \
     "stage_c" \
-    "bcb_hard_muon_final"
+    "bcb_hard_adamw_final"
 }
 
 
 for i in $(seq 1 "${NUM_REPEATS}"); do
   seed=$((BASE_SEED + i - 1))
-  run_muon "${i}" "${seed}"
+  run_adamw "${i}" "${seed}"
 done
+
 
 python - <<PY
 import json
@@ -226,7 +203,7 @@ def mean_std(vals):
     var = sum((v - m) ** 2 for v in vals) / (len(vals) - 1)
     return m, math.sqrt(var)
 
-optimizers = ["muon"]
+optimizers = ["adamw"]
 stages = ["stage_a", "stage_b", "stage_c"]
 
 summary = {}
