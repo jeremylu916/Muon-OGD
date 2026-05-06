@@ -2,17 +2,27 @@ import argparse
 import json
 import math
 import os
+# Default-disable torch's cuDNN SDPA backend; on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built". Falling back to
+# flash / mem-efficient SDPA gives identical training math.
+os.environ.setdefault("TORCH_CUDNN_SDPA_ENABLED", "0")
 import random
 import re
 import textwrap
 from typing import Dict, List
 
 import torch
+# Disable torch's cuDNN SDPA backend programmatically (env var is not always honored).
+try:
+    torch.backends.cuda.enable_cudnn_sdp(False)
+except Exception:
+    pass
 from tqdm.auto import tqdm
 import time
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
+from chat_template_utils import apply_chat_template_safe
 try:
     from peft import LoraConfig, get_peft_model
 except ImportError:
@@ -161,7 +171,7 @@ def build_prompt_text(args, tokenizer, prompt: str) -> str:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": user_content}
         ]
-        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        return apply_chat_template_safe(tokenizer, messages, tokenize=False, add_generation_prompt=True)
     else:
         # Keep complete-mode prompts as raw text to mirror eval_bigcodebench_remote.py.
         return prompt.strip()
@@ -327,7 +337,10 @@ def main():
     use_cuda = torch.cuda.is_available()
     dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
     print(f"[model] dtype={dtype} | use_cuda={use_cuda}", flush=True)
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=dtype)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id, cache_dir=cache_dir, torch_dtype=dtype,
+        attn_implementation=os.environ.get("TRAIN_ATTN_IMPL", "sdpa"),
+    )
     print("[model] base model loaded", flush=True)
     device = torch.device("cuda" if use_cuda else "cpu")
     print(f"[model] moving base model to device={device} before adapter init...", flush=True)
@@ -529,7 +542,12 @@ def main():
     # Save
     print(f"Saving model to {args.output_dir}")
     os.makedirs(args.output_dir, exist_ok=True)
-    model.save_pretrained(args.output_dir)
+    if getattr(args, "use_olora", False) and hasattr(model, "merge_and_unload"):
+        print("Merging LoRA adapters into base weights before saving full model...", flush=True)
+        merged = model.merge_and_unload()
+        merged.save_pretrained(args.output_dir, safe_serialization=True)
+    else:
+        model.save_pretrained(args.output_dir)
     tokenizer.save_pretrained(args.output_dir)
     print("Done.")
 

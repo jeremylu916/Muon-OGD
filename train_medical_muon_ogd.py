@@ -12,28 +12,45 @@ Muon-OGD algorithm (Spectral-Norm Constrained Projection via Dual Iterations):
 
 import argparse
 import os
+# Disable torch's cuDNN SDPA backend by default — on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built" inside SDPA. Falling back
+# to flash / mem-efficient SDPA produces identical results. Override with
+# TORCH_CUDNN_SDPA_ENABLED=1 if your stack supports the cuDNN backend.
+os.environ.setdefault("TORCH_CUDNN_SDPA_ENABLED", "0")
 import random
 import re
 import time
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 import torch
+# Disable torch's cuDNN SDPA backend — on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built". Other SDPA backends
+# (flash / mem-efficient / math) work fine.
+try:
+    torch.backends.cuda.enable_cudnn_sdp(False)
+except Exception:
+    pass
 import torch.nn as nn
+import torch.distributed as dist
 from tqdm.auto import tqdm
 from datasets import load_dataset
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
+from chat_template_utils import apply_chat_template_safe
 from muon_ogd_optimizer import MuonOGDOptimizer
 
 # ---- Defaults ----
 DEFAULT_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_OUTPUT_DIR = "outputs/sft_huatuo_muon"
 DEFAULT_DATASET_ID = "FreedomIntelligence/medical-o1-reasoning-SFT"
-DEFAULT_DATASET_CONFIG = "default"
+DEFAULT_DATASET_CONFIG = "en"
 DEFAULT_TRAIN_SPLIT = "train"
-DEFAULT_QUESTION_FIELD = "Open-ended Verifiable Question"
-DEFAULT_ANSWER_FIELD = "Ground-True Answer"
+DEFAULT_QUESTION_FIELD = "Question"
+DEFAULT_ANSWER_FIELD = "Response"
 DEFAULT_LANGUAGE_FIELD = "language"
 DEFAULT_MAX_LENGTH = 1536
 DEFAULT_BATCH_SIZE = 1
@@ -127,7 +144,7 @@ def parse_args():
     p.add_argument("--muon_momentum", type=float, default=0.95, help="Momentum EMA coefficient for Muon optimizer class")
     p.add_argument("--muon_dynamic_scale", action="store_true", help="Enable dynamic per-layer scaling in Muon optimizer class")
     p.add_argument("--muon_msign_method", type=str, default="ns", choices=["svd", "ns"], help="Polar factor: 'ns' (Newton-Schulz, fast) or 'svd' (exact)")
-    p.add_argument("--muon_ns_iters", type=int, default=6, help="Newton-Schulz iterations")
+    p.add_argument("--muon_ns_iters", type=int, default=4, help="Newton-Schulz iterations")
     p.add_argument("--ci_model_id", type=str, default="", help="Model to extract protected Ci from (pretrained-task model). Defaults to --model_id.")
     p.add_argument("--ci_model_ids", type=str, default="", help="Comma-separated list of models to extract Ci from and accumulate (e.g., gsm8k,bigcodebench checkpoints)")
     p.add_argument("--ci_k_per_source", type=int, default=0, help="If >0, use this k per Ci source; otherwise use --muon_k per source")
@@ -407,13 +424,35 @@ def main():
     args = parse_args()
     cache_dir = get_hf_cache_dir()
 
+    world_size = int(os.environ.get("WORLD_SIZE", "1"))
+    local_rank = int(os.environ.get("LOCAL_RANK", "-1"))
+    is_distributed = world_size > 1
+    if is_distributed:
+        if not torch.cuda.is_available():
+            raise RuntimeError("DDP requested (WORLD_SIZE>1) but CUDA is not available.")
+        if local_rank < 0:
+            raise RuntimeError("DDP requested but LOCAL_RANK is not set.")
+        torch.cuda.set_device(local_rank)
+        dist.init_process_group(backend="nccl", init_method="env://")
+        rank = dist.get_rank()
+        device = torch.device("cuda", local_rank)
+    else:
+        rank = 0
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    is_main_process = rank == 0
+
     random.seed(args.seed)
     torch.manual_seed(args.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
+        # TF32 improves matmul throughput on modern GPUs with negligible impact on training quality.
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
 
     # ---- Dataset ----
-    print(f"Loading dataset {args.dataset_id}...")
+    if is_main_process:
+        print(f"Loading dataset {args.dataset_id}...")
     ds = load_dataset(args.dataset_id, args.dataset_config, split=args.train_split, cache_dir=cache_dir)
 
     if args.english_only:
@@ -423,18 +462,21 @@ def main():
         elif args.question_field in ds.column_names:
             ds = ds.filter(lambda ex: looks_english(to_text(ex.get(args.question_field, ""))))
         else:
-            print(
+            if is_main_process:
+                print(
                 f"[warn] english_only enabled but neither '{args.language_field}' nor '{args.question_field}' exists. Skipping language filter.",
                 flush=True,
             )
 
         if len(ds) == 0:
-            print("[warn] English filtering removed all examples. Reverting to unfiltered dataset.", flush=True)
+            if is_main_process:
+                print("[warn] English filtering removed all examples. Reverting to unfiltered dataset.", flush=True)
             ds = ds_before_filter
 
     if args.num_train_examples and args.num_train_examples < len(ds):
         ds = ds.shuffle(seed=args.seed).select(range(args.num_train_examples))
-    print(f"Training on {len(ds)} examples.")
+    if is_main_process:
+        print(f"Training on {len(ds)} examples.")
 
     # ---- Tokenizer ----
     tokenizer = load_tokenizer(args.model_id, cache_dir=cache_dir)
@@ -451,13 +493,13 @@ def main():
         if args.answer_after_cot_only and a.strip() != (a_raw or "").strip():
             cot_trimmed_examples += 1
 
-        prompt_only = tokenizer.apply_chat_template(
+        prompt_only = apply_chat_template_safe(tokenizer, 
             [{"role": "system", "content": "You are a careful medical assistant. Answer the medical question directly and concisely. Give the final answer first. Do not include unnecessary explanation."},
              {"role": "user", "content": q.strip()}],
             tokenize=False,
             add_generation_prompt=True,
         )
-        full = tokenizer.apply_chat_template(
+        full = apply_chat_template_safe(tokenizer, 
             build_messages(q, a),
             tokenize=False,
             add_generation_prompt=False,
@@ -476,10 +518,28 @@ def main():
         full_tok["labels"] = labels
         return full_tok
 
-    print("Tokenizing dataset...")
+    if is_main_process:
+        print("Tokenizing dataset...")
     tokenized = ds.map(tok, remove_columns=ds.column_names)
 
-    if args.answer_after_cot_only:
+    # Drop examples with no supervised tokens (all labels are -100), which can cause NaN CE loss.
+    before_supervised_filter = len(tokenized)
+    tokenized = tokenized.filter(lambda ex: any(lbl != -100 for lbl in ex["labels"]))
+    removed_no_label = before_supervised_filter - len(tokenized)
+    if removed_no_label > 0 and is_main_process:
+        print(
+            f"[warn] Removed {removed_no_label} examples with no supervised target tokens "
+            f"({len(tokenized)} remain).",
+            flush=True,
+        )
+
+    if len(tokenized) == 0:
+        raise RuntimeError(
+            "All tokenized examples have empty supervision (labels are all -100). "
+            "Try --no-answer_after_cot_only or increase --max_length."
+        )
+
+    if args.answer_after_cot_only and is_main_process:
         print(f"CoT-trimmed answers: {cot_trimmed_examples}/{len(tokenized)} examples", flush=True)
 
     if args.val_ratio > 0 and len(tokenized) > 1:
@@ -487,26 +547,33 @@ def main():
         val_count = min(len(shuffled) - 1, max(1, int(len(shuffled) * args.val_ratio)))
         val_tokenized = shuffled.select(range(val_count))
         train_tokenized = shuffled.select(range(val_count, len(shuffled)))
-        print(f"Train split: {len(train_tokenized)} | Val split: {len(val_tokenized)}")
+        if is_main_process:
+            print(f"Train split: {len(train_tokenized)} | Val split: {len(val_tokenized)}")
     else:
         train_tokenized = tokenized
         val_tokenized = None
 
     # ---- Model ----
-    print(f"Loading model {args.model_id}...")
-    use_cuda = torch.cuda.is_available()
+    if is_main_process:
+        print(f"Loading model {args.model_id}...")
+    use_cuda = device.type == "cuda"
     dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else (torch.float16 if use_cuda else torch.float32)
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=dtype)
-    device = torch.device("cuda" if use_cuda else "cpu")
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id, cache_dir=cache_dir, dtype=dtype,
+        attn_implementation=os.environ.get("TRAIN_ATTN_IMPL", "sdpa"),
+    )
     model.to(device)
     model.train()
+
+    def unwrap_model(m):
+        return m.module if isinstance(m, DDP) else m
 
     def run_probe(step_idx: int):
         if args.probe_every <= 0:
             return
         model.eval()
         for probe_id, probe_q, probe_t in FIXED_PROBES:
-            prompt_only = tokenizer.apply_chat_template(
+            prompt_only = apply_chat_template_safe(tokenizer, 
                 [
                     {"role": "system", "content": "You are a careful medical assistant. Answer the medical question directly and concisely. Give the final answer first. Do not include unnecessary explanation."},
                     {"role": "user", "content": probe_q.strip()},
@@ -518,7 +585,7 @@ def main():
             enc = {k: v.to(device) for k, v in enc.items()}
 
             with torch.no_grad():
-                out = model.generate(
+                out = unwrap_model(model).generate(
                     **enc,
                     max_new_tokens=args.probe_max_new_tokens,
                     do_sample=False,
@@ -531,7 +598,8 @@ def main():
 
             pred_ids = out[0, enc["input_ids"].shape[1]:]
             pred = tokenizer.decode(pred_ids, skip_special_tokens=True).strip()
-            print(f"[probe] step={step_idx} | {probe_id} | q={probe_q[:120]!r} | ****pred={pred[:160]!r} | ****target={probe_t[:160]!r}", flush=True)
+            if is_main_process:
+                print(f"[probe] step={step_idx} | {probe_id} | q={probe_q[:120]!r} | ****pred={pred[:160]!r} | ****target={probe_t[:160]!r}", flush=True)
         model.train()
 
     # ---- Muon-OGD setup ----
@@ -541,7 +609,8 @@ def main():
 
     if args.muon_ogd:
         filters = [s.strip() for s in args.muon_layers.split(",")] if args.muon_layers else []
-        print("Collecting Muon target modules...")
+        if is_main_process:
+            print("Collecting Muon target modules...")
         for name, module in model.named_modules():
             if hasattr(module, "weight") and isinstance(module.weight, torch.Tensor) and module.weight.ndim == 2:
                 if filters and not any(sub in name for sub in filters):
@@ -549,7 +618,8 @@ def main():
                 if not module.weight.requires_grad:
                     continue
                 muon_targets[name] = module
-        print(f"Muon targets: {len(muon_targets)} modules")
+        if is_main_process:
+            print(f"Muon targets: {len(muon_targets)} modules")
 
         if args.ci_from_grads:
             replay_name = args.ci_replay_dataset.strip()
@@ -557,19 +627,22 @@ def main():
             replay_split = args.ci_replay_split.strip()
 
             if replay_name:
-                print(f"Loading replay dataset for Ci from grads: {replay_name} ({replay_cfg or 'default'}) split={replay_split}")
+                if is_main_process:
+                    print(f"Loading replay dataset for Ci from grads: {replay_name} ({replay_cfg or 'default'}) split={replay_split}")
                 if replay_cfg:
                     replay_ds = load_dataset(replay_name, replay_cfg, split=replay_split, cache_dir=cache_dir)
                 else:
                     replay_ds = load_dataset(replay_name, split=replay_split, cache_dir=cache_dir)
             else:
-                print("ci_from_grads enabled but no ci_replay_dataset provided; using current Huatuo dataset as replay.")
+                if is_main_process:
+                    print("ci_from_grads enabled but no ci_replay_dataset provided; using current Huatuo dataset as replay.")
                 replay_ds = ds
 
             n_replay = min(args.ci_replay_examples, len(replay_ds))
             replay_ds = replay_ds.shuffle(seed=args.ci_replay_seed).select(range(n_replay))
 
-            print("Tokenizing replay dataset for Ci-from-grads...")
+            if is_main_process:
+                print("Tokenizing replay dataset for Ci-from-grads...")
             replay_tokenized = replay_ds.map(tok, remove_columns=replay_ds.column_names)
 
             def replay_collate(batch):
@@ -579,9 +652,20 @@ def main():
                     "labels": torch.tensor([ex["labels"] for ex in batch], dtype=torch.long),
                 }
 
-            replay_loader = DataLoader(replay_tokenized, batch_size=1, shuffle=False, collate_fn=replay_collate, num_workers=0)
+            replay_sampler = DistributedSampler(
+                replay_tokenized, num_replicas=world_size, rank=rank, shuffle=False
+            ) if is_distributed else None
+            replay_loader = DataLoader(
+                replay_tokenized,
+                batch_size=1,
+                shuffle=False,
+                sampler=replay_sampler,
+                collate_fn=replay_collate,
+                num_workers=0,
+            )
 
-            print(f"Accumulating old-task gradients over {n_replay} replay examples...")
+            if is_main_process:
+                print(f"Accumulating old-task gradients over {n_replay} replay examples...")
             G_acc: Dict[str, torch.Tensor] = {}
             for name, mod in muon_targets.items():
                 G_acc[name] = torch.zeros_like(mod.weight.data, dtype=torch.float32, device=device)
@@ -597,13 +681,19 @@ def main():
                         G_acc[name].add_(mod.weight.grad.detach().to(torch.float32))
                 model.zero_grad(set_to_none=True)
 
-            print(f"Extracting protected directions Ci from accumulated replay gradients (k={args.muon_k})...")
+            if is_distributed:
+                for name in muon_targets:
+                    dist.all_reduce(G_acc[name], op=dist.ReduceOp.SUM)
+
+            if is_main_process:
+                print(f"Extracting protected directions Ci from accumulated replay gradients (k={args.muon_k})...")
             for name, mod in muon_targets.items():
                 Cs = _extract_rank1_factors_from_matrix(G_acc[name], k=args.muon_k, device=mod.weight.device)
                 muon_C_map[name] = Cs
                 if args.muon_warm_start:
                     muon_lambda_map[name] = torch.zeros(len(Cs), dtype=torch.float32, device=mod.weight.device)
-            print("Ci-from-grads ready.")
+            if is_main_process:
+                print("Ci-from-grads ready.")
         else:
             ci_sources = [s.strip() for s in args.ci_model_ids.split(",") if s.strip()]
             if not ci_sources:
@@ -611,17 +701,20 @@ def main():
                 ci_sources = [fallback_source]
 
             k_per_source = args.ci_k_per_source if args.ci_k_per_source > 0 else args.muon_k
-            print(f"Accumulating Ci from {len(ci_sources)} source model(s), k_per_source={k_per_source}...")
+            if is_main_process:
+                print(f"Accumulating Ci from {len(ci_sources)} source model(s), k_per_source={k_per_source}...")
 
             for name in muon_targets.keys():
                 muon_C_map[name] = []
 
             for src_id in ci_sources:
                 if src_id == args.model_id:
-                    print(f"Snapshotting weights for Ci from: {src_id} (same as model_id)")
+                    if is_main_process:
+                        print(f"Snapshotting weights for Ci from: {src_id} (same as model_id)")
                     ci_weight_map = {name: module.weight.data.detach().clone().cpu() for name, module in muon_targets.items()}
                 else:
-                    print(f"Loading reference model for Ci: {src_id} (CPU, float32)...")
+                    if is_main_process:
+                        print(f"Loading reference model for Ci: {src_id} (CPU, float32)...")
                     ci_ref_model = AutoModelForCausalLM.from_pretrained(src_id, cache_dir=cache_dir, torch_dtype=torch.float32)
                     ci_ref_model.eval()
                     ci_weight_map: Dict[str, torch.Tensor] = {}
@@ -631,9 +724,11 @@ def main():
                     del ci_ref_model
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
-                    print(f"Reference model freed. Weight snapshots for {len(ci_weight_map)} modules.")
+                    if is_main_process:
+                        print(f"Reference model freed. Weight snapshots for {len(ci_weight_map)} modules.")
 
-                print(f"Extracting protected directions Ci from source: {src_id} ...")
+                if is_main_process:
+                    print(f"Extracting protected directions Ci from source: {src_id} ...")
                 for name, module in muon_targets.items():
                     src_weight = ci_weight_map.get(name, module.weight.data)
                     Cs = _extract_rank1_factors_from_matrix(src_weight, k=k_per_source, device=module.weight.device)
@@ -643,12 +738,22 @@ def main():
                 for name, module in muon_targets.items():
                     muon_lambda_map[name] = torch.zeros(len(muon_C_map[name]), dtype=torch.float32, device=module.weight.device)
 
-            print(f"Extracted accumulated Ci for {len(muon_C_map)} modules from sources: {ci_sources}")
+            if is_main_process:
+                print(f"Extracted accumulated Ci for {len(muon_C_map)} modules from sources: {ci_sources}")
+
+    if is_distributed:
+        model = DDP(
+            model,
+            device_ids=[local_rank],
+            output_device=local_rank,
+            find_unused_parameters=False,
+        )
 
     # ---- Optimizer (exclude Muon-targeted weights from AdamW) ----
     muon_weight_ids = {id(m.weight) for m in muon_targets.values()} if args.muon_ogd else set()
     opt_params = [p for p in model.parameters() if p.requires_grad and id(p) not in muon_weight_ids]
-    print(f"AdamW params: {len(opt_params)} tensors (excluded {len(muon_weight_ids)} Muon weight tensors)")
+    if is_main_process:
+        print(f"AdamW params: {len(opt_params)} tensors (excluded {len(muon_weight_ids)} Muon weight tensors)")
     opt = torch.optim.AdamW(opt_params, lr=args.lr, weight_decay=args.weight_decay)
 
     # ---- Scheduler ----
@@ -659,8 +764,27 @@ def main():
             "labels": torch.tensor([ex["labels"] for ex in batch], dtype=torch.long),
         }
 
-    loader = DataLoader(train_tokenized, batch_size=args.batch_size, shuffle=True, collate_fn=collate)
-    val_loader = DataLoader(val_tokenized, batch_size=args.batch_size, shuffle=False, collate_fn=collate) if val_tokenized is not None else None
+    train_sampler = DistributedSampler(
+        train_tokenized, num_replicas=world_size, rank=rank, shuffle=True, seed=args.seed
+    ) if is_distributed else None
+    val_sampler = DistributedSampler(
+        val_tokenized, num_replicas=world_size, rank=rank, shuffle=False
+    ) if (is_distributed and val_tokenized is not None) else None
+
+    loader = DataLoader(
+        train_tokenized,
+        batch_size=args.batch_size,
+        shuffle=(train_sampler is None),
+        sampler=train_sampler,
+        collate_fn=collate,
+    )
+    val_loader = DataLoader(
+        val_tokenized,
+        batch_size=args.batch_size,
+        shuffle=False,
+        sampler=val_sampler,
+        collate_fn=collate,
+    ) if val_tokenized is not None else None
 
     def compute_val_loss():
         if val_loader is None:
@@ -722,12 +846,13 @@ def main():
             num_training_steps=max_train_steps,
         )
 
-    print(f"Starting training: Epochs={args.epochs}, Batch={args.batch_size}, GradAccum={args.grad_accum}")
-    print(f"Total optimization steps: {max_train_steps} | Warmup: {num_warmup_steps}")
-    if args.muon_ogd:
-        print(f"Muon-OGD: k={args.muon_k}, T={args.muon_T}, eta={args.muon_eta}, eta_dual={args.muon_eta_dual}, method={args.muon_msign_method}")
+    if is_main_process:
+        print(f"Starting training: Epochs={args.epochs}, Batch={args.batch_size}, GradAccum={args.grad_accum}")
+        print(f"Total optimization steps: {max_train_steps} | Warmup: {num_warmup_steps}")
+        if args.muon_ogd:
+            print(f"Muon-OGD: k={args.muon_k}, T={args.muon_T}, eta={args.muon_eta}, eta_dual={args.muon_eta_dual}, method={args.muon_msign_method}")
 
-    pbar = tqdm(total=max_train_steps, desc="Training", unit="step")
+    pbar = tqdm(total=max_train_steps, desc="Training", unit="step", disable=not is_main_process)
     global_step = 0
     total_loss = 0.0
     _step_time_accum = 0.0
@@ -735,31 +860,47 @@ def main():
 
     # ---- Training loop ----
     for epoch in range(args.epochs):
-        print(f"Epoch {epoch+1}/{args.epochs}")
+        if train_sampler is not None:
+            train_sampler.set_epoch(epoch)
+        if is_main_process:
+            print(f"Epoch {epoch+1}/{args.epochs}")
         for step, batch in enumerate(loader):
             batch_start_time = time.perf_counter()
             batch = {k: v.to(device) for k, v in batch.items()}
+            is_update_step = ((step + 1) % args.grad_accum == 0)
 
-            outputs = model(**batch)
-            loss = outputs.loss / args.grad_accum
+            # Avoid DDP gradient all-reduce on non-update micro-batches.
+            sync_ctx = model.no_sync() if (is_distributed and not is_update_step) else nullcontext()
+            with sync_ctx:
+                outputs = model(**batch)
+                loss = outputs.loss / args.grad_accum
 
-            # Skip NaN/Inf loss batches
-            if not torch.isfinite(outputs.loss):
-                print(f"[skip] Step {global_step} batch {step}: non-finite loss={outputs.loss.item():.4f}, skipping.", flush=True)
-                model.zero_grad(set_to_none=True)
-                continue
+                # Keep rank behavior identical under DDP to avoid reducer desync.
+                finite_loss = torch.isfinite(outputs.loss)
+                if is_distributed:
+                    finite_tensor = finite_loss.detach().to(dtype=torch.int32, device=device)
+                    dist.all_reduce(finite_tensor, op=dist.ReduceOp.MIN)
+                    finite_loss = bool(finite_tensor.item())
 
-            loss.backward()
+                # Skip NaN/Inf loss batches
+                if not finite_loss:
+                    if is_main_process:
+                        print(f"[skip] Step {global_step} batch {step}: non-finite loss={outputs.loss.item():.4f}, skipping.", flush=True)
+                    model.zero_grad(set_to_none=True)
+                    continue
+
+                loss.backward()
             total_loss += outputs.loss.item()
 
-            if (step + 1) % args.grad_accum == 0:
+            if is_update_step:
                 # Check for NaN/Inf gradients
                 has_bad_grad = any(
                     p.grad is not None and not torch.isfinite(p.grad).all()
                     for p in model.parameters()
                 )
                 if has_bad_grad:
-                    print(f"[skip] Step {global_step}: NaN/Inf in gradients, skipping optimizer step.", flush=True)
+                    if is_main_process:
+                        print(f"[skip] Step {global_step}: NaN/Inf in gradients, skipping optimizer step.", flush=True)
                     model.zero_grad(set_to_none=True)
                     continue
 
@@ -798,7 +939,8 @@ def main():
                                 muon_lambda_map[name] = lam_final.detach()
                             module.weight.data.add_(Delta.to(module.weight.data.dtype))
                     except Exception as e:
-                        print(f"Muon-OGD failure at step {global_step}: {e}", flush=True)
+                        if is_main_process:
+                            print(f"Muon-OGD failure at step {global_step}: {e}", flush=True)
 
                 model.zero_grad(set_to_none=True)
                 global_step += 1
@@ -816,7 +958,7 @@ def main():
                 _step_time_accum += iter_dt
                 _step_time_count += 1
 
-                if global_step % args.log_every == 0:
+                if global_step % args.log_every == 0 and is_main_process:
                     avg_loss = total_loss / (args.log_every * args.grad_accum)
                     lr = scheduler.get_last_lr()[0]
                     avg_step_s = _step_time_accum / max(1, _step_time_count)
@@ -829,7 +971,7 @@ def main():
                     print(f"Step {global_step}/{max_train_steps} | Loss: {avg_loss:.4f} | LR: {lr:.2e} | avg_step_s={avg_step_s:.2f}s{val_msg}")
                     total_loss = 0.0
 
-                if args.probe_every > 0 and global_step % args.probe_every == 0:
+                if args.probe_every > 0 and global_step % args.probe_every == 0 and is_main_process:
                     run_probe(global_step)
 
                 pbar.update(1)
@@ -844,11 +986,17 @@ def main():
     except Exception:
         pass
 
-    print(f"Saving final model to {args.output_dir}")
-    os.makedirs(args.output_dir, exist_ok=True)
-    model.save_pretrained(args.output_dir)
-    tokenizer.save_pretrained(args.output_dir)
-    print("Done.")
+    if is_distributed:
+        dist.barrier()
+    if is_main_process:
+        print(f"Saving final model to {args.output_dir}")
+        os.makedirs(args.output_dir, exist_ok=True)
+        unwrap_model(model).save_pretrained(args.output_dir)
+        tokenizer.save_pretrained(args.output_dir)
+        print("Done.")
+    if is_distributed:
+        dist.barrier()
+        dist.destroy_process_group()
 
 
 if __name__ == "__main__":

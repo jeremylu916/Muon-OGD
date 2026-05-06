@@ -2,6 +2,10 @@ import argparse
 import json
 import math
 import os
+# Default-disable torch's cuDNN SDPA backend; on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built". Falling back to
+# flash / mem-efficient SDPA gives identical training math.
+os.environ.setdefault("TORCH_CUDNN_SDPA_ENABLED", "0")
 import random
 import re
 import textwrap
@@ -9,11 +13,19 @@ import time
 from typing import Dict, List, Optional
 
 import torch
+# Disable torch's cuDNN SDPA backend — on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built". Other SDPA backends
+# (flash / mem-efficient / math) work fine.
+try:
+    torch.backends.cuda.enable_cudnn_sdp(False)
+except Exception:
+    pass
 import torch.nn as nn
 from tqdm.auto import tqdm
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
+from chat_template_utils import apply_chat_template_safe
 from muon_ogd_optimizer import MuonOGDOptimizer
 
 # --- Default Configuration ---
@@ -94,7 +106,7 @@ def parse_args():
     p.add_argument("--muon_layers", type=str, default="", help="Comma-separated substrings to match module names to protect (default=all linear weights)")
     # NEW: allow fast msgn
     p.add_argument("--muon_msign_method", type=str, default="ns", choices=["svd", "ns"], help="Matrix sign / polar factor: 'svd' (slow) or 'ns' (Newton-Schulz fast)")
-    p.add_argument("--muon_ns_iters", type=int, default=6, help="Newton-Schulz iterations for polar factor when --muon_msign_method ns")
+    p.add_argument("--muon_ns_iters", type=int, default=4, help="Newton-Schulz iterations for polar factor when --muon_msign_method ns")
     p.add_argument("--ci_model_id", type=str, default="", help="Model to extract protected Ci directions FROM (pretrained-task model). Defaults to --model_id if not set. Load on CPU and free after extraction.")
     p.add_argument("--muon_warm_start", action="store_true", help="Warm-start dual variables lambda across optimizer steps (recommended)")
     p.add_argument("--muon_use_optimizer_class", action="store_true", help="Use MuonOGDOptimizer class instead of manual per-layer Muon loop")
@@ -526,7 +538,7 @@ def main():
 
         if args.split == "instruct":
             messages = build_prompt_text(args, raw_prompt)
-            prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            prompt_text = apply_chat_template_safe(tokenizer, messages, tokenize=False, add_generation_prompt=True)
             solution_text = f"```python\n{solution}\n```" + tokenizer.eos_token
         else:
             prompt_text = raw_prompt
@@ -575,7 +587,10 @@ def main():
     print(f"Loading model {args.model_id}...")
     use_cuda = torch.cuda.is_available()
     dtype = torch.bfloat16 if (use_cuda and torch.cuda.is_bf16_supported()) else torch.float16
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, torch_dtype=dtype)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id, cache_dir=cache_dir, torch_dtype=dtype,
+        attn_implementation=os.environ.get("TRAIN_ATTN_IMPL", "sdpa"),
+    )
     device = torch.device("cuda" if use_cuda else "cpu")
     model.to(device)
     model.train()
@@ -624,7 +639,7 @@ def main():
                         "Replay dataset examples must have 'question' and 'answer' fields "
                         "(GSM8K format). Adapt replay_tok() for your dataset."
                     )
-                prompt_text = tokenizer.apply_chat_template(
+                prompt_text = apply_chat_template_safe(tokenizer, 
                     [
                         {"role": "system", "content": "You are a helpful assistant."},
                         {

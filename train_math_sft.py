@@ -1,11 +1,19 @@
 import argparse
 import json
 import os
+# Default-disable torch's cuDNN SDPA backend; on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built".
+os.environ.setdefault("TORCH_CUDNN_SDPA_ENABLED", "0")
 import time
 from datasets import load_dataset
 import torch
+try:
+    torch.backends.cuda.enable_cudnn_sdp(False)
+except Exception:
+    pass
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForCausalLM, get_linear_schedule_with_warmup
+from chat_template_utils import apply_chat_template_safe
 try:
     from peft import LoraConfig, PeftModel, get_peft_model
 except ImportError:
@@ -169,7 +177,7 @@ def build_prompt(tokenizer, question: str, answer: str):
         },
         {"role": "assistant", "content": answer},
     ]
-    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False)
+    return apply_chat_template_safe(tokenizer, messages, tokenize=False, add_generation_prompt=False)
 
 
 def main():
@@ -196,7 +204,7 @@ def main():
                 "content": f"Solve the following math word problem. End your response with the final numeric answer.\n\n{example['question']}",
             },
         ]
-        prompt_text = tokenizer.apply_chat_template(
+        prompt_text = apply_chat_template_safe(tokenizer, 
             prompt_only_messages, tokenize=False, add_generation_prompt=True
         )
         prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
@@ -278,7 +286,12 @@ def main():
         if not base_model_id:
             raise ValueError("Could not resolve base model for adapter checkpoint. Set --base_model_id.")
         print(f"[model] loading base model first: {base_model_id}", flush=True)
-        base_model = AutoModelForCausalLM.from_pretrained(base_model_id, cache_dir=cache_dir, dtype=model_dtype)
+        _base_kwargs = {"cache_dir": cache_dir, "dtype": model_dtype}
+        if use_cuda:
+            _base_kwargs["device_map"] = {"": "cuda:0"}
+            _base_kwargs["low_cpu_mem_usage"] = True
+        _base_kwargs.setdefault("attn_implementation", os.environ.get("TRAIN_ATTN_IMPL", "sdpa"))
+        base_model = AutoModelForCausalLM.from_pretrained(base_model_id, **_base_kwargs)
         print(f"[model] base model loaded in {time.perf_counter() - _load_t0:.1f}s", flush=True)
         _adapter_t0 = time.perf_counter()
         print(f"[model] attaching adapter weights from: {args.model_id}", flush=True)
@@ -286,7 +299,10 @@ def main():
         print(f"[model] adapter weights attached in {time.perf_counter() - _adapter_t0:.1f}s", flush=True)
         model.print_trainable_parameters()
     else:
-        model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=model_dtype)
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_id, cache_dir=cache_dir, dtype=model_dtype,
+            attn_implementation=os.environ.get("TRAIN_ATTN_IMPL", "sdpa"),
+        )
         print(f"[model] base model loaded in {time.perf_counter() - _load_t0:.1f}s", flush=True)
     device = torch.device("cuda" if use_cuda else "cpu")
     print(f"[model] moving base model to device={device} before adapter init...", flush=True)
@@ -363,7 +379,7 @@ def main():
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": probe_q},
             ]
-            prompt_text = tokenizer.apply_chat_template(prompt_messages, tokenize=False, add_generation_prompt=True)
+            prompt_text = apply_chat_template_safe(tokenizer, prompt_messages, tokenize=False, add_generation_prompt=True)
             enc = tokenizer(prompt_text, return_tensors="pt", truncation=True, max_length=args.max_length)
             enc = {k: v.to(device) for k, v in enc.items()}
 
@@ -477,7 +493,12 @@ def main():
     pbar.close()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    model.save_pretrained(args.output_dir)
+    if getattr(args, "use_olora", False) and hasattr(model, "merge_and_unload"):
+        print("Merging LoRA adapters into base weights before saving full model...", flush=True)
+        merged = model.merge_and_unload()
+        merged.save_pretrained(args.output_dir, safe_serialization=True)
+    else:
+        model.save_pretrained(args.output_dir)
     tokenizer.save_pretrained(args.output_dir)
 
 

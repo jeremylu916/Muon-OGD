@@ -1,15 +1,23 @@
 import argparse
 import json
 import os
+# Default-disable torch's cuDNN SDPA backend; on this GH200 stack it raises
+# "cuDNN Frontend error: No valid execution plans built".
+os.environ.setdefault("TORCH_CUDNN_SDPA_ENABLED", "0")
 import random
 import re
 import time
 from typing import Dict, List
 
 import torch
+try:
+    torch.backends.cuda.enable_cudnn_sdp(False)
+except Exception:
+    pass
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
+from chat_template_utils import apply_chat_template_safe
 from tqdm.auto import tqdm
 try:
     from peft import LoraConfig, PeftModel, get_peft_model
@@ -318,7 +326,7 @@ def main():
         if args.answer_after_cot_only and a.strip() != (a_raw or "").strip():
             cot_trimmed_examples += 1
 
-        prompt_only = tokenizer.apply_chat_template(
+        prompt_only = apply_chat_template_safe(tokenizer, 
             [
                 {
                     "role": "system",
@@ -330,7 +338,7 @@ def main():
             add_generation_prompt=True,
         )
 
-        full = tokenizer.apply_chat_template(
+        full = apply_chat_template_safe(tokenizer, 
             build_messages(q, a),
             tokenize=False,
             add_generation_prompt=False,
@@ -401,7 +409,12 @@ def main():
         if not base_model_id:
             raise ValueError("Could not resolve base model for adapter checkpoint. Set --base_model_id.")
         print(f"[model] loading base model first: {base_model_id}", flush=True)
-        base_model = AutoModelForCausalLM.from_pretrained(base_model_id, cache_dir=cache_dir, dtype=dtype)
+        _base_kwargs = {"cache_dir": cache_dir, "dtype": dtype}
+        if use_cuda:
+            _base_kwargs["device_map"] = {"": "cuda:0"}
+            _base_kwargs["low_cpu_mem_usage"] = True
+        _base_kwargs.setdefault("attn_implementation", os.environ.get("TRAIN_ATTN_IMPL", "sdpa"))
+        base_model = AutoModelForCausalLM.from_pretrained(base_model_id, **_base_kwargs)
         print(f"[model] base model loaded in {time.perf_counter() - _load_t0:.1f}s", flush=True)
         _adapter_t0 = time.perf_counter()
         print(f"[model] attaching adapter weights from: {args.model_id}", flush=True)
@@ -409,7 +422,10 @@ def main():
         print(f"[model] adapter weights attached in {time.perf_counter() - _adapter_t0:.1f}s", flush=True)
         model.print_trainable_parameters()
     else:
-        model = AutoModelForCausalLM.from_pretrained(args.model_id, cache_dir=cache_dir, dtype=dtype)
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_id, cache_dir=cache_dir, dtype=dtype,
+            attn_implementation=os.environ.get("TRAIN_ATTN_IMPL", "sdpa"),
+        )
         print(f"[model] base model loaded in {time.perf_counter() - _load_t0:.1f}s", flush=True)
 
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -449,7 +465,7 @@ def main():
             return
         model.eval()
         for probe_id, probe_q, probe_t in FIXED_PROBES:
-            prompt_only = tokenizer.apply_chat_template(
+            prompt_only = apply_chat_template_safe(tokenizer, 
                 [
                     {
                         "role": "system",
@@ -586,7 +602,12 @@ def main():
     pbar.close()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    model.save_pretrained(args.output_dir)
+    if getattr(args, "use_olora", False) and hasattr(model, "merge_and_unload"):
+        print("Merging LoRA adapters into base weights before saving full model...", flush=True)
+        merged = model.merge_and_unload()
+        merged.save_pretrained(args.output_dir, safe_serialization=True)
+    else:
+        model.save_pretrained(args.output_dir)
     tokenizer.save_pretrained(args.output_dir)
 
 
