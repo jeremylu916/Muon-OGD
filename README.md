@@ -135,7 +135,7 @@ RUN_ADAMW=0 RUN_OLORA=0 RUN_SUBSPACE=0 RUN_MUON=1 bash llama-3B.sh
 ### Repeats / seeds
 
 - `NUM_REPEATS` (default: `1`) — repeats for AdamW/O-LoRA/Subspace
-- `MUON_NUM_REPEATS` (default: `2`) — repeats for Muon-OGD (to report mean ± std)
+- `MUON_NUM_REPEATS` (default: `3`) — repeats for Muon-OGD (to report mean ± std)
 - `BASE_SEED` (default: `42`)
 
 Example:
