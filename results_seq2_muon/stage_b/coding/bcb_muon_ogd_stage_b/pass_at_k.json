@@ -1,9 +1,0 @@
-{
-  "pass@1": 0.14411764705882352,
-  "model": "samples.jsonl",
-  "split": "complete",
-  "subset": "full",
-  "calibrated": false,
-  "gt_pass_rate": 1.0,
-  "failed_tasks": []
-}
