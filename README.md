@@ -91,7 +91,7 @@ At the end, the script writes an aggregated summary:
 
 ### Paths
 
-- `USER_NAME` (default: `blu7`)
+- `USER_NAME` 
 - `PROJECT_ROOT` (default: `/work/nvme/bgeo/${USER_NAME}/muon_CL`)
 - `ROOT_DIR` (default: `${PROJECT_ROOT}/llama-3.2-3B-instruct`)
 - `RUN_ROOT` (default: `${ROOT_DIR}/runs`)
