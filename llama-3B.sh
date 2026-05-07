@@ -14,7 +14,7 @@ set -euo pipefail
 # Model defaults to a NON-gated mirror (`unsloth/Llama-3.2-3B-Instruct`).
 # Override MODEL_ID to a local path if you have weights staged.
 
-USER_NAME="${USER_NAME:USER_name}"
+USER_NAME="${USER_NAME:-user}"
 PROJECT_ROOT="${PROJECT_ROOT:-/work/nvme/bgeo/${USER_NAME}/muon_CL}"
 ROOT_DIR="${ROOT_DIR:-${PROJECT_ROOT}/llama-3.2-3B-instruct}"
 RUN_ROOT="${RUN_ROOT:-${ROOT_DIR}/runs}"
